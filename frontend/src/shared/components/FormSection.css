@@ -1,0 +1,34 @@
+.form-section {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+}
+
+.form-section.no-border {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optional-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
