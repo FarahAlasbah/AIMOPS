@@ -1,0 +1,22 @@
+.data-upload-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.step-placeholder {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.step-placeholder h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.step-placeholder p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
