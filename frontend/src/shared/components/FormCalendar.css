@@ -1,0 +1,23 @@
+/* Inherits most styles from FormInput.css, but adds specific calendar tweaks */
+.form-calendar {
+  position: relative;
+}
+
+/* Ensure the calendar icon looks consistent across browsers */
+.form-input[type="date"] {
+  font-family: 'Inria Serif', serif;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+}
+
+/* Add custom calendar icon style if needed, or rely on browser default */
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: 0.2s;
+}
+
+.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
