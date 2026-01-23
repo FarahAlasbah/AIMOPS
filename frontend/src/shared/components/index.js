@@ -13,3 +13,7 @@ export { default as FormActions } from './FormActions';
 export { default as Button } from './Button';
 export { default as Stepper } from './Stepper';
 export { default as FileUpload } from './FileUpload';
+
+// Feedback Components
+export { default as StepBadge } from './StepBadge';
+export { default as InfoMessage } from './InfoMessage';

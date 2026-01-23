@@ -1,0 +1,55 @@
+.info-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.info-message-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.info-message-text {
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.info-message-info {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.info-message-info .info-message-text {
+  color: #1e40af;
+}
+
+.info-message-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.info-message-success .info-message-text {
+  color: #166534;
+}
+
+.info-message-warning {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.info-message-warning .info-message-text {
+  color: #92400e;
+}
+
+.info-message-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.info-message-error .info-message-text {
+  color: #991b1b;
+}
