@@ -5,7 +5,9 @@ import MainLayout from './layouts/MainLayout';
 import Overview from './features/dashboard/pages/Overview';
 import CampaignList from './features/campaigns/pages/CampaignList';
 import NewCampaign from './features/campaigns/pages/NewCampaign';
-import DataUpload from './features/data-upload/pages/DataUpload'; // Add this
+import DataUpload from './features/data-upload/pages/DataUpload';
+import FeedbackList from './features/feedback/pages/FeedbackList'; // Add
+import FeedbackUpload from './features/feedback/pages/FeedbackUpload'; // Add
 
 function App() {
   return (
@@ -19,8 +21,9 @@ function App() {
           <Route path="overview" element={<Overview />} />
           <Route path="campaigns" element={<CampaignList />} />
           <Route path="campaigns/new" element={<NewCampaign />} />
-          <Route path="feedback" element={<div><h2>Feedback</h2></div>} />
-          <Route path="data-upload" element={<DataUpload />} /> {/* Add this */}
+          <Route path="feedback" element={<FeedbackList />} /> {/* Add */}
+          <Route path="feedback/upload" element={<FeedbackUpload />} /> {/* Add */}
+          <Route path="data-upload" element={<DataUpload />} />
           <Route path="audit" element={<div><h2>Audit & Data Quality</h2></div>} />
           <Route path="data-sources" element={<div><h2>Data Sources</h2></div>} />
           <Route path="reports" element={<div><h2>Reports</h2></div>} />
