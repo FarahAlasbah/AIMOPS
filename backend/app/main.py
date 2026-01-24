@@ -1,6 +1,5 @@
 """
 AIMOPS FastAPI Application
-Main entry point for the API
 """
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,30 +8,33 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.user import User
 from app.models.role import Role
+from app.api.auth import router as auth_router 
+from app.api import users
 
-# Create FastAPI app
 app = FastAPI(
     title="AIMOPS API",
     description="AI for Marketing & Operations Predicting System",
     version="1.0.0",
-    docs_url="/docs",  # Swagger UI at http://localhost:8000/docs
-    redoc_url="/redoc"  # ReDoc at http://localhost:8000/redoc
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# CORS - allow frontend to call API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React default port
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Register routers
+app.include_router(auth_router) 
+app.include_router(users.router)
 
-# Health check endpoint (test Postman with this!)
+
 @app.get("/")
 def root():
-    """API root - health check"""
+    """API root"""
     return {
         "message": "AIMOPS API is running",
         "version": "1.0.0",
@@ -43,7 +45,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    """Detailed health check"""
+    """Health check"""
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
@@ -51,13 +53,10 @@ def health_check():
     }
 
 
-# Test endpoint - get all users (FOR TESTING ONLY - will add auth later)
+# Keep test endpoints for now
 @app.get("/api/test/users")
 def test_get_users(db: Session = Depends(get_db)):
-    """
-    TEST ENDPOINT - Get all users
-    This is just for testing Postman - will be secured later
-    """
+    """TEST ENDPOINT"""
     users = db.query(User).all()
     return {
         "count": len(users),
@@ -65,35 +64,13 @@ def test_get_users(db: Session = Depends(get_db)):
     }
 
 
-# Test endpoint - get all roles
 @app.get("/api/test/roles")
 def test_get_roles(db: Session = Depends(get_db)):
-    """
-    TEST ENDPOINT - Get all roles with permissions
-    """
+    """TEST ENDPOINT"""
     roles = db.query(Role).all()
     return {
         "count": len(roles),
         "roles": [role.to_dict() for role in roles]
-    }
-
-
-# Test endpoint - check user permissions
-@app.get("/api/test/user/{user_id}/permissions")
-def test_user_permissions(user_id: int, db: Session = Depends(get_db)):
-    """
-    TEST ENDPOINT - Check what permissions a user has
-    """
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        return {"error": "User not found"}
-    
-    return {
-        "user": user.username,
-        "role": user.role.display_name if user.role else None,
-        "permissions": user.get_permissions(),
-        "is_admin": user.is_admin(),
-        "permission_count": len(user.get_permissions())
     }
 
 
