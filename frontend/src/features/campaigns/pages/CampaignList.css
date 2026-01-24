@@ -1,0 +1,131 @@
+.campaign-list-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Table Styles */
+.campaigns-table-wrapper {
+  overflow-x: auto;
+}
+
+.campaigns-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.campaigns-table thead {
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.campaigns-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.campaigns-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.campaigns-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.campaigns-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.campaign-name {
+  font-weight: 500;
+  color: #065f46;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-active {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-planned {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-completed {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Action Button */
+.btn-action {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #065f46;
+  background-color: transparent;
+  border: 1px solid #065f46;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-action:hover {
+  background-color: #065f46;
+  color: white;
+}
+
+/* Primary Button (from shared styles) */
+.btn-primary {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #065f46;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #047857;
+  box-shadow: 0 4px 6px -1px rgba(6, 95, 70, 0.2);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.empty-state p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .campaigns-table {
+    font-size: 13px;
+  }
+
+  .campaigns-table th,
+  .campaigns-table td {
+    padding: 10px 8px;
+  }
+}
