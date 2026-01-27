@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     UPLOAD_FOLDER: str = "./uploads"
     
     class Config:
-        env_file = "../.env"  # Load from .env file
+        env_file = ".env"  # Load from .env file
         case_sensitive = True
 
 
