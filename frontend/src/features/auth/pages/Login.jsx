@@ -1,26 +1,30 @@
 // frontend/src/features/auth/pages/Login.jsx
-import { useState } from 'react';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Eye, 
-  EyeOff, 
-  BarChart3, 
-  Megaphone, 
-  MessageSquare, 
-  TrendingUp,
-  LayoutDashboard 
-} from 'lucide-react'; // Make sure you have lucide-react installed
+import { Eye, EyeOff, BarChart3, Megaphone, MessageSquare, TrendingUp, LayoutDashboard } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/admin/overview', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,14 +32,13 @@ const Login = () => {
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
+    setApiError('');
   };
-
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+
+    if (!formData.username) {
+      newErrors.username = 'Username is required';
     }
 
     if (!formData.password) {
@@ -46,18 +49,35 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Login data:', formData);
-      navigate('/admin/overview');
+    setApiError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await login({
+        username: formData.username,
+        password: formData.password
+      });
+      // Navigation is handled in AuthContext
+    } catch (error) {
+      console.error('Login error:', error);
+      setApiError(error.message || error.detail || 'Invalid username or password');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  
 
   return (
     <div className="login-page">
       <div className="login-container">
-        
         {/* Left Side - Branding */}
         <div className="login-brand">
           <div className="brand-content">
@@ -67,9 +87,9 @@ const Login = () => {
               </div>
               <h1 className="brand-name">AIMOPS</h1>
             </div>
-            
+
             <p className="brand-tagline">
-              Orchestrate your marketing operations with AI-driven precision and intelligent insights.
+              AI-driven Marketing and Operations Predicting System
             </p>
 
             <div className="brand-features">
@@ -79,26 +99,26 @@ const Login = () => {
                 </div>
                 <span className="feature-text">Demand Forecasting</span>
               </div>
-              
+
               <div className="feature-item">
                 <div className="feature-icon">
                   <Megaphone size={20} />
                 </div>
                 <span className="feature-text">Campaign Management</span>
               </div>
-              
+
               <div className="feature-item">
                 <div className="feature-icon">
                   <MessageSquare size={20} />
                 </div>
                 <span className="feature-text">Feedback Analysis</span>
               </div>
-              
+
               <div className="feature-item">
                 <div className="feature-icon">
                   <BarChart3 size={20} />
                 </div>
-                <span className="feature-text">Smart Analytics</span>
+                <span className="feature-text">Smart Insights</span>
               </div>
             </div>
           </div>
@@ -109,28 +129,41 @@ const Login = () => {
           <div className="login-form-container">
             <div className="login-header">
               <h2>Welcome Back</h2>
-              <p>Please enter your details to sign in</p>
+              <p>Sign in to your account to continue</p>
             </div>
 
+            {apiError && (
+              <div className="alert alert-error">
+                {apiError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="login-form">
-              {/* Email Field */}
+              {/* Username Field */}
               <div className="form-field">
-                <label htmlFor="email" className="field-label">Email</label>
+                <label htmlFor="username" className="field-label">
+                  Username
+                </label>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  className={`field-input ${errors.email ? 'error' : ''}`}
-                  placeholder="name@company.com"
-                  value={formData.email}
+                  type="text"
+                  id="username"
+                  name="username"
+                  className={`field-input ${errors.username ? 'error' : ''}`}
+                  placeholder="Enter your username"
+                  value={formData.username}
                   onChange={handleChange}
+                  disabled={isLoading}
                 />
-                {errors.email && <span className="field-error">{errors.email}</span>}
+                {errors.username && (
+                  <span className="field-error">{errors.username}</span>
+                )}
               </div>
 
               {/* Password Field */}
               <div className="form-field">
-                <label htmlFor="password" className="field-label">Password</label>
+                <label htmlFor="password" className="field-label">
+                  Password
+                </label>
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -140,45 +173,50 @@ const Login = () => {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                {errors.password && <span className="field-error">{errors.password}</span>}
+                {errors.password && (
+                  <span className="field-error">{errors.password}</span>
+                )}
               </div>
 
-              {/* Options */}
+              {/* Remember Me & Forgot Password */}
               <div className="form-options">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={isLoading}
                   />
                   <span>Remember me</span>
                 </label>
-                <button type="button" className="forgot-password-link">
-                  Forgot password?
+                <button type="button" className="forgot-password-link" disabled={isLoading}>
+                  Forgot Password?
                 </button>
               </div>
 
-              <button type="submit" className="login-button">
-                Sign In
+              {/* Submit Button */}
+              <button type="submit" className="login-button" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
 
-              <div className="signup-area">
-                <p className="signup-text">
-                  Don't have an account? 
-                  <button type="button" className="signup-link" onClick={() => navigate('/signup')}>Sign up</button>
-                </p>
-              </div>
+              
+
+              {/* Sign Up Link */}
+              
             </form>
 
+            {/* Footer */}
             <div className="login-footer">
               <p>&copy; 2025 AIMOPS. All rights reserved.</p>
             </div>
