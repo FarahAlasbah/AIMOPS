@@ -1,4 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom'; // Remove useNavigate if not needed
+import { useAuth } from '../../shared/contexts/AuthContext'; // Add this
 import {
   LayoutDashboard,
   Megaphone,
@@ -9,13 +10,16 @@ import {
   FileText,
   Settings,
   HelpCircle,
-  User
+  User,
+  LogOut, // ← ADD THIS IMPORT
+  Users  // ← ADD THIS if you added User Management
 } from 'lucide-react';
 import './AdminSidebar.css';
 
 const AdminSidebar = ({ isOpen }) => {
   const location = useLocation();
-  
+  const { user, logout } = useAuth(); // Add this
+
   const menuItems = [
     { title: 'Overview', path: '/admin/overview', icon: LayoutDashboard },
     { title: 'Campaigns', path: '/admin/campaigns', icon: Megaphone },
@@ -24,6 +28,7 @@ const AdminSidebar = ({ isOpen }) => {
     { title: 'Audit & Data Quality', path: '/admin/audit', icon: UserCheck },
     { title: 'Data Sources', path: '/admin/data-sources', icon: Database },
     { title: 'Reports', path: '/admin/reports', icon: FileText },
+    ...(user?.is_admin ? [{ title: 'User Management', path: '/admin/user-management', icon: Users }] : []),
     { title: 'Settings', path: '/admin/settings', icon: Settings }
   ];
 
@@ -68,9 +73,16 @@ const AdminSidebar = ({ isOpen }) => {
             <User size={20} />
           </div>
           <div className="user-info">
-            <div className="user-name">Shahd</div>
-            <div className="user-role">Admin</div>
+            <div className="user-name">{user?.full_name || user?.username || 'User'}</div>
+            <div className="user-role">{user?.role?.display_name || 'User'}</div>
           </div>
+          <button 
+            className="logout-button" 
+            onClick={logout}
+            title="Logout"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </aside>

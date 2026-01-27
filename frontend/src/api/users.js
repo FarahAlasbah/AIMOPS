@@ -1,49 +1,20 @@
+// frontend/src/api/users.js
 import api from './api';
 
-// Get all users (Admin only)
-export const getUsers = async () => {
-  try {
-    const response = await api.get('/api/users');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch users' };
-  }
-};
+// existing:
+export const getUsers = async () => (await api.get('/api/users')).data;
+export const createUser = async (payload) => (await api.post('/api/users', payload)).data;
+export const updateUserRole = async (userId, roleId) =>
+  (await api.patch(`/api/users/${userId}`, { role_id: roleId })).data;
 
-// Create user (Admin only)
-export const createUser = async (userData) => {
-  try {
-    const response = await api.post('/api/users', userData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to create user' };
-  }
-};
+export const deleteUser = async (userId) =>
+  (await api.delete(`/api/users/${userId}`)).data;
 
-// Update user (Admin only)
-export const updateUser = async (userId, userData) => {
-  try {
-    const response = await api.put(`/api/users/${userId}`, userData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to update user' };
-  }
-};
+export const reactivateUser = async (userId) =>
+  (await api.post(`/api/users/${userId}/reactivate`)).data;
 
-// Update user role  (CHANGE THIS ENDPOINT IF YOUR BACKEND DIFFERS)
-export const updateUserRole = async (userId, roleId) => {
-  const res = await api.patch(`/api/users/${userId}`, { role_id: roleId });
-  return res.data;
-};
-
-// Delete user
-export const deleteUser = async (userId) => {
-  const res = await api.delete(`/api/users/${userId}`);
-  return res.data;
-};
-
-// Undo delete = reactivate
-export const reactivateUser = async (userId) => {
-  const res = await api.post(`/api/users/${userId}/reactivate`);
+// new: update any user fields (including role_id)
+export const updateUser = async (userId, payload) => {
+  const res = await api.patch(`/api/users/${userId}`, payload);
   return res.data;
 };
