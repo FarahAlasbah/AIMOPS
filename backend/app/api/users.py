@@ -25,6 +25,8 @@ from app.services.user_service import (
     reactivate_user,
     get_available_roles
 )
+from app.schemas.user import UserPasswordUpdate
+from app.services.user_service import change_password
 
 router = APIRouter(prefix="/api/users", tags=["User Management"])
 
@@ -264,3 +266,60 @@ def reactivate_user_account(
         last_login=user.last_login,
         failed_login_attempts=user.failed_login_attempts
     )
+
+    
+@router.post("/{user_id}/change-password")
+def change_user_password(
+    user_id: int,
+    password_data: UserPasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Change user password
+    
+    **Permissions:**
+    - Users can change their own password
+    - Admins can change any user's password
+    
+    **Security:**
+    - Requires current password verification
+    - New password must be different from current
+    - New password must be at least 8 characters
+    
+    **Request Body:**
+    ```json
+    {
+      "current_password": "OldPassword123",
+      "new_password": "NewPassword123"
+    }
+    ```
+    
+    **Returns:**
+    ```json
+    {
+      "message": "Password changed successfully",
+      "user_id": 1
+    }
+    ```
+    """
+    # Users can change their own password
+    # Admins can change any user's password
+    if not current_user.is_admin() and user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only change your own password"
+        )
+    
+    # Import here to avoid circular imports
+    from app.services.user_service import change_password
+    
+    # Change password
+    result = change_password(
+        db=db,
+        user_id=user_id,
+        current_password=password_data.current_password,
+        new_password=password_data.new_password
+    )
+    
+    return result
