@@ -23,6 +23,7 @@ const EditUserModal = ({
   deleting,
   disableDelete,
 
+  // Password change
   onChangePassword,
   changingPassword,
 }) => {
@@ -39,26 +40,21 @@ const EditUserModal = ({
 
   const [form, setForm] = useState(initial);
 
-  // Delete confirm modal
+  // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Password accordion
-  const [showPasswordPanel, setShowPasswordPanel] = useState(false);
-
-  // Change password fields
+  // Collapsible password section
+  const [showPassword, setShowPassword] = useState(false);
   const [pw, setPw] = useState({ current: "", next: "" });
   const [pwError, setPwError] = useState("");
 
   useEffect(() => setForm(initial), [initial]);
 
-  // When switching users, keep UI clean
-  useEffect(() => {
-    setShowPasswordPanel(false);
-    setPw({ current: "", next: "" });
-    setPwError("");
-  }, [user?.user_id]);
+  // Main form busy state (save/delete only)
+  const busy = !!(saving || deleting);
 
-  const busy = saving || deleting || changingPassword;
+  // Password area busy state (only while changing password)
+  const pwBusy = !!changingPassword;
 
   const setField = (k) => (e) => {
     const v = k === "role_id" ? Number(e.target.value) : e.target.value;
@@ -84,7 +80,12 @@ const EditUserModal = ({
     closeDeleteConfirm();
   };
 
-  const changePassword = async () => {
+  const togglePassword = () => {
+    setPwError("");
+    setShowPassword((v) => !v);
+  };
+
+  const handleChangePassword = async () => {
     setPwError("");
 
     const current = (pw.current || "").trim();
@@ -94,12 +95,13 @@ const EditUserModal = ({
     if (!next) return setPwError("New password is required.");
     if (next.length < 8) return setPwError("New password must be at least 8 characters.");
 
-    await onChangePassword?.(user?.user_id, current, next);
-
-    // If parent sets apiError, it'll show on page; we still clear local form on success
-    setPw({ current: "", next: "" });
-    setPwError("");
-    setShowPasswordPanel(false);
+    try {
+      await onChangePassword?.(user?.user_id, current, next);
+      setPw({ current: "", next: "" });
+      setShowPassword(false);
+    } catch {
+      // parent shows apiError; keep section open
+    }
   };
 
   return (
@@ -116,7 +118,12 @@ const EditUserModal = ({
           </button>
         </div>
 
-        <form onSubmit={submit} className="modal-body modal-body-scroll">
+        {/* Scrollable content to keep UI compact */}
+        <form
+          onSubmit={submit}
+          className="modal-body"
+          style={{ maxHeight: "70vh", overflowY: "auto" }}
+        >
           <div className="modal-grid">
             <div className="modal-field">
               <label htmlFor="edit-username">Username</label>
@@ -183,25 +190,52 @@ const EditUserModal = ({
             </div>
           </div>
 
-          {/* Accordion: Change password */}
-          <div className="panel">
-            <button
-              type="button"
-              className="panel-trigger"
-              onClick={() => setShowPasswordPanel((s) => !s)}
-              disabled={busy}
-              aria-expanded={showPasswordPanel}
+          <div className="modal-actions">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+
+          {/* Collapsible password section */}
+          <div className="danger-zone">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
             >
               <div>
-                <div className="panel-title">Change password</div>
-                <div className="panel-subtitle">New password must be at least 8 characters</div>
+                <div className="danger-title" style={{ color: "#111827" }}>
+                  Password
+                </div>
+                <div className="danger-desc">
+                  New password must be at least 8 characters.
+                </div>
               </div>
 
-              <span className={`panel-chevron ${showPasswordPanel ? "open" : ""}`}>▾</span>
-            </button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={togglePassword}
+                disabled={busy}
+              >
+                {showPassword ? "Hide" : "Change"}
+              </Button>
+            </div>
 
-            {showPasswordPanel && (
-              <div className="panel-content">
+            <div
+              style={{
+                overflow: "hidden",
+                maxHeight: showPassword ? 260 : 0,
+                transition: "max-height 220ms ease",
+              }}
+            >
+              <div style={{ paddingTop: showPassword ? 12 : 0 }}>
                 <div className="modal-grid">
                   <div className="modal-field" style={{ gridColumn: "1 / -1" }}>
                     <label htmlFor="edit-current-password">Current password</label>
@@ -211,8 +245,10 @@ const EditUserModal = ({
                       type="password"
                       className="field-input"
                       value={pw.current}
-                      onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
-                      disabled={busy}
+                      onChange={(e) =>
+                        setPw((p) => ({ ...p, current: e.target.value }))
+                      }
+                      disabled={pwBusy}
                       autoComplete="current-password"
                     />
                   </div>
@@ -226,44 +262,32 @@ const EditUserModal = ({
                       className="field-input"
                       value={pw.next}
                       onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
-                      disabled={busy}
+                      disabled={pwBusy}
                       autoComplete="new-password"
                     />
                     {pwError && <div className="field-error">{pwError}</div>}
                   </div>
                 </div>
 
-                <div className="panel-actions">
+                <div className="modal-actions" style={{ justifyContent: "flex-end" }}>
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => {
-                      setShowPasswordPanel(false);
-                      setPw({ current: "", next: "" });
-                      setPwError("");
-                    }}
-                    disabled={busy}
+                    onClick={handleChangePassword}
+                    disabled={pwBusy || !onChangePassword}
                   >
-                    Cancel
-                  </Button>
-
-                  <Button type="button" onClick={changePassword} disabled={busy}>
-                    {changingPassword ? "Updating..." : "Update password"}
+                    {pwBusy ? "Updating..." : "Update password"}
                   </Button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Footer actions: keep always visible at bottom of the scroll area */}
-          <div className="modal-actions modal-actions-sticky">
-            <div style={{ display: "flex", gap: 10 }}>
-              <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
-                Close
-              </Button>
-              <Button type="submit" disabled={busy}>
-                {saving ? "Saving..." : "Save changes"}
-              </Button>
+          {/* Danger Zone (delete) */}
+          <div className="danger-zone">
+            <div className="danger-title">Danger zone</div>
+            <div className="danger-desc">
+              Deleting a user can be undone for a short time from the Undo bar.
             </div>
 
             <Button

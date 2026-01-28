@@ -1,15 +1,15 @@
 // frontend/src/features/admin/pages/UserManagement.jsx
-import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { PageHeader, Button, InfoMessage } from '../../../shared/components';
-import { useUsers } from '../hooks/useUsers';
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../../shared/contexts/AuthContext";
+import { PageHeader, Button, InfoMessage } from "../../../shared/components";
+import { useUsers } from "../hooks/useUsers";
 
-import AccessDenied from '../components/AccessDenied';
-import CreateUserCard from '../components/CreateUserCard';
-import UsersTableCard from '../components/UsersTableCard';
-import EditUserModal from '../components/EditUserModal';
+import AccessDenied from "../components/AccessDenied";
+import CreateUserCard from "../components/CreateUserCard";
+import UsersTableCard from "../components/UsersTableCard";
+import EditUserModal from "../components/EditUserModal";
 
-import './UserManagement.css';
+import "./UserManagement.css";
 
 const UserManagement = () => {
   const { user } = useAuth();
@@ -24,11 +24,13 @@ const UserManagement = () => {
     updateUserInfo,
     removeUser,
     undoDelete,
+
+    // NEW (must exist in useUsers hook)
     changePassword,
   } = useUsers();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [editingUser, setEditingUser] = useState(null);
@@ -40,6 +42,9 @@ const UserManagement = () => {
   const [changingPassword, setChangingPassword] = useState(false);
 
   const undoTimerRef = useRef(null);
+
+  // NEW
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (user?.is_admin) fetchUsers();
@@ -54,7 +59,10 @@ const UserManagement = () => {
 
   const showUndoMessage = (deletedUser) => {
     clearUndoTimer();
-    setUndoInfo({ user_id: deletedUser.user_id, username: deletedUser.username });
+    setUndoInfo({
+      user_id: deletedUser.user_id,
+      username: deletedUser.username,
+    });
 
     undoTimerRef.current = setTimeout(() => {
       setUndoInfo(null);
@@ -62,8 +70,8 @@ const UserManagement = () => {
   };
 
   const handleCreate = async (payload) => {
-    setApiError('');
-    setSuccessMessage('');
+    setApiError("");
+    setSuccessMessage("");
     setIsSubmitting(true);
 
     try {
@@ -73,7 +81,7 @@ const UserManagement = () => {
       await fetchUsers();
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setSuccessMessage(''), 5000);
+      setTimeout(() => setSuccessMessage(""), 5000);
     }
   };
 
@@ -85,8 +93,8 @@ const UserManagement = () => {
       return;
     }
 
-    setApiError('');
-    setSuccessMessage('');
+    setApiError("");
+    setSuccessMessage("");
     setSavingEdit(true);
 
     try {
@@ -94,16 +102,16 @@ const UserManagement = () => {
       setEditingUser(null);
       await fetchUsers();
 
-      setSuccessMessage('User updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 4000);
+      setSuccessMessage("User updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 4000);
     } finally {
       setSavingEdit(false);
     }
   };
 
   const handleDeleteFromModal = async (u) => {
-    setApiError('');
-    setSuccessMessage('');
+    setApiError("");
+    setSuccessMessage("");
     setDeleting(true);
 
     try {
@@ -119,8 +127,8 @@ const UserManagement = () => {
   const handleUndoDelete = async () => {
     if (!undoInfo?.user_id) return;
 
-    setApiError('');
-    setSuccessMessage('');
+    setApiError("");
+    setSuccessMessage("");
 
     try {
       const { user_id, username } = undoInfo;
@@ -132,7 +140,7 @@ const UserManagement = () => {
       await fetchUsers();
 
       setSuccessMessage(`User "${username}" restored successfully!`);
-      setTimeout(() => setSuccessMessage(''), 4000);
+      setTimeout(() => setSuccessMessage(""), 4000);
     } catch {
       // apiError handled in hook
     }
@@ -151,6 +159,27 @@ const UserManagement = () => {
   }
 };
 
+  // NEW: password change handler for EditUserModal
+  const handleChangePassword = async (userId, currentPassword, newPassword) => {
+    setApiError("");
+    setSuccessMessage("");
+    setChangingPassword(true);
+
+    try {
+      if (typeof changePassword !== "function") {
+        setApiError("changePassword is not available. Update useUsers hook first.");
+        return;
+      }
+
+      await changePassword(userId, currentPassword, newPassword);
+
+      setSuccessMessage("Password changed successfully!");
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   if (!user?.is_admin) return <AccessDenied />;
 
   return (
@@ -160,12 +189,16 @@ const UserManagement = () => {
         subtitle="Create and manage users"
         actions={
           !showCreateForm && (
-            <Button onClick={() => setShowCreateForm(true)}>+ Create New User</Button>
+            <Button onClick={() => setShowCreateForm(true)}>
+              + Create New User
+            </Button>
           )
         }
       />
 
-      {successMessage && <InfoMessage type="success">{successMessage}</InfoMessage>}
+      {successMessage && (
+        <InfoMessage type="success">{successMessage}</InfoMessage>
+      )}
       {apiError && <InfoMessage type="error">{apiError}</InfoMessage>}
 
       {undoInfo && (
@@ -184,28 +217,33 @@ const UserManagement = () => {
           apiError={apiError}
           onCancel={() => {
             setShowCreateForm(false);
-            setApiError('');
+            setApiError("");
           }}
           onCreate={handleCreate}
           isSubmitting={isSubmitting}
         />
       )}
 
-      <UsersTableCard users={users} loading={loading} onEdit={(u) => setEditingUser(u)} />
+      <UsersTableCard
+        users={users}
+        loading={loading}
+        onEdit={(u) => setEditingUser(u)}
+      />
 
       {editingUser && (
         <EditUserModal
           user={editingUser}
           saving={savingEdit}
           deleting={deleting}
-          changingPassword={changingPassword}
+          disableDelete={
+            editingUser.user_id === user?.user_id ||
+            editingUser.role_name === "Administrator"
+          }
           onClose={() => setEditingUser(null)}
           onSave={handleEditSave}
           onDelete={handleDeleteFromModal}
           onChangePassword={handleChangePassword}
-          disableDelete={
-            editingUser.user_id === user?.user_id || editingUser.role_name === 'Administrator'
-          }
+          changingPassword={changingPassword}
         />
       )}
     </div>
