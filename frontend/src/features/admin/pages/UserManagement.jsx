@@ -38,6 +38,9 @@ const UserManagement = () => {
 
   const [deleting, setDeleting] = useState(false);
   const [undoInfo, setUndoInfo] = useState(null);
+
+  const [changingPassword, setChangingPassword] = useState(false);
+
   const undoTimerRef = useRef(null);
 
   // NEW
@@ -142,6 +145,19 @@ const UserManagement = () => {
       // apiError handled in hook
     }
   };
+  const handleChangePassword = async (userId, currentPassword, newPassword) => {
+  setApiError('');
+  setSuccessMessage('');
+  setChangingPassword(true);
+
+  try {
+    await changePassword(userId, currentPassword, newPassword);
+    setSuccessMessage('Password changed successfully!');
+    setTimeout(() => setSuccessMessage(''), 4000);
+  } finally {
+    setChangingPassword(false);
+  }
+};
 
   // NEW: password change handler for EditUserModal
   const handleChangePassword = async (userId, currentPassword, newPassword) => {

@@ -1,4 +1,3 @@
-// frontend/src/features/admin/components/EditUserModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../../shared/components";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
@@ -107,19 +106,14 @@ const EditUserModal = ({
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card">
+      <div className="modal-card modal-card-scroll">
         <div className="modal-header">
           <div>
             <div className="modal-title">Edit user</div>
             <div className="modal-subtitle">{user?.username}</div>
           </div>
 
-          <button
-            type="button"
-            className="modal-x"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className="modal-x" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -182,7 +176,7 @@ const EditUserModal = ({
               <select
                 id="edit-role"
                 name="role_id"
-                className="field-input field-select"
+                className="field-input field-select field-select-sm"
                 value={form.role_id}
                 onChange={setField("role_id")}
                 disabled={busy}
@@ -304,17 +298,16 @@ const EditUserModal = ({
             >
               {deleting ? "Deleting..." : "Delete user"}
             </Button>
-
-            {disableDelete && (
-              <div className="danger-hint">
-                You can’t delete yourself or the Administrator account.
-              </div>
-            )}
           </div>
+
+          {disableDelete && (
+            <div className="danger-hint" style={{ marginTop: 8 }}>
+              You can’t delete yourself or the Administrator account.
+            </div>
+          )}
         </form>
       </div>
 
-      {/* Confirm delete modal */}
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Delete user?"
