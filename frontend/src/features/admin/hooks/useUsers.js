@@ -6,7 +6,8 @@ import {
   updateUserRole,
   deleteUser,
   reactivateUser,
-  updateUser, // NEW
+  updateUser,
+  changeUserPassword, // NEW
 } from '../../../api/users';
 
 const formatApiError = (error) => {
@@ -70,7 +71,6 @@ export const useUsers = () => {
     }
   }, []);
 
-  // NEW: update any fields (username/email/full_name/role_id/status...)
   const updateUserInfo = useCallback(async (userId, payload) => {
     try {
       setApiError('');
@@ -101,6 +101,17 @@ export const useUsers = () => {
     }
   }, []);
 
+  // NEW: change password
+  const changePassword = useCallback(async (userId, currentPassword, newPassword) => {
+    try {
+      setApiError('');
+      return await changeUserPassword(userId, currentPassword, newPassword);
+    } catch (error) {
+      setApiError(formatApiError(error));
+      throw error;
+    }
+  }, []);
+
   return {
     users,
     loading,
@@ -109,8 +120,9 @@ export const useUsers = () => {
     fetchUsers,
     addUser,
     changeRole,
-    updateUserInfo, // NEW
+    updateUserInfo,
     removeUser,
     undoDelete,
+    changePassword, // NEW
   };
 };

@@ -1,28 +1,36 @@
 // frontend/src/features/auth/pages/Login.jsx
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, BarChart3, Megaphone, MessageSquare, TrendingUp, LayoutDashboard } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useAuth } from "../../../shared/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  Eye,
+  EyeOff,
+  BarChart3,
+  Megaphone,
+  MessageSquare,
+  TrendingUp,
+  LayoutDashboard,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
-import './Login.css';
+import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
-    username: '',
-    password: ''
+    username: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/admin/overview', { replace: true });
+      navigate("/admin/overview", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -30,55 +38,44 @@ const Login = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors({ ...errors, [name]: "" });
     }
-    setApiError('');
+    setApiError("");
   };
+
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.username) {
-      newErrors.username = 'Username is required';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-
+    if (!formData.username) newErrors.username = "Username is required";
+    if (!formData.password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiError('');
+    setApiError("");
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
-
     try {
       await login({
         username: formData.username,
-        password: formData.password
+        password: formData.password,
       });
-      // Navigation is handled in AuthContext
     } catch (error) {
-      console.error('Login error:', error);
-      setApiError(error.message || error.detail || 'Invalid username or password');
+      console.error("Login error:", error);
+      setApiError(
+        error.message || error.detail || "Invalid username or password",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  
-
   return (
     <div className="login-page">
       <div className="login-container">
-        {/* Left Side - Branding */}
         <div className="login-brand">
           <div className="brand-content">
             <div className="brand-logo">
@@ -124,7 +121,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
         <div className="login-form-side">
           <div className="login-form-container">
             <div className="login-header">
@@ -132,14 +128,13 @@ const Login = () => {
               <p>Sign in to your account to continue</p>
             </div>
 
-            {apiError && (
-              <div className="alert alert-error">
-                {apiError}
-              </div>
-            )}
+            {apiError && <div className="alert alert-error">{apiError}</div>}
 
-            <form onSubmit={handleSubmit} className="login-form">
-              {/* Username Field */}
+            <form
+              onSubmit={handleSubmit}
+              className="login-form"
+              autoComplete="on"
+            >
               <div className="form-field">
                 <label htmlFor="username" className="field-label">
                   Username
@@ -148,38 +143,44 @@ const Login = () => {
                   type="text"
                   id="username"
                   name="username"
-                  className={`field-input ${errors.username ? 'error' : ''}`}
+                  autoComplete="username"
+                  className={`field-input ${errors.username ? "error" : ""}`}
                   placeholder="Enter your username"
                   value={formData.username}
                   onChange={handleChange}
                   disabled={isLoading}
+                  required
                 />
                 {errors.username && (
                   <span className="field-error">{errors.username}</span>
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="form-field">
                 <label htmlFor="password" className="field-label">
                   Password
                 </label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
-                    className={`field-input ${errors.password ? 'error' : ''}`}
+                    autoComplete="current-password"
+                    className={`field-input ${errors.password ? "error" : ""}`}
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
                     disabled={isLoading}
+                    required
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -189,10 +190,11 @@ const Login = () => {
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="form-options">
                 <label className="checkbox-label">
                   <input
+                    id="rememberMe"
+                    name="rememberMe"
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
@@ -200,23 +202,25 @@ const Login = () => {
                   />
                   <span>Remember me</span>
                 </label>
-                <button type="button" className="forgot-password-link" disabled={isLoading}>
+
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  disabled={isLoading}
+                >
                   Forgot Password?
                 </button>
               </div>
 
-              {/* Submit Button */}
-              <button type="submit" className="login-button" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <button
+                type="submit"
+                className="login-button"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
               </button>
-
-              
-
-              {/* Sign Up Link */}
-              
             </form>
 
-            {/* Footer */}
             <div className="login-footer">
               <p>&copy; 2025 AIMOPS. All rights reserved.</p>
             </div>
