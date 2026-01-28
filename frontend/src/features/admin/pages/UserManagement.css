@@ -650,3 +650,100 @@
     min-width: 0;
   }
 }
+/* Make modal body scrollable (clean height on all devices) */
+.modal-card-scroll {
+  max-height: min(78vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body-scroll {
+  overflow: auto;
+  flex: 1;
+}
+
+/* Sticky actions inside scrollable modal */
+.modal-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 12px;
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Collapsible panel (accordion) */
+.panel {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.panel-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.panel-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.panel-title {
+  font-weight: 700;
+  color: #111827;
+  font-size: 13px;
+}
+
+.panel-subtitle {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.panel-chevron {
+  transition: transform 0.15s ease;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.panel-chevron.open {
+  transform: rotate(180deg);
+}
+
+.panel-content {
+  padding: 12px 14px 14px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Better spacing on small screens */
+@media (max-width: 640px) {
+  .modal-actions-sticky {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .modal-actions-sticky > div {
+    justify-content: space-between;
+  }
+}

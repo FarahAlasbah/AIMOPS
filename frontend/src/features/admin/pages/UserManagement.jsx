@@ -24,6 +24,7 @@ const UserManagement = () => {
     updateUserInfo,
     removeUser,
     undoDelete,
+    changePassword,
   } = useUsers();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -35,6 +36,9 @@ const UserManagement = () => {
 
   const [deleting, setDeleting] = useState(false);
   const [undoInfo, setUndoInfo] = useState(null);
+
+  const [changingPassword, setChangingPassword] = useState(false);
+
   const undoTimerRef = useRef(null);
 
   useEffect(() => {
@@ -133,6 +137,19 @@ const UserManagement = () => {
       // apiError handled in hook
     }
   };
+  const handleChangePassword = async (userId, currentPassword, newPassword) => {
+  setApiError('');
+  setSuccessMessage('');
+  setChangingPassword(true);
+
+  try {
+    await changePassword(userId, currentPassword, newPassword);
+    setSuccessMessage('Password changed successfully!');
+    setTimeout(() => setSuccessMessage(''), 4000);
+  } finally {
+    setChangingPassword(false);
+  }
+};
 
   if (!user?.is_admin) return <AccessDenied />;
 
@@ -181,9 +198,11 @@ const UserManagement = () => {
           user={editingUser}
           saving={savingEdit}
           deleting={deleting}
+          changingPassword={changingPassword}
           onClose={() => setEditingUser(null)}
           onSave={handleEditSave}
           onDelete={handleDeleteFromModal}
+          onChangePassword={handleChangePassword}
           disableDelete={
             editingUser.user_id === user?.user_id || editingUser.role_name === 'Administrator'
           }
