@@ -6,7 +6,7 @@ import {
   reactivateUser,
   updateUser,
   changeUserPassword, // NEW
-} from "../../../api/users";
+} from '../../../api/users';
 
 // ... keep formatApiError as-is
 const formatApiError = (err) => {
@@ -90,16 +90,16 @@ export const useUsers = () => {
     }
   }, []);
 
-  // NEW
-  const changePassword = async (userId, currentPassword, newPassword) => {
-  try {
-    return await changeUserPassword(userId, currentPassword, newPassword);
-  } catch (err) {
-    setApiError(formatApiError(err));
-    throw err;
-  }
-};
-
+  // NEW: change password
+  const changePassword = useCallback(async (userId, currentPassword, newPassword) => {
+    try {
+      setApiError('');
+      return await changeUserPassword(userId, currentPassword, newPassword);
+    } catch (error) {
+      setApiError(formatApiError(error));
+      throw error;
+    }
+  }, []);
 
   return {
     users,
@@ -108,6 +108,7 @@ export const useUsers = () => {
     setApiError,
     fetchUsers,
     addUser,
+    changeRole,
     updateUserInfo,
     removeUser,
     undoDelete,

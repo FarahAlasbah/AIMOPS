@@ -19,11 +19,10 @@ export const updateUser = async (userId, payload) => {
   return res.data;
 };
 
-
-export const changeUserPassword = async (userId, currentPassword, newPassword) => {
+export const changeUserPassword = async (userId, current_password, new_password) => {
   const res = await api.post(`/api/users/${userId}/change-password`, {
-    current_password: currentPassword,
-    new_password: newPassword,
+    current_password,
+    new_password,
   });
   return res.data;
 };
