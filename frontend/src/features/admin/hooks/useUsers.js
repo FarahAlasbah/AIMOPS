@@ -1,49 +1,43 @@
-// frontend/src/features/admin/hooks/useUsers.js
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 import {
   getUsers,
   createUser,
-  updateUserRole,
   deleteUser,
   reactivateUser,
-  updateUser, // NEW
-} from '../../../api/users';
+  updateUser,
+  changeUserPassword, // NEW
+} from "../../../api/users";
 
-const formatApiError = (error) => {
-  const data = error?.response?.data || error;
-  const detail = data?.detail;
+// ... keep formatApiError as-is
+const formatApiError = (err) => {
+  const data = err?.response?.data;
 
-  if (typeof detail === 'string') return detail;
-
-  if (Array.isArray(detail)) {
-    return detail
-      .map((e) => {
-        const field = Array.isArray(e?.loc) ? e.loc[e.loc.length - 1] : '';
-        const msg = e?.msg || 'Validation error';
-        return field ? `${field}: ${msg}` : msg;
-      })
-      .join(' | ');
+  // FastAPI validation errors (Pydantic)
+  if (data?.detail && Array.isArray(data.detail)) {
+    return data.detail.map((e) => e.msg).join(", ");
   }
 
-  if (detail && typeof detail === 'object') return detail?.msg || 'Validation error';
+  // FastAPI normal error format
+  if (typeof data?.detail === "string") return data.detail;
 
-  return data?.message || 'Something went wrong';
+  // Generic axios message
+  return err?.message || "Something went wrong";
 };
 
 export const useUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState("");
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getUsers();
       setUsers(Array.isArray(response) ? response : []);
-      setApiError('');
+      setApiError("");
     } catch (error) {
-      console.error('Failed to fetch users:', error);
-      setApiError('Failed to load users');
+      console.error("Failed to fetch users:", error);
+      setApiError("Failed to load users");
       setUsers([]);
     } finally {
       setLoading(false);
@@ -52,30 +46,23 @@ export const useUsers = () => {
 
   const addUser = useCallback(async (payload) => {
     try {
-      setApiError('');
-      return await createUser(payload);
+      setApiError("");
+      const newUser = await createUser(payload);
+      return newUser;
     } catch (error) {
+      console.error("Create user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
   }, []);
 
-  const changeRole = useCallback(async (userId, roleId) => {
-    try {
-      setApiError('');
-      return await updateUserRole(userId, roleId);
-    } catch (error) {
-      setApiError(formatApiError(error));
-      throw error;
-    }
-  }, []);
-
-  // NEW: update any fields (username/email/full_name/role_id/status...)
   const updateUserInfo = useCallback(async (userId, payload) => {
     try {
-      setApiError('');
-      return await updateUser(userId, payload);
+      setApiError("");
+      const updated = await updateUser(userId, payload);
+      return updated;
     } catch (error) {
+      console.error("Update user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
@@ -83,9 +70,10 @@ export const useUsers = () => {
 
   const removeUser = useCallback(async (userId) => {
     try {
-      setApiError('');
+      setApiError("");
       await deleteUser(userId);
     } catch (error) {
+      console.error("Delete user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
@@ -93,13 +81,25 @@ export const useUsers = () => {
 
   const undoDelete = useCallback(async (userId) => {
     try {
-      setApiError('');
+      setApiError("");
       await reactivateUser(userId);
     } catch (error) {
+      console.error("Reactivate user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
   }, []);
+
+  // NEW
+  const changePassword = async (userId, currentPassword, newPassword) => {
+  try {
+    return await changeUserPassword(userId, currentPassword, newPassword);
+  } catch (err) {
+    setApiError(formatApiError(err));
+    throw err;
+  }
+};
+
 
   return {
     users,
@@ -108,9 +108,9 @@ export const useUsers = () => {
     setApiError,
     fetchUsers,
     addUser,
-    changeRole,
-    updateUserInfo, // NEW
+    updateUserInfo,
     removeUser,
     undoDelete,
+    changePassword, // NEW
   };
 };
