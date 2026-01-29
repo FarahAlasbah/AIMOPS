@@ -1,27 +1,34 @@
+// frontend/src/features/admin/hooks/useUsers.js
 import { useCallback, useState } from "react";
 import {
   getUsers,
   createUser,
+  updateUserRole,
   deleteUser,
   reactivateUser,
   updateUser,
-  changeUserPassword, // NEW
-} from '../../../api/users';
+  changeUserPassword, // make sure this exists in api/users.js
+} from "../../../api/users";
 
-// ... keep formatApiError as-is
-const formatApiError = (err) => {
-  const data = err?.response?.data;
+const formatApiError = (error) => {
+  const data = error?.response?.data || error;
+  const detail = data?.detail;
 
-  // FastAPI validation errors (Pydantic)
-  if (data?.detail && Array.isArray(data.detail)) {
-    return data.detail.map((e) => e.msg).join(", ");
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((e) => {
+        const field = Array.isArray(e?.loc) ? e.loc[e.loc.length - 1] : "";
+        const msg = e?.msg || "Validation error";
+        return field ? `${field}: ${msg}` : msg;
+      })
+      .join(" | ");
   }
 
-  // FastAPI normal error format
-  if (typeof data?.detail === "string") return data.detail;
+  if (detail && typeof detail === "object") return detail?.msg || "Validation error";
 
-  // Generic axios message
-  return err?.message || "Something went wrong";
+  return data?.message || error?.message || "Something went wrong";
 };
 
 export const useUsers = () => {
@@ -47,10 +54,19 @@ export const useUsers = () => {
   const addUser = useCallback(async (payload) => {
     try {
       setApiError("");
-      const newUser = await createUser(payload);
-      return newUser;
+      return await createUser(payload);
     } catch (error) {
-      console.error("Create user error:", error?.response?.data || error);
+      setApiError(formatApiError(error));
+      throw error;
+    }
+  }, []);
+
+  // RESTORED: changeRole (this is what your error complains about)
+  const changeRole = useCallback(async (userId, roleId) => {
+    try {
+      setApiError("");
+      return await updateUserRole(userId, roleId);
+    } catch (error) {
       setApiError(formatApiError(error));
       throw error;
     }
@@ -59,10 +75,8 @@ export const useUsers = () => {
   const updateUserInfo = useCallback(async (userId, payload) => {
     try {
       setApiError("");
-      const updated = await updateUser(userId, payload);
-      return updated;
+      return await updateUser(userId, payload);
     } catch (error) {
-      console.error("Update user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
@@ -73,7 +87,6 @@ export const useUsers = () => {
       setApiError("");
       await deleteUser(userId);
     } catch (error) {
-      console.error("Delete user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
@@ -84,16 +97,15 @@ export const useUsers = () => {
       setApiError("");
       await reactivateUser(userId);
     } catch (error) {
-      console.error("Reactivate user error:", error?.response?.data || error);
       setApiError(formatApiError(error));
       throw error;
     }
   }, []);
 
-  // NEW: change password
+  // Password change (used by your UserManagement.jsx)
   const changePassword = useCallback(async (userId, currentPassword, newPassword) => {
     try {
-      setApiError('');
+      setApiError("");
       return await changeUserPassword(userId, currentPassword, newPassword);
     } catch (error) {
       setApiError(formatApiError(error));
@@ -108,10 +120,10 @@ export const useUsers = () => {
     setApiError,
     fetchUsers,
     addUser,
-    changeRole,
+    changeRole,       // now defined
     updateUserInfo,
     removeUser,
     undoDelete,
-    changePassword, // NEW
+    changePassword,   // for EditUserModal
   };
 };
