@@ -9,7 +9,8 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.role import Role
 from app.api.auth import router as auth_router 
-from app.api import users
+from app.api import users, campaigns
+
 
 app = FastAPI(
     title="AIMOPS API",
@@ -30,6 +31,7 @@ app.add_middleware(
 # Register routers
 app.include_router(auth_router) 
 app.include_router(users.router)
+app.include_router(campaigns.router)
 
 
 @app.get("/")

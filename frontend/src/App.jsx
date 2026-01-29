@@ -41,9 +41,9 @@ function App() {
           <Route
             path="/app"
             element={
-              <ProtectedRoute>
+              <RequireRole allow={["admin"]}>
                 <MainLayout />
-              </ProtectedRoute>
+              </RequireRole>
             }
           >
             <Route index element={<Navigate to="/app/profile" replace />} />
