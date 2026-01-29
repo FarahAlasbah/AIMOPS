@@ -5,40 +5,50 @@ import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
+const safeParse = (v) => {
+  try {
+    return JSON.parse(v);
+  } catch {
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("auth_token");
-      const userData = localStorage.getItem("user_data");
+    const token = localStorage.getItem("auth_token");
+    const userData = localStorage.getItem("user_data");
 
-      if (token && userData) {
-        try {
-          setUser(JSON.parse(userData));
-        } catch (error) {
-          console.error("Auth check failed:", error);
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("user_data");
-        }
+    if (token && userData) {
+      const parsed = safeParse(userData);
+      if (parsed) setUser(parsed);
+      else {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
       }
-      setLoading(false);
-    };
+    }
 
-    checkAuth();
+    setLoading(false);
   }, []);
 
   const login = async (credentials) => {
     const response = await apiLogin(credentials);
 
-    localStorage.setItem("auth_token", response.access_token);
-    localStorage.setItem("user_data", JSON.stringify(response.user));
-    setUser(response.user);
+    // Ensure permissions exists (array)
+    const normalizedUser = {
+      ...response.user,
+      permissions: Array.isArray(response.user?.permissions) ? response.user.permissions : [],
+    };
 
-    // Everyone goes to their personal page first
-    navigate("/app/profile", { replace: true });
+    localStorage.setItem("auth_token", response.access_token);
+    localStorage.setItem("user_data", JSON.stringify(normalizedUser));
+    setUser(normalizedUser);
+
+    // Everyone lands in /app (guards will handle access)
+    navigate("/app/overview", { replace: true });
 
     return response;
   };
@@ -46,8 +56,6 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await apiLogout();
-    } catch (error) {
-      console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_data");
@@ -57,29 +65,28 @@ export const AuthProvider = ({ children }) => {
   };
 
   const hasPermission = (permission) => {
-    return user?.permissions?.includes(permission) || false;
-  };
-
-  const isAdmin = () => {
-    const roleName = user?.role?.role_name || user?.role_name;
-    return !!user?.is_admin || roleName === "admin";
+    if (!permission) return true;
+    if (user?.is_admin === true) return true;
+    const perms = Array.isArray(user?.permissions) ? user.permissions : [];
+    return perms.includes(permission);
   };
 
   const value = {
     user,
+    setUser,
     login,
     logout,
     loading,
     isAuthenticated: !!user,
     hasPermission,
-    isAdmin,
+    isAdmin: () => user?.is_admin === true,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 };

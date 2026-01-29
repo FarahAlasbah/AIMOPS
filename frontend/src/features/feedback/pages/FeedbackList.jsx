@@ -6,10 +6,16 @@ import {
   Button,
   FormSelect
 } from '../../../shared/components';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import './FeedbackList.css';
 
 const FeedbackList = () => {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  const canUpload = hasPermission('feedback.upload');
+  const canAnalyze = hasPermission('feedback.analyze');
+
   const [filterCampaign, setFilterCampaign] = useState('');
   const [filterSentiment, setFilterSentiment] = useState('');
 
@@ -62,19 +68,34 @@ const FeedbackList = () => {
     }
   };
 
+  const headerActions = (canAnalyze || canUpload) ? (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      {canAnalyze && (
+        <Button
+          variant="secondary"
+          onClick={() => alert('Feedback analysis will be implemented here.')}
+        >
+          Run Analysis
+        </Button>
+      )}
+
+      {canUpload && (
+        <Button
+          variant="primary"
+          onClick={() => navigate('/app/feedback/upload')}
+        >
+          Upload Feedback
+        </Button>
+      )}
+    </div>
+  ) : null;
+
   return (
     <div className="feedback-list-page">
       <PageHeader
         title="Feedback"
-        subtitle="View and analyze customer feedback from campaigns"
-        actions={
-          <Button
-            variant="primary"
-            onClick={() => navigate('/admin/feedback/upload')}
-          >
-            + Upload Feedback
-          </Button>
-        }
+        subtitle="View customer feedback and sentiment"
+        actions={headerActions}
       />
 
       {/* Filters Card */}
@@ -165,13 +186,18 @@ const FeedbackList = () => {
 
           {feedbackItems.length === 0 && (
             <div className="empty-state">
-              <p>No feedback yet. Upload your first feedback data!</p>
-              <Button
-                variant="primary"
-                onClick={() => navigate('/admin/feedback/upload')}
-              >
-                + Upload Feedback
-              </Button>
+              <p>No feedback yet.</p>
+
+              {canUpload ? (
+                <Button
+                  variant="primary"
+                  onClick={() => navigate('/app/feedback/upload')}
+                >
+                  Upload Feedback
+                </Button>
+              ) : (
+                <p>You don’t have permission to upload feedback.</p>
+              )}
             </div>
           )}
         </div>
