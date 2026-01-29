@@ -278,3 +278,77 @@ def reactivate_user(db: Session, user_id: int) -> User:
 def get_available_roles(db: Session) -> List[Role]:
     """Get all available roles"""
     return db.query(Role).order_by(Role.role_id).all()
+
+
+def change_password(
+    db: Session,
+    user_id: int,
+    current_password: str,
+    new_password: str
+) -> dict:
+    """
+    Change user's password
+    
+    Steps:
+    1. Verify user exists and is active
+    2. Verify current password is correct
+    3. Check new password is different from current
+    4. Hash new password
+    5. Update database
+    6. Reset failed login attempts (clean slate)
+    
+    Args:
+        db: Database session
+        user_id: User to update
+        current_password: Current password for verification
+        new_password: New password to set
+        
+    Returns:
+        Success message dict
+        
+    Raises:
+        HTTPException 404: User not found
+        HTTPException 400: Current password incorrect or new password same as current
+    """
+    from app.core.security import verify_password
+    
+    # Get user
+    user = get_user_by_id(db, user_id)
+    
+    # Check user is active
+    if not user.is_active():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot change password for inactive account"
+        )
+    
+    # Verify current password is correct
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Check new password is different from current
+    if verify_password(new_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+    
+    # Hash and update password
+    user.password_hash = hash_password(new_password)
+    
+    # Reset failed login attempts (fresh start)
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    
+    # Update timestamp
+    user.updated_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return {
+        "message": "Password changed successfully",
+        "user_id": user_id
+    }
