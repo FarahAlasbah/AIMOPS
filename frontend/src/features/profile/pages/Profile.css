@@ -1,0 +1,130 @@
+.profile-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.profile-full {
+  grid-column: 1 / -1;
+}
+
+.profile-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Reuse your existing input look */
+.field-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #111827;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-family: 'Inria Serif', serif;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #065f46;
+  box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
+}
+
+.field-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* Locked username tooltip */
+.locked-field {
+  position: relative;
+  display: block;
+}
+
+.locked-field .locked-tooltip {
+  position: absolute;
+  left: 10px;
+  top: calc(100% + 8px);
+  background: #111827;
+  color: white;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+
+.locked-field:hover .locked-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Password collapse (smooth + compact) */
+.pw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pw-title {
+  font-weight: 700;
+  color: #111827;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.pw-desc {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pw-collapse {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 220ms ease;
+}
+
+.pw-collapse.open {
+  max-height: 320px;
+}
+
+.pw-inner {
+  padding-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
