@@ -38,7 +38,7 @@ const DataUpload = () => {
     setUploadedFile(null);
     setCurrentStep(1);
     // Or navigate back
-    // navigate('/admin/data-sources');
+    // navigate('/app/data-sources');
   };
 
   return (
@@ -46,7 +46,7 @@ const DataUpload = () => {
       <PageHeader
         title="Upload Historical Sales Data"
         breadcrumbs={[
-          { label: 'Data Sources', link: true, onClick: () => navigate('/admin/data-sources') },
+          { label: 'Data Sources', link: true, onClick: () => navigate('/app/data-sources') },
           { label: 'Upload Sales Data', link: false }
         ]}
       />
