@@ -129,3 +129,21 @@
     padding: 10px 8px;
   }
 }
+
+/* Actions layout */
+.campaign-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Optional delete styling */
+.btn-danger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  color: white;
+}

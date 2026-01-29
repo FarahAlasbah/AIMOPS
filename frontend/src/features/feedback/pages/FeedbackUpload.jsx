@@ -41,7 +41,7 @@ const FeedbackUpload = () => {
     });
 
     alert('Feedback imported successfully!');
-    navigate('/admin/feedback');
+    navigate('/app/feedback');
   };
 
   const handleDownloadTemplate = () => {
@@ -51,7 +51,7 @@ const FeedbackUpload = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Feedback', link: true, onClick: () => navigate('/admin/feedback') },
+    { label: 'Feedback', link: true, onClick: () => navigate('/app/feedback') },
     { label: 'Upload Feedback', link: false }
   ];
 
@@ -65,24 +65,7 @@ const FeedbackUpload = () => {
 
       <Card>
         {/* Step 1: Select Campaign */}
-        <div className="upload-section">
-          <StepBadge number="1" title="Select Campaign" />
-
-          <div className="form-group-inline">
-            <FormSelect
-              label="Related Campaign"
-              placeholder="Select a Campaign......"
-              options={campaignOptions}
-              value={selectedCampaign}
-              onChange={(e) => setSelectedCampaign(e.target.value)}
-              required
-            />
-          </div>
-
-          <InfoMessage type="info">
-            Choose the campaign this feedback relates to for better context in analysis.
-          </InfoMessage>
-        </div>
+        {/* ...same */}
 
         {/* Step 2: Upload File */}
         <div className="upload-section">
@@ -101,7 +84,7 @@ const FeedbackUpload = () => {
               className="link-button"
               onClick={handleDownloadTemplate}
             >
-              📥 Download Simple feedback template
+              Download simple feedback template
             </button>
           </div>
         </div>
@@ -110,7 +93,7 @@ const FeedbackUpload = () => {
         <FormActions>
           <Button
             variant="secondary"
-            onClick={() => navigate('/admin/feedback')}
+            onClick={() => navigate('/app/feedback')}
           >
             Cancel
           </Button>

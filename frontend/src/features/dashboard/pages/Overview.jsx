@@ -1,78 +1,113 @@
-import { Card, PageHeader } from '../../../shared/components';
-import './Overview.css';
+// frontend/src/features/dashboard/pages/Overview.jsx
+import { Card, PageHeader } from "../../../shared/components";
+import { useAuth } from "../../../shared/contexts/AuthContext";
+import "./Overview.css";
 
-const Overview = () => {
+const pickDashboard = ({ user, hasPermission }) => {
+  const roleName = user?.role?.display_name || user?.role_name || "";
+
+  // Prefer role if present
+  if (user?.is_admin === true || roleName === "Administrator") return "admin";
+  if (roleName === "Business Owner") return "owner";
+  if (roleName === "Marketing User") return "marketing";
+
+  // Fallback by permission (in case role name changes)
+  if (hasPermission("users.view") || hasPermission("system.settings")) return "admin";
+  if (hasPermission("campaigns.view") || hasPermission("feedback.view")) return "marketing";
+
+  return "default";
+};
+
+const DASH = {
+  admin: {
+    title: "Admin Dashboard",
+    subtitle: "System overview and management",
+    stats: [
+      { label: "Total Users", value: "—" },
+      { label: "Data Quality", value: "—" },
+      { label: "Active Campaigns", value: "—" },
+      { label: "Feedback Items", value: "—" },
+    ],
+    activity: [
+      "Review user roles and permissions",
+      "Check audit & data quality",
+      "Review system reports",
+    ],
+  },
+  marketing: {
+    title: "Marketing Dashboard",
+    subtitle: "Campaigns and feedback performance",
+    stats: [
+      { label: "Active Campaigns", value: "—" },
+      { label: "New Feedback", value: "—" },
+      { label: "Positive Sentiment", value: "—" },
+      { label: "Data Uploads", value: "—" },
+    ],
+    activity: [
+      "Launch or review campaigns",
+      "Upload and analyze feedback",
+      "Check campaign performance",
+    ],
+  },
+  owner: {
+    title: "Business Owner Dashboard",
+    subtitle: "High-level view of operations and results",
+    stats: [
+      { label: "Revenue (Period)", value: "—" },
+      { label: "Forecast Status", value: "—" },
+      { label: "Campaign ROI", value: "—" },
+      { label: "Data Quality", value: "—" },
+    ],
+    activity: [
+      "Review forecasts and KPIs",
+      "Compare campaigns performance",
+      "Check data quality trends",
+    ],
+  },
+  default: {
+    title: "Dashboard",
+    subtitle: "Overview",
+    stats: [
+      { label: "Status", value: "—" },
+      { label: "Notifications", value: "—" },
+      { label: "Updates", value: "—" },
+      { label: "Tasks", value: "—" },
+    ],
+    activity: ["Welcome back"],
+  },
+};
+
+export default function Overview() {
+  const { user, hasPermission } = useAuth();
+  const key = pickDashboard({ user, hasPermission });
+  const cfg = DASH[key];
+
   return (
     <div className="overview-page">
-      <PageHeader 
-        title="Overview"
-        subtitle="Dashboard overview of your campaigns and performance"
-      />
+      <PageHeader title={cfg.title} subtitle={cfg.subtitle} />
 
-      {/* Stats Cards Grid */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <h3>Total Campaigns</h3>
-          <p className="stat-number">12</p>
-          <span className="stat-change positive">+2 this month</span>
-        </div>
-        
-        <div className="stat-card">
-          <h3>Active Forecasts</h3>
-          <p className="stat-number">5</p>
-          <span className="stat-change">Running</span>
-        </div>
-        
-        <div className="stat-card">
-          <h3>Feedback Items</h3>
-          <p className="stat-number">248</p>
-          <span className="stat-change positive">+32 new</span>
-        </div>
-        
-        <div className="stat-card">
-          <h3>Data Quality</h3>
-          <p className="stat-number">94%</p>
-          <span className="stat-change positive">Excellent</span>
-        </div>
+        {cfg.stats.map((s) => (
+          <div className="stat-card" key={s.label}>
+            <h3>{s.label}</h3>
+            <p className="stat-number">{s.value}</p>
+            <span className="stat-change"> </span>
+          </div>
+        ))}
       </div>
 
-      {/* Recent Activity Card */}
-      <Card title="Recent Activity">
+      <Card title="What you can do next">
         <div className="activity-list">
-          <div className="activity-item">
-            <div className="activity-icon">📊</div>
-            <div className="activity-content">
-              <p className="activity-title">New forecast completed</p>
-              <p className="activity-time">2 hours ago</p>
+          {cfg.activity.map((t, i) => (
+            <div className="activity-item" key={i}>
+              <div className="activity-icon">•</div>
+              <div className="activity-content">
+                <p className="activity-title">{t}</p>
+              </div>
             </div>
-          </div>
-          <div className="activity-item">
-            <div className="activity-icon">📢</div>
-            <div className="activity-content">
-              <p className="activity-title">Campaign "Summer Sale" launched</p>
-              <p className="activity-time">5 hours ago</p>
-            </div>
-          </div>
-          <div className="activity-item">
-            <div className="activity-icon">💬</div>
-            <div className="activity-content">
-              <p className="activity-title">48 new feedback entries analyzed</p>
-              <p className="activity-time">1 day ago</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Campaign Performance Card */}
-      <Card title="Campaign Performance" subtitle="Last 30 days">
-        <div className="performance-placeholder">
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: '40px 0' }}>
-            📈 Chart visualization will be displayed here
-          </p>
+          ))}
         </div>
       </Card>
     </div>
   );
-};
-
-export default Overview;
+}

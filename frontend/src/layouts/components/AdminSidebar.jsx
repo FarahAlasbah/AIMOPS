@@ -19,25 +19,31 @@ import "./AdminSidebar.css";
 
 const AdminSidebar = ({ isOpen }) => {
   const location = useLocation();
-  const { user, logout, isAdmin } = useAuth();
-
-  const admin = isAdmin?.() || false;
-
-  const menuItems = [
-    { title: "Overview", path: "/admin/overview", icon: LayoutDashboard },
-    { title: "Campaigns", path: "/admin/campaigns", icon: Megaphone },
-    { title: "Feedback", path: "/admin/feedback", icon: MessageSquare },
-    { title: "Data Upload", path: "/admin/data-upload", icon: Upload },
-    { title: "Audit & Data Quality", path: "/admin/audit", icon: UserCheck },
-    { title: "Data Sources", path: "/admin/data-sources", icon: Database },
-    { title: "Reports", path: "/admin/reports", icon: FileText },
-    ...(admin
-      ? [{ title: "User Management", path: "/admin/user-management", icon: Users }]
-      : []),
-    { title: "Settings", path: "/admin/settings", icon: Settings },
-  ];
+  const { user, logout, hasPermission } = useAuth();
 
   const isActive = (path) => location.pathname === path;
+
+  // One menu list, filtered by permissions
+  const menuItems = [
+    { title: "Overview", path: "/app/overview", icon: LayoutDashboard, perm: "dashboard.view" },
+
+    { title: "Campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
+    // Optional: you can hide "new" from sidebar and show it as a button inside CampaignList instead
+    // { title: "New Campaign", path: "/app/campaigns/new", icon: Megaphone, perm: "campaigns.create" },
+
+    { title: "Feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
+    // { title: "Feedback Upload", path: "/app/feedback/upload", icon: Upload, perm: "feedback.upload" },
+
+    { title: "Data Upload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
+
+    // If you actually have these pages, guard them by system.* (admin-only)
+    { title: "Audit & Data Quality", path: "/app/audit", icon: UserCheck, perm: "system.audit" },
+    { title: "Data Sources", path: "/app/data-sources", icon: Database, perm: "system.settings" },
+    { title: "Reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
+    { title: "Settings", path: "/app/settings", icon: Settings, perm: "system.settings" },
+
+    { title: "User Management", path: "/app/user-management", icon: Users, perm: "users.view" },
+  ].filter((item) => hasPermission(item.perm));
 
   return (
     <aside className={`admin-sidebar ${isOpen ? "open" : "closed"}`}>
@@ -65,20 +71,25 @@ const AdminSidebar = ({ isOpen }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <Link to="/admin/support" className="nav-item">
+        <Link to="/app/support" className="nav-item">
           <HelpCircle className="nav-icon" size={20} />
           <span className="nav-text">Support</span>
         </Link>
 
-        {/* Everyone goes to /app/profile */}
-        <Link to="/app/profile" className="user-profile" style={{ textDecoration: "none" }}>
+        <Link
+          to="/app/profile"
+          className="user-profile"
+          style={{ textDecoration: "none" }}
+        >
           <div className="user-avatar">
             <User size={20} />
           </div>
 
           <div className="user-info">
             <div className="user-name">{user?.full_name || user?.username || "User"}</div>
-            <div className="user-role">{user?.role?.display_name || user?.role_name || "User"}</div>
+            <div className="user-role">
+              {user?.role?.display_name || user?.role_name || "User"}
+            </div>
           </div>
 
           <button

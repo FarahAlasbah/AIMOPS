@@ -87,9 +87,9 @@ const NewCampaign = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Campaigns', link: true, onClick: () => navigate('/admin/campaigns') },
-    { label: 'New campaigns', link: false }
-  ];
+  { label: 'Campaigns', link: true, onClick: () => navigate('/app/campaigns') },
+  { label: 'New campaigns', link: false }
+];
 
   const budgetOptions = [
     { value: '0-5000', label: '$0 - $5,000' },
@@ -210,7 +210,7 @@ const NewCampaign = () => {
           <FormActions>
             <Button
               variant="secondary"
-              onClick={() => navigate('/admin/campaigns')}
+              onClick={() => navigate('/app/campaigns')}
             >
               Cancel
             </Button>

@@ -44,7 +44,6 @@ const UserManagement = () => {
   const undoTimerRef = useRef(null);
 
   // NEW
-  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (user?.is_admin) fetchUsers();
@@ -145,19 +144,19 @@ const UserManagement = () => {
       // apiError handled in hook
     }
   };
-  const handleChangePassword = async (userId, currentPassword, newPassword) => {
-  setApiError('');
-  setSuccessMessage('');
-  setChangingPassword(true);
+//   const handleChangePassword = async (userId, currentPassword, newPassword) => {
+//   setApiError('');
+//   setSuccessMessage('');
+//   setChangingPassword(true);
 
-  try {
-    await changePassword(userId, currentPassword, newPassword);
-    setSuccessMessage('Password changed successfully!');
-    setTimeout(() => setSuccessMessage(''), 4000);
-  } finally {
-    setChangingPassword(false);
-  }
-};
+//   try {
+//     await changePassword(userId, currentPassword, newPassword);
+//     setSuccessMessage('Password changed successfully!');
+//     setTimeout(() => setSuccessMessage(''), 4000);
+//   } finally {
+//     setChangingPassword(false);
+//   }
+// };
 
   // NEW: password change handler for EditUserModal
   const handleChangePassword = async (userId, currentPassword, newPassword) => {
