@@ -3,13 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./features/auth/pages/Login";
-
 import RequirePermission from "./routes/RequirePermission";
 
-// Pages
 import Profile from "./features/profile/pages/Profile";
-
-// Shared pages (available depending on permissions)
 import Overview from "./features/dashboard/pages/Overview";
 import CampaignList from "./features/campaigns/pages/CampaignList";
 import NewCampaign from "./features/campaigns/pages/NewCampaign";
@@ -17,24 +13,37 @@ import DataUpload from "./features/data-upload/pages/DataUpload";
 import FeedbackList from "./features/feedback/pages/FeedbackList";
 import FeedbackUpload from "./features/feedback/pages/FeedbackUpload";
 import UserManagement from "./features/admin/pages/UserManagement";
-
 import Denied from "./shared/pages/Denied";
+
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
+const RTL_LANGS = new Set(["ar"]);
+
+function useDirection() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const lng = i18n.language?.startsWith("ar") ? "ar" : "en";
+    const dir = RTL_LANGS.has(lng) ? "rtl" : "ltr";
+
+    document.documentElement.lang = lng;
+    document.documentElement.dir = dir;
+  }, [i18n.language]);
+}
+
 function App() {
+  useDirection(); // IMPORTANT: make the effect run
+
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Legacy admin base -> send to /app */}
-          <Route
-            path="/admin/*"
-            element={<Navigate to="/app/overview" replace />}
-          />
+          <Route path="/admin/*" element={<Navigate to="/app/overview" replace />} />
 
-          {/* All authenticated users live under /app */}
           <Route
             path="/app"
             element={
@@ -45,7 +54,6 @@ function App() {
           >
             <Route index element={<Navigate to="/app/overview" replace />} />
 
-            {/* Everyone (per your table) */}
             <Route
               path="overview"
               element={
@@ -63,7 +71,6 @@ function App() {
               }
             />
 
-            {/* Campaigns */}
             <Route
               path="campaigns"
               element={
@@ -81,7 +88,6 @@ function App() {
               }
             />
 
-            {/* Feedback */}
             <Route
               path="feedback"
               element={
@@ -99,7 +105,6 @@ function App() {
               }
             />
 
-            {/* Data upload */}
             <Route
               path="data-upload"
               element={
@@ -109,7 +114,6 @@ function App() {
               }
             />
 
-            {/* Admin-only page by permission */}
             <Route
               path="user-management"
               element={
@@ -118,13 +122,11 @@ function App() {
                 </RequirePermission>
               }
             />
-            <Route path="denied" element={<Denied />} />
 
-            {/* Add more routes here the same way:
-                reports.view, system.settings, system.audit, forecasts.* etc */}
+            {/* This matches your RequirePermission redirect to "/app/denied" */}
+            <Route path="denied" element={<Denied />} />
           </Route>
 
-          {/* Catch all */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
