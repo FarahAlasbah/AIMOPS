@@ -1,0 +1,12 @@
+{
+  "appName": "AIMOPS",
+  "nav": {
+    "overview": "نظرة عامة",
+    "campaigns": "الحملات",
+    "feedback": "الآراء"
+  },
+  "actions": {
+    "save": "حفظ",
+    "cancel": "إلغاء"
+  }
+}
