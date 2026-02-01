@@ -1,0 +1,12 @@
+{
+  "appName": "AIMOPS",
+  "nav": {
+    "overview": "Overview",
+    "campaigns": "Campaigns",
+    "feedback": "Feedback"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel"
+  }
+}
