@@ -20,3 +20,15 @@
   color: #6b7280;
   margin-bottom: 8px;
 }
+.upload-progress {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.upload-progress-bar {
+  height: 100%;
+  background: #065f46;
+}
