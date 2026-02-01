@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.api.auth import router as auth_router 
 from app.api import users, campaigns
+from app.api import data_upload
 
 
 app = FastAPI(
@@ -32,7 +33,7 @@ app.add_middleware(
 app.include_router(auth_router) 
 app.include_router(users.router)
 app.include_router(campaigns.router)
-
+app.include_router(data_upload.router)
 
 @app.get("/")
 def root():
