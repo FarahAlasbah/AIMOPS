@@ -1,22 +1,24 @@
-// frontend/src/features/admin/components/UsersCardsList.jsx
-import { Card, Button } from '../../../shared/components';
+import { Card, Button } from "../../../shared/components";
+import { useTranslation } from "react-i18next";
 
 const ROLE_BADGE_BY_NAME = {
-  Administrator: 'admin',
-  'Marketing User': 'marketing_user',
-  'Business Owner': 'business_owner',
+  Administrator: "admin",
+  "Marketing User": "marketing_user",
+  "Business Owner": "business_owner",
 };
 
 const UsersCardsList = ({ users, loading, onEdit }) => {
+  const { t } = useTranslation("admin");
+
   return (
-    <Card title="System Users">
+    <Card title={t("users.systemUsers")}>
       {loading ? (
         <div className="loading-state">
-          <p>Loading users...</p>
+          <p>{t("users.loading")}</p>
         </div>
       ) : users.length === 0 ? (
         <div className="empty-state">
-          <p>No users found. Create your first user!</p>
+          <p>{t("users.empty")}</p>
         </div>
       ) : (
         <div className="users-cards">
@@ -28,8 +30,8 @@ const UsersCardsList = ({ users, loading, onEdit }) => {
                   <div className="user-card-name">{u.full_name}</div>
                 </div>
 
-                <span className={`role-badge role-${ROLE_BADGE_BY_NAME[u.role_name] || 'unknown'}`}>
-                  {u.role_name || 'Unknown'}
+                <span className={`role-badge role-${ROLE_BADGE_BY_NAME[u.role_name] || "unknown"}`}>
+                  {u.role_name || t("users.unknownRole")}
                 </span>
               </div>
 
@@ -37,7 +39,7 @@ const UsersCardsList = ({ users, loading, onEdit }) => {
 
               <div className="user-card-actions">
                 <Button type="button" variant="secondary" onClick={() => onEdit(u)}>
-                  Edit
+                  {t("users.edit")}
                 </Button>
               </div>
             </div>

@@ -1,0 +1,122 @@
+{
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "Create and manage users",
+    "createNewUser": "+ Create New User",
+
+    "success": {
+      "userCreated": "User \"{{username}}\" created successfully!",
+      "userUpdated": "User updated successfully!",
+      "userRestored": "User \"{{username}}\" restored successfully!",
+      "passwordChanged": "Password changed successfully!"
+    },
+
+    "errors": {
+      "changePasswordMissing": "changePassword is not available. Update useUsers hook first."
+    },
+
+    "undo": {
+      "deleted": "User {{username}} deleted.",
+      "button": "Undo"
+    }
+  },
+  "accessDenied": {
+    "title": "Access Denied",
+    "usersOnlyAdmins": "You don't have permission to access this page. Only administrators can manage users."
+  },
+
+  "users": {
+    "systemUsers": "System Users",
+    "loading": "Loading users...",
+    "empty": "No users found. Create your first user!",
+    "unknownRole": "Unknown",
+    "edit": "Edit",
+    "editAria": "Edit user"
+  },
+
+  "createUser": {
+    "title": "Create New User",
+    "labels": {
+      "username": "Username",
+      "email": "Email",
+      "fullName": "Full Name",
+      "password": "Password",
+      "role": "Role"
+    },
+    "placeholders": {
+      "username": "Enter username (e.g., farah_business_owner)",
+      "email": "Enter email (e.g., farah@aimops.com)",
+      "fullName": "Enter full name",
+      "password": "Enter password (min. 6 characters)"
+    },
+    "roles": {
+      "marketing": "Marketing User",
+      "owner": "Business Owner"
+    },
+    "errors": {
+      "usernameRequired": "Username is required",
+      "usernameMin": "Username must be at least 3 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Email is invalid",
+      "fullNameRequired": "Full name is required",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Password must be at least 6 characters",
+      "roleInvalid": "Role is invalid"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create User",
+      "creating": "Creating User..."
+    }
+  },
+
+  "editUser": {
+    "title": "Edit user",
+    "usernameCantChange": "Username can't be changed",
+    "usernameCantChangeTooltip": "Username can’t be changed",
+
+    "labels": {
+      "username": "Username",
+      "email": "Email",
+      "fullName": "Full name",
+      "role": "Role"
+    },
+
+    "buttons": {
+      "cancel": "Cancel",
+      "saveChanges": "Save changes",
+      "saving": "Saving..."
+    },
+
+    "password": {
+      "title": "Password",
+      "desc": "New password must be at least 8 characters.",
+      "toggleShow": "Hide",
+      "toggleHide": "Change",
+      "current": "Current password",
+      "new": "New password",
+      "update": "Update password",
+      "updating": "Updating...",
+      "errors": {
+        "currentRequired": "Current password is required.",
+        "newRequired": "New password is required.",
+        "newMin": "New password must be at least 8 characters."
+      }
+    },
+
+    "danger": {
+      "title": "Danger zone",
+      "desc": "Deleting a user can be undone for a short time from the Undo bar.",
+      "delete": "Delete user",
+      "deleting": "Deleting...",
+      "cannotDeleteHint": "You can’t delete yourself or the Administrator account."
+    },
+
+    "confirmDelete": {
+      "title": "Delete user?",
+      "description": "This will delete \"{{username}}\". You can undo shortly from the Undo bar.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  }
+}
