@@ -23,23 +23,6 @@ def login(
     """
     Login endpoint
     
-    Frontend sends:
-    {
-        "username": "admin",
-        "password": "Admin@123"
-    }
-    
-    Backend returns:
-    {
-        "access_token": "eyJhbGciOiJIUz...",
-        "token_type": "bearer",
-        "user": {
-            "user_id": 1,
-            "username": "admin",
-            "role": {...},
-            "permissions": [...]
-        }
-    }
     """
     # Authenticate user
     user = authenticate_user(db, credentials.username, credentials.password)
@@ -66,14 +49,6 @@ def get_current_user_info(
     """
     Get current logged-in user info
     
-    Requires: Valid JWT token in Authorization header
-    
-    Frontend usage:
-    fetch('/api/auth/me', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
     """
     return UserResponse(
         user_id=current_user.user_id,
@@ -93,10 +68,7 @@ def get_current_user_info(
 def logout(current_user: User = Depends(get_current_user)):
     """
     Logout endpoint
-    
-    Note: JWT tokens are stateless, so logout is handled client-side
-    by removing the token from storage. This endpoint just validates
-    the token is still valid.
+
     """
     return {
         "message": "Logged out successfully",

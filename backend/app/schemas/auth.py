@@ -6,7 +6,7 @@ from typing import Optional
 
 
 class LoginRequest(BaseModel):
-    """Login request - what frontend sends"""
+    """Login request"""
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=3, max_length=72)  # bcrypt limit
     
@@ -22,14 +22,13 @@ class LoginRequest(BaseModel):
             raise ValueError('Password is required')
         if len(v) < 3:
             raise ValueError('Password must be at least 3 characters')
-        # Check byte length (important for UTF-8!)
         if len(v.encode('utf-8')) > 72:
             raise ValueError('Password is too long (max 72 bytes)')
         return v
 
 
 class LoginResponse(BaseModel):
-    """Login response - what backend returns"""
+    """Login response"""
     access_token: str
     token_type: str = "bearer"
     user: dict
