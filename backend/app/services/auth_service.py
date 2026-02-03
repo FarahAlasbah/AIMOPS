@@ -12,10 +12,7 @@ from app.core.config import settings
 def authenticate_user(db: Session, username: str, password: str) -> User:
     """
     Authenticate user with username and password
-    
-    Returns:
-        User object if valid
-        Raises HTTPException if invalid
+
     """
     # Find user
     user = db.query(User).filter(User.username == username.lower()).first()
@@ -36,7 +33,6 @@ def authenticate_user(db: Session, username: str, password: str) -> User:
     
     # Verify password
     if not verify_password(password, user.password_hash):
-        # Increment failed attempts (we'll implement lockout later)
         user.failed_login_attempts += 1
         db.commit()
         
@@ -55,13 +51,10 @@ def authenticate_user(db: Session, username: str, password: str) -> User:
 def create_user_token(user: User) -> str:
     """
     Create JWT token for user
-    
-    Returns:
-        JWT token string
     """
     # Token contains user info
     token_data = {
-        "sub": str(user.user_id),  # "sub" = subject (standard JWT field)
+        "sub": str(user.user_id), 
         "username": user.username,
         "role": user.role.role_name if user.role else None
     }

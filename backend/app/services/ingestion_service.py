@@ -171,20 +171,39 @@ def parse_uploaded_file(file_path: str, file_type: str) -> pd.DataFrame:
 
 
 # ============================================
-# Column Role Detection
+# Column Role Detection (IMPROVED VERSION)
 # ============================================
 
 def detect_column_role(column_name: str, sample_values: List[Any]) -> Dict[str, Any]:
     """
-    Detect what a column represents
+    Smart column detection: Name-first, Values-confirm approach
     
-    Args:
-        column_name: Column header
-        sample_values: First 10 values
-        
-    Returns:
-        Detection result with role, classification, confidence
+    Process:
+    1. Check column NAME first (get initial guess)
+    2. Analyze VALUES to CONFIRM or CONTRADICT
+    3. Return validated result with confidence
+    
+    This catches mislabeled columns and works with unclear names!
+    
+    Example 1 - Perfect match:
+        Column: "الكمية"
+        Name suggests: quantity (70%)
+        Values: [50, 30, 100] → integers ✓
+        Result: quantity (95% confidence) ✅
+    
+    Example 2 - Name lies:
+        Column: "الكمية" (says quantity)
+        Name suggests: quantity (70%)
+        Values: ["2024-01-15"] → dates! ❌
+        Result: date (65%) + WARNING ⚠️
+    
+    Example 3 - Unclear name:
+        Column: "الفئة" (category with ال prefix)
+        Name suggests: category (70%)
+        Values: ["مأكولات", "مشروبات"] → low variety text ✓
+        Result: category (95%) ✅
     """
+    
     col_lower = str(column_name).lower().strip()
     non_null = [v for v in sample_values if pd.notna(v)]
     
@@ -193,91 +212,431 @@ def detect_column_role(column_name: str, sample_values: List[Any]) -> Dict[str, 
             "role": "unknown",
             "classification": "unknown",
             "auto_include": False,
+            "can_skip": True,
             "confidence": 0.0
         }
     
-    # Check REQUIRED fields
-    for role, info in REQUIRED_FIELDS.items():
-        if any(kw in col_lower for kw in info["keywords"]):
-            confidence = _verify_data_matches(role, non_null)
-            if confidence > 0.5:
-                return {
-                    "role": role,
-                    "classification": "required",
-                    "auto_include": True,
-                    "can_skip": info["can_skip"],
-                    "confidence": confidence,
-                    "why": info["why"]
-                }
     
-    # Check BENEFICIAL fields
-    for role, info in BENEFICIAL_FIELDS.items():
-        if any(kw in col_lower for kw in info["keywords"]):
-            confidence = _verify_data_matches(role, non_null)
-            if confidence > 0.5:
-                return {
-                    "role": role,
-                    "classification": "beneficial",
-                    "auto_include": True,  # ✅ Auto-include!
-                    "can_skip": True,
-                    "confidence": confidence,
-                    "benefit": info["benefit"],
-                    "impact": info["impact"]
-                }
+    # ====================
+    # STEP 1: Check NAME
+    # ====================
     
-    # Check if PROBABLY NOT USEFUL
-    for role, info in PROBABLY_NOT_USEFUL.items():
-        if any(kw in col_lower for kw in info["keywords"]):
-            return {
-                "role": role,
-                "classification": "probably_not_useful",
-                "auto_include": False,  # Don't auto-include
-                "can_skip": True,
-                "confidence": 0.8,
-                "reason": info["reason"],
-                "but_useful_if": info["but_useful_if"]
-            }
+    name_suggestion = _check_name_keywords(col_lower)
+    suggested_role = name_suggestion["role"]
+    name_confidence = name_suggestion["confidence"]
     
-    # Unknown
-    return {
-        "role": "unknown",
-        "classification": "unknown",
-        "auto_include": False,
-        "can_skip": True,
-        "confidence": 0.0
-    }
-
-
-def _verify_data_matches(role: str, values: List[Any]) -> float:
-    """Verify values match expected type for role"""
     
-    if role == "date":
-        date_like = sum(1 for v in values if any(s in str(v) for s in ['-', '/', '.']))
-        return min(date_like / len(values) + 0.2, 1.0)
+    # ====================
+    # STEP 2: Analyze VALUES
+    # ====================
     
-    elif role in ["product_name", "category", "brand"]:
-        text_count = sum(1 for v in values if not str(v).replace('.', '').isdigit())
-        unique_ratio = len(set(str(v) for v in values)) / len(values)
-        return min((text_count / len(values)) * unique_ratio + 0.2, 1.0)
+    value_analysis = _analyze_values(non_null)
     
-    elif role == "quantity":
-        try:
-            int_count = sum(1 for v in values if float(v) == int(float(v)))
-            return min(int_count / len(values) + 0.1, 1.0)
-        except:
-            return 0.0
     
-    elif role in ["unit_price", "total_amount", "discount"]:
-        try:
-            float(values[0])
-            return 0.9
-        except:
-            return 0.0
+    # ====================
+    # STEP 3: VALIDATE
+    # ====================
+    
+    if suggested_role != "unknown":
+        # We have name-based guess - validate with values
+        validation = _validate_role_with_values(suggested_role, value_analysis)
+        
+        if validation["matches"]:
+            # VALUES CONFIRM NAME! ✅
+            final_confidence = min(name_confidence + 0.25, 1.0)
+            return _build_result(suggested_role, final_confidence)
+        
+        else:
+            # VALUES CONTRADICT NAME! ⚠️
+            actual_role = validation["actual_role"]
+            return _build_result(actual_role, 0.65)
     
     else:
-        return 0.7
+        # Name unclear - use values only
+        detected = _detect_from_values(value_analysis)
+        return _build_result(detected["role"], detected["confidence"])
 
 
+# ====================
+# Helper Functions
+# ====================
+
+def _check_name_keywords(col_lower: str) -> Dict[str, Any]:
+    """Check if column name matches any known keywords"""
+    
+    # Check all field types
+    all_fields = {**REQUIRED_FIELDS, **BENEFICIAL_FIELDS, **PROBABLY_NOT_USEFUL}
+    
+    for role, info in all_fields.items():
+        keywords = info.get("keywords", [])
+        for keyword in keywords:
+            if keyword in col_lower:
+                confidence = 0.8 if role in PROBABLY_NOT_USEFUL else 0.7
+                return {"role": role, "confidence": confidence}
+    
+    return {"role": "unknown", "confidence": 0.0}
+
+
+def _analyze_values(values: List[Any]) -> Dict[str, Any]:
+    """Analyze column values to understand data type and patterns"""
+    
+    total = len(values)
+    unique = len(set(str(v) for v in values))
+    variety_ratio = unique / total
+    
+    analysis = {
+        "total": total,
+        "unique": unique,
+        "variety": "high" if variety_ratio > 0.7 else "medium" if variety_ratio > 0.3 else "low"
+    }
+    
+    # ============================================
+    # IMPORTANT: Check numbers BEFORE dates!
+    # ============================================
+    
+    # Try: Integers?
+    try:
+        int_count = sum(1 for v in values if float(v) == int(float(v)))
+        if int_count / total > 0.8:
+            analysis["data_type"] = "integer"
+            return analysis
+    except:
+        pass
+    
+    # Try: Decimals?
+    try:
+        # If we can convert to float, it's a number (not a date!)
+        float_count = 0
+        for v in values:
+            try:
+                float(v)
+                float_count += 1
+            except (ValueError, TypeError):
+                pass
+        
+        if float_count / total > 0.5:
+            analysis["data_type"] = "decimal"
+            return analysis
+    except:
+        pass
+    
+    # ============================================
+    # NOW check for dates (after ruling out numbers)
+    # ============================================
+    
+    # Try: Dates?
+    # If we got here, values are NOT pure numbers
+    # Now we can safely check for date separators
+    date_like = 0
+    for v in values:
+        v_str = str(v).strip()
+        
+        # Check for date separators
+        has_separator = any(sep in v_str for sep in ['-', '/', '.'])
+        
+        if has_separator:
+            # Count separators (dates have at least 2: YYYY-MM-DD)
+            separator_count = v_str.count('-') + v_str.count('/') + v_str.count('.')
+            
+            # Dates have at least 2 separators
+            if separator_count >= 2:
+                # Additional check: dates have multiple parts when split
+                parts = v_str.replace('-', '/').replace('.', '/').split('/')
+                # Should have 3 parts (year, month, day) or at least 2
+                if len(parts) >= 2:
+                    date_like += 1
+    
+    if date_like / total > 0.7:
+        analysis["data_type"] = "date"
+        return analysis
+    
+    # Default: Text
+    analysis["data_type"] = "text"
+    return analysis
+
+
+def _validate_role_with_values(suggested_role: str, value_analysis: Dict) -> Dict[str, Any]:
+    """Check if values match what we expect for this role"""
+    
+    data_type = value_analysis["data_type"]
+    variety = value_analysis.get("variety", "medium")
+    
+    # Expected patterns for each role
+    expectations = {
+        "date": {"types": ["date"]},
+        "product_name": {"types": ["text"]},
+        "quantity": {"types": ["integer"]},
+        "unit_price": {"types": ["decimal", "integer"]},
+        "total_amount": {"types": ["decimal", "integer"]},
+        "category": {"types": ["text"], "variety_check": "low"},
+        "brand": {"types": ["text"], "variety_check": "low"},
+        "channel": {"types": ["text"], "variety_check": "low"},
+        "customer_id": {"types": ["text", "integer"]},
+        "product_code": {"types": ["text", "integer"]},
+        "employee_id": {"types": ["integer", "text"]},
+    }
+    
+    if suggested_role not in expectations:
+        return {"matches": True}
+    
+    expected = expectations[suggested_role]
+    
+    # Check data type
+    if data_type not in expected["types"]:
+        # MISMATCH! Detect actual role from values
+        actual_role = _detect_from_data_type(data_type, variety)
+        return {"matches": False, "actual_role": actual_role}
+    
+    # Check variety if specified
+    if "variety_check" in expected:
+        if variety != expected["variety_check"]:
+            # Variety mismatch for category/brand/channel
+            # If text but high variety, probably product_name
+            if variety == "high":
+                return {"matches": False, "actual_role": "product_name"}
+    
+    return {"matches": True}
+
+
+def _detect_from_data_type(data_type: str, variety: str) -> str:
+    """Detect role based purely on data type and variety"""
+    
+    if data_type == "date":
+        return "date"
+    elif data_type == "integer" and variety in ["high", "medium"]:
+        return "quantity"
+    elif data_type == "integer" and variety == "low":
+        return "employee_id"
+    elif data_type == "decimal":
+        return "unit_price"
+    elif data_type == "text" and variety == "low":
+        return "category"
+    elif data_type == "text" and variety in ["high", "medium"]:
+        return "product_name"
+    else:
+        return "unknown"
+
+
+def _detect_from_values(value_analysis: Dict) -> Dict[str, Any]:
+    """Detect role when name is unclear - use values only"""
+    
+    role = _detect_from_data_type(
+        value_analysis["data_type"],
+        value_analysis.get("variety", "medium")
+    )
+    
+    confidence = 0.6 if role != "unknown" else 0.0
+    return {"role": role, "confidence": confidence}
+
+
+def _build_result(role: str, confidence: float) -> Dict[str, Any]:
+    """
+    Build the final detection result with verification support
+    
+    Confidence levels:
+    - 90%+: High confidence, auto-include
+    - 60-89%: Medium confidence, needs user verification
+    - <60%: Low confidence, user must map
+    """
+    
+    # Determine if verification is needed
+    verification_needed = confidence < 0.9
+    confidence_level = "high" if confidence >= 0.9 else "medium" if confidence >= 0.6 else "low"
+    
+    # Build base result
+    if role in REQUIRED_FIELDS:
+        info = REQUIRED_FIELDS[role]
+        result = {
+            "role": role,
+            "classification": "required",
+            "auto_include": True if confidence >= 0.6 else False,
+            "can_skip": info.get("can_skip", False),
+            "confidence": confidence,
+            "confidence_level": confidence_level,
+            "verification_needed": verification_needed,
+            "why": info.get("why")
+        }
+    
+    elif role in BENEFICIAL_FIELDS:
+        info = BENEFICIAL_FIELDS[role]
+        result = {
+            "role": role,
+            "classification": "beneficial",
+            "auto_include": True if confidence >= 0.6 else False,
+            "can_skip": True,
+            "confidence": confidence,
+            "confidence_level": confidence_level,
+            "verification_needed": verification_needed,
+            "benefit": info.get("benefit"),
+            "impact": info.get("impact")
+        }
+    
+    elif role in PROBABLY_NOT_USEFUL:
+        info = PROBABLY_NOT_USEFUL[role]
+        result = {
+            "role": role,
+            "classification": "probably_not_useful",
+            "auto_include": False,
+            "can_skip": True,
+            "confidence": confidence,
+            "confidence_level": confidence_level,
+            "verification_needed": False,  # Don't need verification for skips
+            "reason": info.get("reason"),
+            "but_useful_if": info.get("but_useful_if")
+        }
+    
+    else:
+        result = {
+            "role": "unknown",
+            "classification": "unknown",
+            "auto_include": False,
+            "can_skip": True,
+            "confidence": 0.0,
+            "confidence_level": "low",
+            "verification_needed": True,  # Always need verification for unknown
+        }
+    
+    # Add alternative roles for medium/low confidence
+    if verification_needed and role != "unknown":
+        result["alternative_roles"] = _get_alternative_roles(role, confidence)
+        result["user_prompt"] = _get_user_prompt(role, confidence_level)
+    
+    return result
+
+
+def _get_alternative_roles(detected_role: str, confidence: float) -> List[str]:
+    """
+    Suggest alternative roles for user to choose from
+    
+    Based on what the detected role is, suggest similar options
+    """
+    alternatives = []
+    
+    if detected_role == "category":
+        alternatives = ["product_name", "brand", "channel", "skip"]
+    
+    elif detected_role == "product_name":
+        alternatives = ["category", "brand", "description", "skip"]
+    
+    elif detected_role == "quantity":
+        alternatives = ["discount", "unit_price", "skip"]
+    
+    elif detected_role == "unit_price":
+        alternatives = ["total_amount", "discount", "quantity", "skip"]
+    
+    elif detected_role == "total_amount":
+        alternatives = ["unit_price", "discount", "skip"]
+    
+    elif detected_role == "channel":
+        alternatives = ["category", "brand", "skip"]
+    
+    elif detected_role == "customer_id":
+        alternatives = ["product_code", "skip"]
+    
+    elif detected_role == "product_code":
+        alternatives = ["customer_id", "skip"]
+    
+    elif detected_role in PROBABLY_NOT_USEFUL:
+        alternatives = ["skip", "include_anyway"]
+    
+    else:
+        # Generic alternatives for unknown fields
+        alternatives = ["product_name", "category", "quantity", "unit_price", "total_amount", "skip"]
+    
+    return alternatives
+
+
+def _get_user_prompt(role: str, confidence_level: str) -> str:
+    """
+    Generate user-friendly prompt for verification
+    
+    Makes it clear what we think and asks user to confirm
+    """
+    
+    role_names = {
+        "date": "Sale Date",
+        "product_name": "Product Name",
+        "quantity": "Quantity Sold",
+        "unit_price": "Unit Price",
+        "total_amount": "Total Amount",
+        "category": "Product Category",
+        "brand": "Product Brand",
+        "channel": "Sales Channel",
+        "customer_id": "Customer ID",
+        "product_code": "Product Code/SKU",
+        "discount": "Discount Amount",
+        "employee_id": "Employee ID",
+        "invoice_number": "Invoice Number",
+        "payment_method": "Payment Method",
+        "register_number": "POS Terminal",
+        "tax_amount": "Tax Amount"
+    }
+    
+    role_display = role_names.get(role, role.replace("_", " ").title())
+    
+    if confidence_level == "medium":
+        return f"We think this is '{role_display}', but we're not completely sure. Please confirm."
+    elif confidence_level == "low":
+        return f"We detected this as '{role_display}', but confidence is low. Please verify or choose a different mapping."
+    else:
+        return f"Is this '{role_display}'?"
+
+
+# ============================================
+#  group by confidence
+# ============================================
+
+def _classify_for_ui(columns: List[Dict]) -> Dict[str, List]:
+    """Group columns by classification AND confidence level for UI display"""
+    
+    result = {
+        "high_confidence": [],      # 90%+ - Auto-include, minimal user interaction
+        "needs_verification": [],   # 60-89% - User must verify
+        "needs_mapping": [],        # <60% - User must map
+        "suggested_skip": [],       # System thinks these are useless
+        "required_missing": []      # Required fields not detected
+    }
+    
+    detected_required = set()
+    
+    for col in columns:
+        classification = col["classification"]
+        role = col["role"]
+        confidence = col.get("confidence", 0.0)
+        confidence_level = col.get("confidence_level", "low")
+        
+        # High confidence columns (90%+)
+        if confidence >= 0.9 and classification in ["required", "beneficial"]:
+            result["high_confidence"].append(col)
+            if classification == "required":
+                detected_required.add(role)
+        
+        # Medium confidence (60-89%) - needs verification
+        elif 0.6 <= confidence < 0.9 and classification in ["required", "beneficial"]:
+            result["needs_verification"].append(col)
+            if classification == "required":
+                detected_required.add(role)
+        
+        # Low confidence (<60%) or unknown - needs mapping
+        elif confidence < 0.6 or classification == "unknown":
+            result["needs_mapping"].append(col)
+        
+        # Suggested to skip
+        elif classification == "probably_not_useful":
+            result["suggested_skip"].append(col)
+    
+    # Check for missing required fields
+    for role in REQUIRED_FIELDS.keys():
+        if role not in detected_required and not REQUIRED_FIELDS[role]["can_skip"]:
+            result["required_missing"].append({
+                "role": role,
+                "name": REQUIRED_FIELDS[role]["name"],
+                "why": REQUIRED_FIELDS[role]["why"],
+                "user_prompt": f"We couldn't find a '{REQUIRED_FIELDS[role]['name']}' column. Please map one."
+            })
+    
+    return result
+      
 # ============================================
 # Complete File Analysis
 # ============================================
@@ -314,6 +673,10 @@ def analyze_uploaded_file(file_path: str, file_type: str) -> Dict[str, Any]:
             "auto_include": detection["auto_include"],
             "can_skip": detection.get("can_skip", True),
             "confidence": detection["confidence"],
+            "confidence_level": detection.get("confidence_level"),  
+            "verification_needed": detection.get("verification_needed"),  
+            "alternative_roles": detection.get("alternative_roles"),  
+            "user_prompt": detection.get("user_prompt"),  
             "samples": samples[:5],
             "total_values": total_rows,
             "non_null_values": int(non_null_count),
@@ -344,44 +707,6 @@ def analyze_uploaded_file(file_path: str, file_type: str) -> Dict[str, Any]:
         "classified": classified
     }
 
-
-def _classify_for_ui(columns: List[Dict]) -> Dict[str, List]:
-    """Group columns by classification for UI display"""
-    
-    result = {
-        "auto_included": [],
-        "suggested_skip": [],
-        "unknown": [],
-        "required_missing": []
-    }
-    
-    detected_required = set()
-    
-    for col in columns:
-        classification = col["classification"]
-        role = col["role"]
-        
-        if classification in ["required", "beneficial"] and col["auto_include"]:
-            result["auto_included"].append(col)
-            if classification == "required":
-                detected_required.add(role)
-        
-        elif classification == "probably_not_useful":
-            result["suggested_skip"].append(col)
-        
-        elif classification == "unknown":
-            result["unknown"].append(col)
-    
-    # Check for missing required fields
-    for role in REQUIRED_FIELDS.keys():
-        if role not in detected_required and not REQUIRED_FIELDS[role]["can_skip"]:
-            result["required_missing"].append({
-                "role": role,
-                "name": REQUIRED_FIELDS[role]["name"],
-                "why": REQUIRED_FIELDS[role]["why"]
-            })
-    
-    return result
 
 
 # ============================================
