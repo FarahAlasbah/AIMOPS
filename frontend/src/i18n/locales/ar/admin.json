@@ -1,0 +1,111 @@
+{
+  "userManagement": {
+    "title": "إدارة المستخدمين",
+    "subtitle": "إنشاء المستخدمين وإدارتهم",
+    "createNewUser": "+ إنشاء مستخدم جديد",
+    "success": {
+      "userCreated": "تم إنشاء المستخدم \"{{username}}\" بنجاح!",
+      "userUpdated": "تم تحديث المستخدم بنجاح!",
+      "userRestored": "تمت استعادة المستخدم \"{{username}}\" بنجاح!",
+      "passwordChanged": "تم تغيير كلمة المرور بنجاح!"
+    },
+    "errors": {
+      "changePasswordMissing": "ميزة تغيير كلمة المرور غير متاحة. حدّث useUsers hook أولاً."
+    },
+    "undo": {
+      "deleted": "تم حذف المستخدم {{username}}.",
+      "button": "تراجع"
+    }
+  },
+  "accessDenied": {
+    "title": "تم رفض الوصول",
+    "usersOnlyAdmins": "ليس لديك صلاحية للوصول لهذه الصفحة. فقط المدراء يمكنهم إدارة المستخدمين."
+  },
+  "users": {
+    "systemUsers": "مستخدمو النظام",
+    "loading": "جارٍ تحميل المستخدمين...",
+    "empty": "لا يوجد مستخدمون. أنشئ أول مستخدم!",
+    "unknownRole": "غير معروف",
+    "edit": "تعديل",
+    "editAria": "تعديل المستخدم"
+  },
+  "createUser": {
+    "title": "إنشاء مستخدم جديد",
+    "labels": {
+      "username": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "fullName": "الاسم الكامل",
+      "password": "كلمة المرور",
+      "role": "الدور"
+    },
+    "placeholders": {
+      "username": "أدخل اسم المستخدم (مثال: farah_business_owner)",
+      "email": "أدخل البريد الإلكتروني (مثال: farah@aimops.com)",
+      "fullName": "أدخل الاسم الكامل",
+      "password": "أدخل كلمة المرور (على الأقل 6 أحرف)"
+    },
+    "roles": {
+      "marketing": "مستخدم تسويق",
+      "owner": "صاحب عمل"
+    },
+    "errors": {
+      "usernameRequired": "اسم المستخدم مطلوب",
+      "usernameMin": "اسم المستخدم يجب أن يكون 3 أحرف على الأقل",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "emailInvalid": "البريد الإلكتروني غير صحيح",
+      "fullNameRequired": "الاسم الكامل مطلوب",
+      "passwordRequired": "كلمة المرور مطلوبة",
+      "passwordMin": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+      "roleInvalid": "الدور غير صحيح"
+    },
+    "buttons": {
+      "cancel": "إلغاء",
+      "create": "إنشاء مستخدم",
+      "creating": "جارٍ إنشاء المستخدم..."
+    }
+  },
+  "editUser": {
+    "title": "تعديل المستخدم",
+    "usernameCantChange": "لا يمكن تغيير اسم المستخدم",
+    "usernameCantChangeTooltip": "لا يمكن تغيير اسم المستخدم",
+    "labels": {
+      "username": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "fullName": "الاسم الكامل",
+      "role": "الدور"
+    },
+    "buttons": {
+      "cancel": "إلغاء",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ..."
+    },
+    "password": {
+      "title": "كلمة المرور",
+      "desc": "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل.",
+      "toggleShow": "إخفاء",
+      "toggleHide": "تغيير",
+      "current": "كلمة المرور الحالية",
+      "new": "كلمة المرور الجديدة",
+      "update": "تحديث كلمة المرور",
+      "updating": "جارٍ التحديث...",
+      "errors": {
+        "currentRequired": "كلمة المرور الحالية مطلوبة.",
+        "newRequired": "كلمة المرور الجديدة مطلوبة.",
+        "newMin": "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل."
+      }
+    },
+    "danger": {
+      "title": "منطقة خطرة",
+      "desc": "يمكن التراجع عن حذف المستخدم لفترة قصيرة من شريط التراجع.",
+      "delete": "حذف المستخدم",
+      "deleting": "جارٍ الحذف...",
+      "cannotDeleteHint": "لا يمكنك حذف نفسك أو حساب المدير."
+    },
+    "confirmDelete": {
+      "title": "حذف المستخدم؟",
+      "description": "سيتم حذف \"{{username}}\". يمكنك التراجع لفترة قصيرة من شريط التراجع.",
+      "confirm": "حذف",
+      "cancel": "إلغاء"
+    }
+  }
+}

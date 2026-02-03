@@ -10,9 +10,11 @@ import UsersTableCard from "../components/UsersTableCard";
 import EditUserModal from "../components/EditUserModal";
 
 import "./UserManagement.css";
+import { useTranslation } from "react-i18next";
 
 const UserManagement = () => {
   const { user } = useAuth();
+  const { t } = useTranslation("admin");
 
   const {
     users,
@@ -24,8 +26,6 @@ const UserManagement = () => {
     updateUserInfo,
     removeUser,
     undoDelete,
-
-    // NEW (must exist in useUsers hook)
     changePassword,
   } = useUsers();
 
@@ -42,8 +42,6 @@ const UserManagement = () => {
   const [changingPassword, setChangingPassword] = useState(false);
 
   const undoTimerRef = useRef(null);
-
-  // NEW
 
   useEffect(() => {
     if (user?.is_admin) fetchUsers();
@@ -75,7 +73,9 @@ const UserManagement = () => {
 
     try {
       await addUser(payload);
-      setSuccessMessage(`User "${payload.username}" created successfully!`);
+      setSuccessMessage(
+        t("userManagement.success.userCreated", { username: payload.username })
+      );
       setShowCreateForm(false);
       await fetchUsers();
     } finally {
@@ -101,7 +101,7 @@ const UserManagement = () => {
       setEditingUser(null);
       await fetchUsers();
 
-      setSuccessMessage("User updated successfully!");
+      setSuccessMessage(t("userManagement.success.userUpdated"));
       setTimeout(() => setSuccessMessage(""), 4000);
     } finally {
       setSavingEdit(false);
@@ -115,7 +115,7 @@ const UserManagement = () => {
 
     try {
       await removeUser(u.user_id);
-      setEditingUser(null); // close modal
+      setEditingUser(null);
       await fetchUsers();
       showUndoMessage(u);
     } finally {
@@ -138,27 +138,13 @@ const UserManagement = () => {
 
       await fetchUsers();
 
-      setSuccessMessage(`User "${username}" restored successfully!`);
+      setSuccessMessage(t("userManagement.success.userRestored", { username }));
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch {
       // apiError handled in hook
     }
   };
-//   const handleChangePassword = async (userId, currentPassword, newPassword) => {
-//   setApiError('');
-//   setSuccessMessage('');
-//   setChangingPassword(true);
 
-//   try {
-//     await changePassword(userId, currentPassword, newPassword);
-//     setSuccessMessage('Password changed successfully!');
-//     setTimeout(() => setSuccessMessage(''), 4000);
-//   } finally {
-//     setChangingPassword(false);
-//   }
-// };
-
-  // NEW: password change handler for EditUserModal
   const handleChangePassword = async (userId, currentPassword, newPassword) => {
     setApiError("");
     setSuccessMessage("");
@@ -166,13 +152,13 @@ const UserManagement = () => {
 
     try {
       if (typeof changePassword !== "function") {
-        setApiError("changePassword is not available. Update useUsers hook first.");
+        setApiError(t("userManagement.errors.changePasswordMissing"));
         return;
       }
 
       await changePassword(userId, currentPassword, newPassword);
 
-      setSuccessMessage("Password changed successfully!");
+      setSuccessMessage(t("userManagement.success.passwordChanged"));
       setTimeout(() => setSuccessMessage(""), 4000);
     } finally {
       setChangingPassword(false);
@@ -184,29 +170,27 @@ const UserManagement = () => {
   return (
     <div className="user-management-page">
       <PageHeader
-        title="User Management"
-        subtitle="Create and manage users"
+        title={t("userManagement.title")}
+        subtitle={t("userManagement.subtitle")}
         actions={
           !showCreateForm && (
             <Button onClick={() => setShowCreateForm(true)}>
-              + Create New User
+              {t("userManagement.createNewUser")}
             </Button>
           )
         }
       />
 
-      {successMessage && (
-        <InfoMessage type="success">{successMessage}</InfoMessage>
-      )}
+      {successMessage && <InfoMessage type="success">{successMessage}</InfoMessage>}
       {apiError && <InfoMessage type="error">{apiError}</InfoMessage>}
 
       {undoInfo && (
         <div className="undo-bar">
           <span>
-            User <strong>{undoInfo.username}</strong> deleted.
+            {t("userManagement.undo.deleted", { username: undoInfo.username })}
           </span>
           <Button type="button" variant="secondary" onClick={handleUndoDelete}>
-            Undo
+            {t("userManagement.undo.button")}
           </Button>
         </div>
       )}
@@ -223,11 +207,7 @@ const UserManagement = () => {
         />
       )}
 
-      <UsersTableCard
-        users={users}
-        loading={loading}
-        onEdit={(u) => setEditingUser(u)}
-      />
+      <UsersTableCard users={users} loading={loading} onEdit={(u) => setEditingUser(u)} />
 
       {editingUser && (
         <EditUserModal
