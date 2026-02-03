@@ -1,13 +1,14 @@
-import { Card, PageHeader, InfoMessage } from '../../../shared/components';
+import { Card, PageHeader, InfoMessage } from "../../../shared/components";
+import { useTranslation } from "react-i18next";
 
 const AccessDenied = () => {
+  const { t } = useTranslation("admin");
+
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <PageHeader title="Access Denied" />
+    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      <PageHeader title={t("accessDenied.title")} />
       <Card>
-        <InfoMessage type="error">
-          You don't have permission to access this page. Only administrators can manage users.
-        </InfoMessage>
+        <InfoMessage type="error">{t("accessDenied.usersOnlyAdmins")}</InfoMessage>
       </Card>
     </div>
   );

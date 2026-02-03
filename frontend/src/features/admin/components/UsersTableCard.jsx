@@ -1,39 +1,37 @@
-// frontend/src/features/admin/components/UsersTableCard.jsx
-import { Card } from '../../../shared/components';
-import { Pencil } from 'lucide-react';
+import { Card } from "../../../shared/components";
+import { Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ROLE_BADGE_BY_NAME = {
-  Administrator: 'admin',
-  'Marketing User': 'marketing_user',
-  'Business Owner': 'business_owner',
+  Administrator: "admin",
+  "Marketing User": "marketing_user",
+  "Business Owner": "business_owner",
 };
 
 const UsersTableCard = ({ users, loading, onEdit }) => {
-  const badge = (u) => ROLE_BADGE_BY_NAME[u.role_name] || 'unknown';
+  const { t } = useTranslation("admin");
+  const badge = (u) => ROLE_BADGE_BY_NAME[u.role_name] || "unknown";
 
   return (
-    <Card title="System Users">
+    <Card title={t("users.systemUsers")}>
       {loading ? (
         <div className="loading-state">
-          <p>Loading users...</p>
+          <p>{t("users.loading")}</p>
         </div>
       ) : users.length === 0 ? (
         <div className="empty-state">
-          <p>No users found. Create your first user!</p>
+          <p>{t("users.empty")}</p>
         </div>
       ) : (
-        // add wrapper class on the table container (only this line change)
-      <div className="users-table-wrapper users-table-desktop">
-
-        <div className="users-table-wrapper">
+        <div className="users-table-wrapper users-table-desktop">
           <table className="users-table users-table-clean">
             <thead>
               <tr>
-                <th>Username</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th style={{ width: 56, textAlign: 'right' }} />
+                <th>{t("editUser.labels.username")}</th>
+                <th>{t("editUser.labels.fullName")}</th>
+                <th>{t("editUser.labels.email")}</th>
+                <th>{t("editUser.labels.role")}</th>
+                <th style={{ width: 56, textAlign: "right" }} />
               </tr>
             </thead>
 
@@ -45,15 +43,15 @@ const UsersTableCard = ({ users, loading, onEdit }) => {
                   <td className="cell-muted">{u.email}</td>
                   <td>
                     <span className={`role-badge role-${badge(u)}`}>
-                      {u.role_name || 'Unknown'}
+                      {u.role_name || t("users.unknownRole")}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ textAlign: "right" }}>
                     <button
                       type="button"
                       className="icon-btn"
-                      aria-label="Edit user"
-                      title="Edit"
+                      aria-label={t("users.editAria")}
+                      title={t("users.edit")}
                       onClick={() => onEdit(u)}
                     >
                       <Pencil size={16} />
@@ -64,7 +62,6 @@ const UsersTableCard = ({ users, loading, onEdit }) => {
             </tbody>
           </table>
         </div>
-      </div>
       )}
     </Card>
   );
