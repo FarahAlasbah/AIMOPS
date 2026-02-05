@@ -11,6 +11,58 @@ from datetime import datetime, date
 
 
 # ============================================
+# Request Schemas (What User Sends)
+# ============================================
+
+class ColumnMappingRequest(BaseModel):
+    """
+    User's column mapping choices for data import
+    
+    Sent when user confirms column mappings and clicks "Import"
+    
+    Example request:
+    {
+        "date_column": "sale_date",
+        "product_column": "product_name", 
+        "quantity_column": "qty",
+        "price_column": "unit_price",
+        "total_amount_column": "total",
+        "category_column": "category",
+        "skip_columns": ["employee_id", "invoice_number"]
+    }
+    """
+    # Required mappings
+    date_column: str = Field(..., description="Column containing sale dates")
+    product_column: str = Field(..., description="Column containing product names")
+    quantity_column: str = Field(..., description="Column containing quantities sold")
+    
+    # Optional but beneficial
+    price_column: Optional[str] = Field(None, description="Column containing unit prices")
+    total_amount_column: Optional[str] = Field(None, description="Column containing total amounts")
+    category_column: Optional[str] = Field(None, description="Column containing product categories")
+    brand_column: Optional[str] = Field(None, description="Column containing brands")
+    channel_column: Optional[str] = Field(None, description="Column containing sales channels")
+    customer_id_column: Optional[str] = Field(None, description="Column containing customer IDs")
+    product_code_column: Optional[str] = Field(None, description="Column containing product codes/SKUs")
+    discount_column: Optional[str] = Field(None, description="Column containing discount amounts")
+    
+    # Columns to skip
+    skip_columns: List[str] = Field(default=[], description="Columns to ignore during import")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "date_column": "sale_date",
+                "product_column": "product_name",
+                "quantity_column": "qty",
+                "price_column": "unit_price",
+                "category_column": "category",
+                "skip_columns": ["employee_id", "invoice_number"]
+            }
+        }
+
+
+# ============================================
 # Response Schemas (What API Returns)
 # ============================================
 
@@ -137,6 +189,42 @@ class BatchListResponse(BaseModel):
         from_attributes = True
 
 
+class ProcessingResponse(BaseModel):
+    """
+    Response after processing/importing data
+    
+    Returns statistics about the import
+    """
+    success: bool
+    message: str
+    batch_id: int
+    status: str
+    statistics: dict
+    date_range: dict
+    processing_time_seconds: Optional[int] = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "message": "File processed successfully",
+                "batch_id": 1,
+                "status": "completed",
+                "statistics": {
+                    "total_rows": 1250,
+                    "valid_rows": 1230,
+                    "rejected_rows": 20,
+                    "success_rate": 98.4
+                },
+                "date_range": {
+                    "start": "2024-01-01",
+                    "end": "2024-12-31"
+                },
+                "processing_time_seconds": 45
+            }
+        }
+
+
 # ============================================
 # Why These Schemas?
 # ============================================
@@ -158,6 +246,11 @@ class BatchListResponse(BaseModel):
 #   - For listing many uploads
 #   - Only essential info
 #   - Performance optimized
+#
+# ColumnMappingRequest:
+#   - User's confirmed column choices
+#   - Validates required fields present
+#   - Documents what columns mean
 
 # Q: Why use Pydantic for responses?
 # A: 
