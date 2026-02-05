@@ -733,3 +733,86 @@ def extract_date_range(df: pd.DataFrame, date_column: str) -> Dict[str, Any]:
         }
     except Exception as e:
         return {"start_date": None, "end_date": None, "total_days": 0, "error": str(e)}
+    
+
+def detect_file_type_from_mappings(file_path: str, mappings: List[Dict]) -> Dict:
+    """
+    Detect if file is single or multiple products
+    based on user's confirmed mappings
+    
+    Args:
+        file_path: Path to uploaded file
+        mappings: List of user's confirmed column mappings
+        
+    Returns:
+        {
+            "type": "single_product" | "multiple_products",
+            "details": {...}
+        }
+    """
+    import pandas as pd
+    
+    # Check if user mapped a product_name column
+    product_mapping = None
+    for m in mappings:
+        if m.get("role") == "product_name":
+            product_mapping = m
+            break
+    
+    if not product_mapping:
+        # NO PRODUCT COLUMN = Single product file
+        return {
+            "type": "single_product",
+            "details": {
+                "requires_product_name": True,
+                "message": "Please provide a name for this product"
+            }
+        }
+    
+    # HAS PRODUCT COLUMN = Check how many unique products
+    try:
+        # Read the file
+        df = pd.read_csv(file_path)
+        
+        # Get product column name
+        product_col = product_mapping.get("original_name")
+        
+        # Check if column exists in dataframe
+        if product_col not in df.columns:
+            # Column name doesn't match - print debug info
+            print(f"DEBUG: Looking for column '{product_col}'")
+            print(f"DEBUG: Available columns: {df.columns.tolist()}")
+            
+            raise ValueError(f"Column '{product_col}' not found in file")
+        
+        # Count unique products
+        unique_products = df[product_col].dropna().nunique()
+        
+        if unique_products <= 1:
+            # Only 1 unique product (or none)
+            single_product_name = df[product_col].dropna().iloc[0] if len(df[product_col].dropna()) > 0 else "Unknown"
+            return {
+                "type": "single_product",
+                "details": {
+                    "detected_product_name": single_product_name,
+                    "requires_confirmation": True,
+                    "message": f"File contains one product: {single_product_name}"
+                }
+            }
+        
+        else:
+            # Multiple products
+            return {
+                "type": "multiple_products",
+                "details": {
+                    "unique_products_count": int(unique_products),
+                    "requires_extraction": True,
+                    "message": f"Found {unique_products} unique products"
+                }
+            }
+    
+    except Exception as e:
+        import traceback
+        print(f"ERROR in detect_file_type_from_mappings: {str(e)}")
+        print(traceback.format_exc())
+        raise
