@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Card, PageHeader } from "../../../shared/components";
+import { Card, PageHeader, Button } from "../../../shared/components";
 import Stepper from "../../../shared/components/Stepper";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
-import { uploadSalesData, analyzeSalesBatch, submitSalesMapping } from "../../../api/data";
+import { uploadSalesData, analyzeSalesBatch, submitSalesMapping, getAllUploads } from "../../../api/data";
 
 import UploadStep from "../components/UploadStep";
 import MappingStep from "../components/MappingStep";
@@ -13,12 +13,22 @@ import ReviewStep from "../components/ReviewStep";
 import UploadsList from "../components/UploadsList";
 
 import { MAX_MB, getFileKey, readDedupeSet, writeDedupeSet, validateSelectedFile } from "../utils/fileUtils";
-import { getUploads, addUpload, updateUpload, removeUpload } from "../utils/uploadsStore";
 import { getCachedAnalysis, setCachedAnalysis, clearCachedAnalysis } from "../utils/analysisCache";
 
 import "./DataUpload.css";
 
 const LS_MAPPING_KEY = (batchId) => `sales_batch_mapping_v1_${batchId}`;
+
+const normalizeUpload = (u) => ({
+  batchId: u?.batch_id ?? u?.batchId,
+  fileName: u?.file_name ?? u?.fileName,
+  fileType: u?.file_type ?? u?.fileType,
+  fileSizeKb: u?.file_size_kb ?? u?.fileSizeKb,
+  status: u?.status,
+  uploadedAt: u?.uploaded_at ?? u?.uploadedAt,
+  validRows: u?.valid_rows ?? u?.validRows,
+  rejectedRows: u?.rejected_rows ?? u?.rejectedRows,
+});
 
 export default function DataUpload() {
   const navigate = useNavigate();
@@ -47,8 +57,9 @@ export default function DataUpload() {
 
   const [submitWarning, setSubmitWarning] = useState("");
 
-  // uploads list state (from localStorage)
-  const [uploads, setUploads] = useState(() => getUploads());
+  // uploads list state (from backend)
+  const [uploadsLoading, setUploadsLoading] = useState(false);
+  const [uploads, setUploads] = useState([]);
 
   const steps = ["Upload", "Map Columns", "Review"];
 
@@ -61,7 +72,25 @@ export default function DataUpload() {
     []
   );
 
-  const refreshUploads = () => setUploads(getUploads());
+  const fetchUploads = async () => {
+    setUploadsLoading(true);
+    try {
+      const res = await getAllUploads();
+      const list = Array.isArray(res) ? res.map(normalizeUpload) : [];
+      // newest first (backend seems already newest first, but keep it stable)
+      list.sort((a, b) => String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || "")));
+      setUploads(list);
+    } catch (e) {
+      // don't hard-fail the page if uploads fetch fails
+      setError((prev) => prev || "Failed to load uploads list.");
+    } finally {
+      setUploadsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUploads();
+  }, []);
 
   const resetToUploadStep = () => {
     setCurrentStep(1);
@@ -112,7 +141,7 @@ export default function DataUpload() {
       setUploading(true);
       setProgress(0);
 
-      const res = await uploadSalesData({
+      await uploadSalesData({
         file: uploadedFile,
         campaignId: selectedCampaign || undefined,
         onProgress: setProgress,
@@ -123,23 +152,8 @@ export default function DataUpload() {
       dedupe.add(getFileKey(uploadedFile));
       writeDedupeSet(dedupe);
 
-      const newBatchId = res?.batch_id ?? res?.batchId ?? null;
-      if (!newBatchId) {
-        setError("Upload succeeded, but batch_id was not returned by the backend.");
-        return;
-      }
-
-      // store upload card locally
-      addUpload({
-        batchId: newBatchId,
-        fileName: res?.file_name || uploadedFile.name,
-        uploadedAt: res?.uploaded_at || new Date().toISOString(),
-        status: res?.status || "uploaded",
-        campaignId: selectedCampaign || null,
-        campaignLabel:
-          campaignOptions.find((c) => String(c.value) === String(selectedCampaign))?.label || "",
-      });
-      refreshUploads();
+      // refresh list from backend
+      await fetchUploads();
 
       // reset file picker but stay in step 1
       setUploadedFile(null);
@@ -186,7 +200,7 @@ export default function DataUpload() {
           const cached = getCachedAnalysis(batchId);
           if (cached) {
             setAnalysis(cached);
-            // init mapping state from cached analysis
+
             const initial = {};
             (cached?.columns || []).forEach((c) => {
               initial[c.index] = {
@@ -211,7 +225,15 @@ export default function DataUpload() {
         const res = await analyzeSalesBatch(batchId);
         setAnalysis(res);
         setCachedAnalysis(batchId, res);
-        updateUpload(batchId, { status: res?.status || "mapping", fileName: res?.file_name });
+
+        // patch local uploads list UI immediately
+        setUploads((prev) =>
+          prev.map((u) =>
+            String(u.batchId) === String(batchId)
+              ? { ...u, status: res?.status || u.status, fileName: res?.file_name || u.fileName }
+              : u
+          )
+        );
 
         const initial = {};
         (res?.columns || []).forEach((c) => {
@@ -228,8 +250,6 @@ export default function DataUpload() {
           rm[r.role] = "";
         });
         setRequiredMissingMap(rm);
-
-        refreshUploads();
       } catch (err) {
         const msg =
           err?.response?.data?.detail ||
@@ -326,8 +346,6 @@ export default function DataUpload() {
     };
 
     localStorage.setItem(LS_MAPPING_KEY(batchId), JSON.stringify(payload));
-    updateUpload(batchId, { status: "mapped" });
-    refreshUploads();
 
     try {
       await submitSalesMapping(batchId, payload);
@@ -353,16 +371,12 @@ export default function DataUpload() {
 
   const hasCachedAnalysis = (id) => !!getCachedAnalysis(id);
 
-  const handleDeleteUpload = (id) => {
-    removeUpload(id);
+  const clearLocalForBatch = (id) => {
     clearCachedAnalysis(id);
     try {
       localStorage.removeItem(LS_MAPPING_KEY(id));
     } catch {}
-    refreshUploads();
-
-    // if user is currently viewing this batch, go back to step 1
-    if (String(batchId) === String(id)) resetToUploadStep();
+    // no backend delete endpoint shown, so we only clear local data
   };
 
   return (
@@ -404,7 +418,12 @@ export default function DataUpload() {
             />
 
             <div style={{ marginTop: 18 }}>
-              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 8 }}>Uploads</div>
+              <div className="uploads-header">
+                <div style={{ fontWeight: 800, color: "#111827" }}>Uploads</div>
+                <Button variant="secondary" onClick={fetchUploads} disabled={uploadsLoading}>
+                  {uploadsLoading ? "Refreshing..." : "Refresh"}
+                </Button>
+              </div>
 
               <UploadsList
                 uploads={uploads}
@@ -413,7 +432,7 @@ export default function DataUpload() {
                 onAnalyze={(id) => openMappingForBatch(id, { refresh: false })}
                 onReview={(id) => openReviewForBatch(id)}
                 onRefreshAnalysis={(id) => openMappingForBatch(id, { refresh: true })}
-                onDelete={handleDeleteUpload}
+                onClearLocal={clearLocalForBatch}
               />
             </div>
           </>
