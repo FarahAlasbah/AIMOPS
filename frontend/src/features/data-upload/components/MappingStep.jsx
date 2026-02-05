@@ -1,0 +1,230 @@
+import { Button, FormActions, FormSelect } from "../../../shared/components";
+import InfoMessage from "../../../shared/components/InfoMessage";
+import ColumnMeta from "./ColumnMeta";
+import { buildRoleOptions } from "../utils/analysisUtils";
+
+function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissingMap, onPick }) {
+  if (!Array.isArray(requiredMissing) || requiredMissing.length === 0) return null;
+
+  return (
+    <div className="mapping-card">
+      <div className="mapping-title">Required fields missing</div>
+      <div className="mapping-sub">You must map these required fields before you can confirm.</div>
+
+      {requiredMissing.map((r) => (
+        <div key={r.role} style={{ marginTop: 10 }}>
+          <div style={{ fontWeight: 600, color: "#111827", marginBottom: 6 }}>
+            {r.name} (required)
+          </div>
+
+          {r.user_prompt && (
+            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>{r.user_prompt}</div>
+          )}
+
+          <FormSelect
+            label="Choose column"
+            placeholder="Select a column..."
+            options={allColumnsOptions}
+            value={requiredMissingMap?.[r.role] || ""}
+            onChange={(e) => onPick(r.role, e.target.value)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NeedsMappingCard({ needsMapping, columnMap, onSetRole }) {
+  if (!Array.isArray(needsMapping) || needsMapping.length === 0) return null;
+
+  return (
+    <div className="mapping-card">
+      <div className="mapping-title">Needs mapping</div>
+      <div className="mapping-sub">These columns need a role before you can continue.</div>
+
+      {needsMapping.map((c) => {
+        const current = columnMap?.[c.index] || {};
+        const options = buildRoleOptions(c);
+
+        return (
+          <div key={c.index} style={{ marginTop: 14 }}>
+            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+
+            {c.user_prompt && (
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{c.user_prompt}</div>
+            )}
+
+            <div className="mapping-row" style={{ marginTop: 10 }}>
+              <FormSelect
+                label="Role"
+                placeholder="Select role..."
+                options={options}
+                value={current.role || "skip"}
+                onChange={(e) => onSetRole(c.index, e.target.value)}
+              />
+            </div>
+
+            <ColumnMeta column={c} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConfirmVerified }) {
+  if (!Array.isArray(needsVerification) || needsVerification.length === 0) return null;
+
+  return (
+    <div className="mapping-card">
+      <div className="mapping-title">Needs verification</div>
+      <div className="mapping-sub">Confirm the AI guess or choose a different role.</div>
+
+      {needsVerification.map((c) => {
+        const current = columnMap?.[c.index] || {};
+        const options = buildRoleOptions(c);
+
+        return (
+          <div key={c.index} style={{ marginTop: 14 }}>
+            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+
+            {c.user_prompt && (
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{c.user_prompt}</div>
+            )}
+
+            <div className="mapping-row" style={{ marginTop: 10 }}>
+              <FormSelect
+                label="Role"
+                placeholder="Select role..."
+                options={options}
+                value={current.role || "skip"}
+                onChange={(e) => onSetRole(c.index, e.target.value)}
+              />
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onConfirmVerified(c.index)}
+                disabled={!!current.verified}
+              >
+                {current.verified ? "Confirmed" : "Confirm"}
+              </Button>
+            </div>
+
+            <ColumnMeta column={c} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude }) {
+  if (!Array.isArray(suggestedSkip) || suggestedSkip.length === 0) return null;
+
+  return (
+    <div className="mapping-card">
+      <div className="mapping-title">Suggested to skip</div>
+      <div className="mapping-sub">
+        These columns are probably not useful. You can still include them if you want.
+      </div>
+
+      {suggestedSkip.map((c) => {
+        const current = columnMap?.[c.index] || {};
+        return (
+          <div key={c.index} style={{ marginTop: 14 }}>
+            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+
+            {c.reason && (
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+                Why skip: {c.reason}
+              </div>
+            )}
+
+            <div className="mapping-row" style={{ marginTop: 10 }}>
+              <Button type="button" variant="secondary" onClick={() => onToggleInclude(c.index)}>
+                {current.include ? "Included" : "Skipped"}
+              </Button>
+
+              <div style={{ fontSize: 13, color: "#6b7280" }}>
+                Current role: {current.role || "skip"}
+              </div>
+            </div>
+
+            <ColumnMeta column={c} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function MappingStep({
+  analysisLoading,
+  analysis,
+  allColumnsOptions,
+  columnMap,
+  requiredMissingMap,
+
+  onBack,
+  onSetRole,
+  onConfirmVerified,
+  onToggleInclude,
+  onPickRequiredMissing,
+
+  canConfirm,
+  onConfirm,
+}) {
+  if (analysisLoading) return <InfoMessage type="info">Analyzing file...</InfoMessage>;
+  if (!analysis) return <InfoMessage type="info">No analysis data yet.</InfoMessage>;
+
+  const requiredMissing = analysis?.classified?.required_missing || [];
+  const needsVerification = analysis?.classified?.needs_verification || [];
+  const needsMapping = analysis?.classified?.needs_mapping || [];
+  const suggestedSkip = analysis?.classified?.suggested_skip || [];
+
+  return (
+    <>
+      <div className="mapping-section">
+        <RequiredMissingCard
+          requiredMissing={requiredMissing}
+          allColumnsOptions={allColumnsOptions}
+          requiredMissingMap={requiredMissingMap}
+          onPick={onPickRequiredMissing}
+        />
+
+        <NeedsMappingCard needsMapping={needsMapping} columnMap={columnMap} onSetRole={onSetRole} />
+
+        <NeedsVerificationCard
+          needsVerification={needsVerification}
+          columnMap={columnMap}
+          onSetRole={onSetRole}
+          onConfirmVerified={onConfirmVerified}
+        />
+
+        <SuggestedSkipCard
+          suggestedSkip={suggestedSkip}
+          columnMap={columnMap}
+          onToggleInclude={onToggleInclude}
+        />
+      </div>
+
+      <FormActions>
+        <Button variant="secondary" onClick={onBack}>
+          Back
+        </Button>
+        <Button variant="primary" onClick={onConfirm} disabled={!canConfirm}>
+          Confirm & Continue
+        </Button>
+      </FormActions>
+
+      {!canConfirm && (
+        <div style={{ marginTop: 12 }}>
+          <InfoMessage type="info">
+            Please resolve required missing fields and confirm all “Needs verification” columns.
+          </InfoMessage>
+        </div>
+      )}
+    </>
+  );
+}

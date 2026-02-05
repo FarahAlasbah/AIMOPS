@@ -1,58 +1,57 @@
-// frontend/src/features/data-upload/pages/DataUpload.jsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  PageHeader,
-  Button,
-  FormActions,
-  FormSelect,
-} from "../../../shared/components";
+
+import { Card, PageHeader } from "../../../shared/components";
 import Stepper from "../../../shared/components/Stepper";
-import FileUpload from "../../../shared/components/FileUpload";
 import InfoMessage from "../../../shared/components/InfoMessage";
-import { uploadSalesData } from "../../../api/data";
+
+import { uploadSalesData, analyzeSalesBatch, submitSalesMapping } from "../../../api/data";
+
+import UploadStep from "../components/UploadStep";
+import MappingStep from "../components/MappingStep";
+import ReviewStep from "../components/ReviewStep";
+import UploadsList from "../components/UploadsList";
+
+import { MAX_MB, getFileKey, readDedupeSet, writeDedupeSet, validateSelectedFile } from "../utils/fileUtils";
+import { getUploads, addUpload, updateUpload, removeUpload } from "../utils/uploadsStore";
+import { getCachedAnalysis, setCachedAnalysis, clearCachedAnalysis } from "../utils/analysisCache";
+
 import "./DataUpload.css";
 
-const MAX_MB = 50;
-const MAX_BYTES = MAX_MB * 1024 * 1024;
-const ALLOWED_EXT = new Set(["csv", "xlsx"]);
+const LS_MAPPING_KEY = (batchId) => `sales_batch_mapping_v1_${batchId}`;
 
-// LocalStorage key to remember previously uploaded files (dedupe)
-const DEDUPE_STORAGE_KEY = "sales_upload_dedupe_keys_v1";
-
-const getFileKey = (file) => `${file.name}__${file.size}__${file.lastModified}`;
-
-const readDedupeSet = () => {
-  try {
-    const raw = localStorage.getItem(DEDUPE_STORAGE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(arr) ? arr : []);
-  } catch {
-    return new Set();
-  }
-};
-
-const writeDedupeSet = (set) => {
-  localStorage.setItem(DEDUPE_STORAGE_KEY, JSON.stringify(Array.from(set)));
-};
-
-const getExt = (filename) => {
-  const parts = String(filename).toLowerCase().split(".");
-  return parts.length > 1 ? parts[parts.length - 1] : "";
-};
-
-const DataUpload = () => {
+export default function DataUpload() {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
+
   const [uploadedFile, setUploadedFile] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState("");
+
+  const [batchId, setBatchId] = useState(null);
+  const [forceRefreshAnalysis, setForceRefreshAnalysis] = useState(false);
+
   const [error, setError] = useState("");
+
+  // upload progress
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Optional: replace this with real campaigns from backend later
+  // analysis
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+
+  // mapping state
+  const [columnMap, setColumnMap] = useState({});
+  const [requiredMissingMap, setRequiredMissingMap] = useState({});
+
+  const [submitWarning, setSubmitWarning] = useState("");
+
+  // uploads list state (from localStorage)
+  const [uploads, setUploads] = useState(() => getUploads());
+
+  const steps = ["Upload", "Map Columns", "Review"];
+
   const campaignOptions = useMemo(
     () => [
       { value: "1", label: "Summer Sale 2025" },
@@ -62,36 +61,36 @@ const DataUpload = () => {
     []
   );
 
-  const steps = ["Upload", "Map Columns", "Review"];
+  const refreshUploads = () => setUploads(getUploads());
+
+  const resetToUploadStep = () => {
+    setCurrentStep(1);
+    setBatchId(null);
+    setAnalysis(null);
+    setAnalysisLoading(false);
+    setColumnMap({});
+    setRequiredMissingMap({});
+    setSubmitWarning("");
+    setForceRefreshAnalysis(false);
+  };
 
   const handleFileSelect = (file) => {
     setError("");
-
     if (!file) {
       setUploadedFile(null);
       return;
     }
 
-    // 1) Extension validation
-    const ext = getExt(file.name);
-    if (!ALLOWED_EXT.has(ext)) {
+    const validation = validateSelectedFile(file);
+    if (!validation.ok) {
       setUploadedFile(null);
-      setError("Only .csv and .xlsx files are allowed.");
+      setError(validation.message);
       return;
     }
 
-    // 2) Size validation
-    if (file.size > MAX_BYTES) {
-      setUploadedFile(null);
-      setError(`File is too large. Max size is ${MAX_MB} MB.`);
-      return;
-    }
-
-    // 3) Duplicate prevention (name+size+lastModified)
     const fileKey = getFileKey(file);
-    const dedupeSet = readDedupeSet();
-
-    if (dedupeSet.has(fileKey)) {
+    const dedupe = readDedupeSet();
+    if (dedupe.has(fileKey)) {
       setUploadedFile(null);
       setError("This file was already uploaded before. Please choose a different file.");
       return;
@@ -100,62 +99,270 @@ const DataUpload = () => {
     setUploadedFile(file);
   };
 
-  const handleUploadAndAnalyze = async () => {
+  const handleUpload = async () => {
     setError("");
+    setSubmitWarning("");
 
     if (!uploadedFile) {
       setError("Please select a file first.");
       return;
     }
 
-    // If you want campaign selection to be required, uncomment:
-    // if (!selectedCampaign) {
-    //   setError("Please select a campaign.");
-    //   return;
-    // }
-
     try {
       setUploading(true);
       setProgress(0);
 
-      await uploadSalesData({
+      const res = await uploadSalesData({
         file: uploadedFile,
         campaignId: selectedCampaign || undefined,
         onProgress: setProgress,
       });
 
-      // Mark as uploaded to prevent duplicates later
-      const dedupeSet = readDedupeSet();
-      dedupeSet.add(getFileKey(uploadedFile));
-      writeDedupeSet(dedupeSet);
+      // frontend dedupe mark
+      const dedupe = readDedupeSet();
+      dedupe.add(getFileKey(uploadedFile));
+      writeDedupeSet(dedupe);
 
-      // Move to next step
-      setCurrentStep(2);
+      const newBatchId = res?.batch_id ?? res?.batchId ?? null;
+      if (!newBatchId) {
+        setError("Upload succeeded, but batch_id was not returned by the backend.");
+        return;
+      }
+
+      // store upload card locally
+      addUpload({
+        batchId: newBatchId,
+        fileName: res?.file_name || uploadedFile.name,
+        uploadedAt: res?.uploaded_at || new Date().toISOString(),
+        status: res?.status || "uploaded",
+        campaignId: selectedCampaign || null,
+        campaignLabel:
+          campaignOptions.find((c) => String(c.value) === String(selectedCampaign))?.label || "",
+      });
+      refreshUploads();
+
+      // reset file picker but stay in step 1
+      setUploadedFile(null);
+      setProgress(0);
     } catch (err) {
-      // Basic message extraction (works with axios errors too)
       const msg =
         err?.response?.data?.detail ||
         err?.response?.data?.message ||
         err?.message ||
         "Upload failed.";
 
-      // If backend returns 409 for duplicate, show a nicer message
-      if (err?.response?.status === 409) {
-        setError("Duplicate upload detected. This file was already processed.");
-      } else {
-        setError(String(msg));
-      }
+      if (err?.response?.status === 409) setError("Duplicate upload detected. This file was already processed.");
+      else setError(String(msg));
     } finally {
       setUploading(false);
     }
   };
 
-  const handleCancel = () => {
-    setUploadedFile(null);
-    setSelectedCampaign("");
+  const openMappingForBatch = (id, { refresh = false } = {}) => {
     setError("");
-    setProgress(0);
-    setCurrentStep(1);
+    setSubmitWarning("");
+    setBatchId(id);
+    setForceRefreshAnalysis(!!refresh);
+    setCurrentStep(2);
+  };
+
+  const openReviewForBatch = (id) => {
+    setError("");
+    setSubmitWarning("");
+    setBatchId(id);
+    setCurrentStep(3);
+  };
+
+  // Step 2 analysis: load from cache unless refresh requested
+  useEffect(() => {
+    const run = async () => {
+      if (currentStep !== 2 || !batchId) return;
+
+      setError("");
+      setAnalysisLoading(true);
+
+      try {
+        if (!forceRefreshAnalysis) {
+          const cached = getCachedAnalysis(batchId);
+          if (cached) {
+            setAnalysis(cached);
+            // init mapping state from cached analysis
+            const initial = {};
+            (cached?.columns || []).forEach((c) => {
+              initial[c.index] = {
+                role: c.role || "skip",
+                include: !!c.auto_include,
+                verified: !c.verification_needed,
+              };
+            });
+            setColumnMap(initial);
+
+            const rm = {};
+            (cached?.classified?.required_missing || []).forEach((r) => {
+              rm[r.role] = "";
+            });
+            setRequiredMissingMap(rm);
+
+            setAnalysisLoading(false);
+            return;
+          }
+        }
+
+        const res = await analyzeSalesBatch(batchId);
+        setAnalysis(res);
+        setCachedAnalysis(batchId, res);
+        updateUpload(batchId, { status: res?.status || "mapping", fileName: res?.file_name });
+
+        const initial = {};
+        (res?.columns || []).forEach((c) => {
+          initial[c.index] = {
+            role: c.role || "skip",
+            include: !!c.auto_include,
+            verified: !c.verification_needed,
+          };
+        });
+        setColumnMap(initial);
+
+        const rm = {};
+        (res?.classified?.required_missing || []).forEach((r) => {
+          rm[r.role] = "";
+        });
+        setRequiredMissingMap(rm);
+
+        refreshUploads();
+      } catch (err) {
+        const msg =
+          err?.response?.data?.detail ||
+          err?.response?.data?.message ||
+          err?.message ||
+          "Analyze failed.";
+        setError(String(msg));
+      } finally {
+        setAnalysisLoading(false);
+        setForceRefreshAnalysis(false);
+      }
+    };
+
+    run();
+  }, [currentStep, batchId, forceRefreshAnalysis]);
+
+  const allColumnsOptions = useMemo(() => {
+    const cols = analysis?.columns || [];
+    return cols.map((c) => ({ value: String(c.index), label: c.name }));
+  }, [analysis]);
+
+  const setRole = (colIndex, role) => {
+    setColumnMap((prev) => ({
+      ...prev,
+      [colIndex]: { ...(prev[colIndex] || {}), role, include: role === "skip" ? false : true },
+    }));
+  };
+
+  const confirmVerified = (colIndex) => {
+    setColumnMap((prev) => ({
+      ...prev,
+      [colIndex]: { ...(prev[colIndex] || {}), verified: true },
+    }));
+  };
+
+  const toggleInclude = (colIndex) => {
+    setColumnMap((prev) => ({
+      ...prev,
+      [colIndex]: { ...(prev[colIndex] || {}), include: !prev[colIndex]?.include },
+    }));
+  };
+
+  const setRequiredMissing = (requiredRole, colIndexStr) => {
+    setRequiredMissingMap((prev) => ({ ...prev, [requiredRole]: colIndexStr }));
+
+    const colIndex = Number(colIndexStr);
+    if (!Number.isNaN(colIndex)) {
+      setColumnMap((prev) => ({
+        ...prev,
+        [colIndex]: { ...(prev[colIndex] || {}), role: requiredRole, include: true, verified: true },
+      }));
+    }
+  };
+
+  const canConfirm = useMemo(() => {
+    if (!analysis) return false;
+
+    const needsVerification = analysis?.classified?.needs_verification || [];
+    for (const c of needsVerification) {
+      if (!columnMap?.[c.index]?.verified) return false;
+    }
+
+    const needsMapping = analysis?.classified?.needs_mapping || [];
+    for (const c of needsMapping) {
+      const role = columnMap?.[c.index]?.role;
+      if (!role || role === "skip") return false;
+    }
+
+    const requiredMissing = analysis?.classified?.required_missing || [];
+    for (const r of requiredMissing) {
+      if (!requiredMissingMap?.[r.role]) return false;
+    }
+
+    return true;
+  }, [analysis, columnMap, requiredMissingMap]);
+
+  const handleConfirmMapping = async () => {
+    setError("");
+    setSubmitWarning("");
+
+    if (!analysis || !batchId) return;
+
+    const mappings = (analysis.columns || []).map((c) => ({
+      index: c.index,
+      name: c.name,
+      role: columnMap?.[c.index]?.role || "skip",
+      include: !!columnMap?.[c.index]?.include,
+    }));
+
+    const payload = {
+      batch_id: batchId,
+      mappings,
+      required_missing: requiredMissingMap,
+    };
+
+    localStorage.setItem(LS_MAPPING_KEY(batchId), JSON.stringify(payload));
+    updateUpload(batchId, { status: "mapped" });
+    refreshUploads();
+
+    try {
+      await submitSalesMapping(batchId, payload);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Mapping submit failed.";
+      setSubmitWarning(`Saved locally, but backend submit failed: ${String(msg)}`);
+    }
+
+    setCurrentStep(3);
+  };
+
+  const hasLocalMapping = (id) => {
+    try {
+      return !!localStorage.getItem(LS_MAPPING_KEY(id));
+    } catch {
+      return false;
+    }
+  };
+
+  const hasCachedAnalysis = (id) => !!getCachedAnalysis(id);
+
+  const handleDeleteUpload = (id) => {
+    removeUpload(id);
+    clearCachedAnalysis(id);
+    try {
+      localStorage.removeItem(LS_MAPPING_KEY(id));
+    } catch {}
+    refreshUploads();
+
+    // if user is currently viewing this batch, go back to step 1
+    if (String(batchId) === String(id)) resetToUploadStep();
   };
 
   return (
@@ -179,83 +386,65 @@ const DataUpload = () => {
 
         {currentStep === 1 && (
           <>
-            <FormSelect
-              label="Related Campaign (optional)"
-              placeholder="Select a campaign..."
-              options={campaignOptions}
-              value={selectedCampaign}
-              onChange={(e) => setSelectedCampaign(e.target.value)}
+            <UploadStep
+              campaignOptions={campaignOptions}
+              selectedCampaign={selectedCampaign}
+              onCampaignChange={(e) => setSelectedCampaign(e.target.value)}
+              uploadedFile={uploadedFile}
+              onFileSelect={handleFileSelect}
+              uploading={uploading}
+              progress={progress}
+              maxMb={MAX_MB}
+              onCancel={() => {
+                setUploadedFile(null);
+                setError("");
+                setProgress(0);
+              }}
+              onUpload={handleUpload}
             />
 
-            <div style={{ marginTop: 16 }}>
-              <FileUpload
-                onFileSelect={handleFileSelect}
-                accept=".csv,.xlsx"
-                maxSize={MAX_MB}
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 8 }}>Uploads</div>
+
+              <UploadsList
+                uploads={uploads}
+                hasLocalMapping={hasLocalMapping}
+                hasCachedAnalysis={hasCachedAnalysis}
+                onAnalyze={(id) => openMappingForBatch(id, { refresh: false })}
+                onReview={(id) => openReviewForBatch(id)}
+                onRefreshAnalysis={(id) => openMappingForBatch(id, { refresh: true })}
+                onDelete={handleDeleteUpload}
               />
             </div>
-
-            {uploading && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>
-                  Uploading... {progress}%
-                </div>
-                <div className="upload-progress">
-                  <div className="upload-progress-bar" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
-            )}
-
-            <FormActions>
-              <Button variant="secondary" onClick={handleCancel} disabled={uploading}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleUploadAndAnalyze}
-                disabled={!uploadedFile || uploading}
-              >
-                Upload & Analyze
-              </Button>
-            </FormActions>
           </>
         )}
 
         {currentStep === 2 && (
-          <div className="step-placeholder">
-            <h3>Step 2: Map Columns</h3>
-            <p>Column mapping interface will go here</p>
-            <p>Selected file: {uploadedFile?.name}</p>
-
-            <FormActions>
-              <Button variant="secondary" onClick={() => setCurrentStep(1)}>
-                Back
-              </Button>
-              <Button variant="primary" onClick={() => setCurrentStep(3)}>
-                Continue to Review
-              </Button>
-            </FormActions>
-          </div>
+          <MappingStep
+            analysisLoading={analysisLoading}
+            analysis={analysis}
+            allColumnsOptions={allColumnsOptions}
+            columnMap={columnMap}
+            requiredMissingMap={requiredMissingMap}
+            onBack={() => resetToUploadStep()}
+            onSetRole={setRole}
+            onConfirmVerified={confirmVerified}
+            onToggleInclude={toggleInclude}
+            onPickRequiredMissing={setRequiredMissing}
+            canConfirm={canConfirm}
+            onConfirm={handleConfirmMapping}
+          />
         )}
 
         {currentStep === 3 && (
-          <div className="step-placeholder">
-            <h3>Step 3: Review</h3>
-            <p>Review and confirm interface will go here</p>
-
-            <FormActions>
-              <Button variant="secondary" onClick={() => setCurrentStep(2)}>
-                Back
-              </Button>
-              <Button variant="primary" onClick={() => alert("Data uploaded successfully!")}>
-                Confirm & Save
-              </Button>
-            </FormActions>
-          </div>
+          <ReviewStep
+            batchId={batchId}
+            submitWarning={submitWarning}
+            onBack={() => setCurrentStep(2)}
+            onFinish={() => resetToUploadStep()}
+          />
         )}
       </Card>
     </div>
   );
-};
-
-export default DataUpload;
+}
