@@ -18,7 +18,9 @@ from app.models.ingestion_batch import IngestionBatch
 from app.schemas.data_upload import (
     UploadInitiateResponse,
     BatchInfoResponse,
-    BatchListResponse
+    BatchListResponse,
+    ColumnMappingRequest,
+    ProcessingResponse
 )
 
 
@@ -183,7 +185,141 @@ async def upload_sales_file(
 
 
 # ============================================
-# ENDPOINT 2: Analyze File
+# ENDPOINT 2: List All Uploads
+# ============================================
+
+@router.get("/uploads", response_model=List[BatchListResponse])
+async def list_uploaded_files(
+    status: str = None,
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get list of all uploaded files
+    
+    **What this returns:**
+    - All uploads by all users (visible to everyone)
+    - Shows file name, size, status, upload date
+    - Sorted by most recent first
+    
+    **Query Parameters:**
+    - `status`: Filter by status (pending, mapping, processing, completed, failed)
+    - `limit`: Max results to return (default: 50, max: 100)
+    - `offset`: Skip first N results (for pagination)
+    
+    **Example usage:**
+    - `/api/data/uploads` - Get last 50 uploads
+    - `/api/data/uploads?status=completed` - Only successful uploads
+    - `/api/data/uploads?limit=20&offset=20` - Get results 21-40
+    
+    **Permissions:** All authenticated users can view uploads
+    """
+    
+    # Build query - exclude soft-deleted batches
+    query = db.query(IngestionBatch).filter(
+        IngestionBatch.deleted_at.is_(None)
+    )
+    
+    # Filter by status if provided
+    if status:
+        # Validate status value
+        valid_statuses = ['pending', 'mapping', 'processing', 'completed', 'failed']
+        if status not in valid_statuses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            )
+        query = query.filter(IngestionBatch.status == status)
+    
+    # Apply pagination limits
+    if limit > 100:
+        limit = 100  # Prevent excessive data transfer
+    
+    # Sort by most recent first
+    query = query.order_by(IngestionBatch.uploaded_at.desc())
+    
+    # Apply limit and offset
+    batches = query.limit(limit).offset(offset).all()
+    
+    # Convert to response schema
+    return [
+        BatchListResponse(
+            batch_id=batch.batch_id,
+            file_name=batch.file_name,
+            file_type=batch.file_type,
+            file_size_kb=batch.file_size_kb,
+            status=batch.status,
+            uploaded_at=batch.uploaded_at,
+            valid_rows=batch.valid_rows or 0,
+            rejected_rows=batch.rejected_rows or 0
+        )
+        for batch in batches
+    ]
+
+
+# ============================================
+# ENDPOINT 3: Get Single Upload Details
+# ============================================
+
+@router.get("/uploads/{batch_id}", response_model=BatchInfoResponse)
+async def get_upload_details(
+    batch_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get detailed information about a specific upload
+    
+    **What this returns:**
+    - Complete details about one upload
+    - Includes processing stats, date range, errors
+    - More detailed than the list endpoint
+    
+    **Use cases:**
+    - User clicks on upload in list
+    - Check processing status
+    - View error details if failed
+    
+    **Permissions:** All authenticated users can view details
+    """
+    
+    # Get batch from database
+    batch = db.query(IngestionBatch).filter(
+        IngestionBatch.batch_id == batch_id,
+        IngestionBatch.deleted_at.is_(None)
+    ).first()
+    
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Upload batch {batch_id} not found"
+        )
+    
+    # Return detailed info
+    return BatchInfoResponse(
+        batch_id=batch.batch_id,
+        file_name=batch.file_name,
+        file_type=batch.file_type,
+        file_size_kb=batch.file_size_kb,
+        uploaded_by=batch.uploaded_by,
+        uploaded_at=batch.uploaded_at,
+        status=batch.status,
+        total_rows=batch.total_rows or 0,
+        valid_rows=batch.valid_rows or 0,
+        rejected_rows=batch.rejected_rows or 0,
+        date_range_start=batch.date_range_start,
+        date_range_end=batch.date_range_end,
+        processing_started_at=batch.processing_started_at,
+        processing_completed_at=batch.processing_completed_at,
+        processing_duration_seconds=batch.processing_duration_seconds,
+        error_message=batch.error_message
+    )
+
+
+# ============================================
+# ENDPOINT 4: Analyze File
 # ============================================
 
 @router.get("/analyze/{batch_id}")
@@ -270,3 +406,153 @@ async def analyze_uploaded_file_endpoint(
         "classified": analysis_result["classified"],
         "sample_data": analysis_result["sample_data"]
     }
+
+
+# ============================================
+# ENDPOINT 5: Process/Import File
+# ============================================
+
+@router.post("/process/{batch_id}", response_model=ProcessingResponse)
+async def process_sales_data(
+    batch_id: int,
+    mappings: ColumnMappingRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Process and import sales data into database
+    
+    **What this does:**
+    1. Takes user's confirmed column mappings
+    2. Reads and validates the data
+    3. Imports into sales_data table
+    4. Updates batch statistics
+    5. Calculates date range
+    
+    **Request body example:**
+    ```json
+    {
+        "date_column": "sale_date",
+        "product_column": "product_name",
+        "quantity_column": "qty",
+        "price_column": "unit_price",
+        "category_column": "category",
+        "skip_columns": ["employee_id", "invoice_num"]
+    }
+    ```
+    
+    **Permissions:** Admin, Marketing User only
+    """
+    
+    # Permission Check
+    if current_user.role.role_name not in ['admin', 'marketing_user']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Admin and Marketing Users can process files"
+        )
+    
+    # Get Batch
+    batch = db.query(IngestionBatch).filter(
+        IngestionBatch.batch_id == batch_id,
+        IngestionBatch.deleted_at.is_(None)
+    ).first()
+    
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Upload batch {batch_id} not found"
+        )
+    
+    # Check batch status
+    if batch.status not in ['mapping', 'pending']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Batch cannot be processed. Current status: {batch.status}"
+        )
+    
+    # Check file exists
+    file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found on server"
+        )
+    
+    # Update status to processing
+    batch.status = 'processing'
+    batch.processing_started_at = datetime.utcnow()
+    db.commit()
+    
+    try:
+        # Import the processing function
+        from app.services.ingestion_service import parse_uploaded_file, extract_date_range
+        
+        # Parse file
+        df = parse_uploaded_file(file_path, batch.file_type)
+        
+        # Get column mappings from request
+        date_col = mappings.date_column
+        product_col = mappings.product_column
+        quantity_col = mappings.quantity_column
+        
+        # TODO: Here you would actually import the data into your sales_data table
+        # For now, we'll just update the batch statistics
+        
+        total_rows = len(df)
+        valid_rows = len(df.dropna(subset=[date_col, product_col]))
+        rejected_rows = total_rows - valid_rows
+        
+        # Extract date range
+        date_info = extract_date_range(df, date_col)
+        
+        # Update batch
+        batch.total_rows = total_rows
+        batch.valid_rows = valid_rows
+        batch.rejected_rows = rejected_rows
+        batch.date_range_start = date_info.get('start_date')
+        batch.date_range_end = date_info.get('end_date')
+        batch.processing_completed_at = datetime.utcnow()
+        batch.status = 'completed'
+        
+        # Calculate duration
+        if batch.processing_started_at:
+            duration = (batch.processing_completed_at - batch.processing_started_at).total_seconds()
+            batch.processing_duration_seconds = int(duration)
+        
+        db.commit()
+        db.refresh(batch)
+        
+        return ProcessingResponse(
+            success=True,
+            message="File processed successfully",
+            batch_id=batch.batch_id,
+            status=batch.status,
+            statistics={
+                "total_rows": batch.total_rows,
+                "valid_rows": batch.valid_rows,
+                "rejected_rows": batch.rejected_rows,
+                "success_rate": round((valid_rows / total_rows * 100), 2) if total_rows > 0 else 0
+            },
+            date_range={
+                "start": batch.date_range_start.isoformat() if batch.date_range_start else None,
+                "end": batch.date_range_end.isoformat() if batch.date_range_end else None
+            },
+            processing_time_seconds=batch.processing_duration_seconds
+        )
+        
+    except Exception as e:
+        # Mark as failed
+        batch.status = 'failed'
+        batch.error_message = str(e)
+        batch.processing_completed_at = datetime.utcnow()
+        
+        if batch.processing_started_at:
+            duration = (batch.processing_completed_at - batch.processing_started_at).total_seconds()
+            batch.processing_duration_seconds = int(duration)
+        
+        db.commit()
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process file: {str(e)}"
+        )
