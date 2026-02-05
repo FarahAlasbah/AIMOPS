@@ -217,3 +217,110 @@
   flex-wrap: wrap;
   margin-top: 12px;
 }
+.uploads-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.upload-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.meta-pill {
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 4px;
+}
+
+.pager-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.pager-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pager-page {
+  font-size: 13px;
+  color: #374151;
+}
+
+.pager-btn {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #111827;
+  cursor: pointer;
+}
+
+.pager-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Confirmation UI: keep big lists from taking the whole page */
+.mapping-pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.mapping-list {
+  margin-top: 10px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.verify-item {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.verify-item:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.verify-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.link-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #065f46;
+  cursor: pointer;
+  font-weight: 600;
+}
