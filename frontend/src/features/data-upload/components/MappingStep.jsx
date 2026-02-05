@@ -1,3 +1,5 @@
+// frontend/src/features/data-upload/components/MappingStep.jsx
+import { useState } from "react";
 import { Button, FormActions, FormSelect } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import ColumnMeta from "./ColumnMeta";
@@ -73,48 +75,95 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole }) {
 }
 
 function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConfirmVerified }) {
+  const [page, setPage] = useState(1);
+  const [expanded, setExpanded] = useState({});
+  const pageSize = 5;
+
   if (!Array.isArray(needsVerification) || needsVerification.length === 0) return null;
+
+  const total = needsVerification.length;
+  const confirmed = needsVerification.filter((c) => !!columnMap?.[c.index]?.verified).length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const safeSetPage = (p) => setPage(Math.min(Math.max(1, p), totalPages));
+
+  const start = (page - 1) * pageSize;
+  const pageItems = needsVerification.slice(start, start + pageSize);
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">Needs verification</div>
+      <div className="mapping-title">
+        Needs verification ({confirmed}/{total} confirmed)
+      </div>
       <div className="mapping-sub">Confirm the AI guess or choose a different role.</div>
 
-      {needsVerification.map((c) => {
-        const current = columnMap?.[c.index] || {};
-        const options = buildRoleOptions(c);
+      <div className="mapping-pager">
+        <button className="pager-btn" onClick={() => safeSetPage(page - 1)} disabled={page === 1}>
+          Prev
+        </button>
+        <div className="pager-page">
+          Page {page} / {totalPages}
+        </div>
+        <button
+          className="pager-btn"
+          onClick={() => safeSetPage(page + 1)}
+          disabled={page === totalPages}
+        >
+          Next
+        </button>
+      </div>
 
-        return (
-          <div key={c.index} style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+      <div className="mapping-list">
+        {pageItems.map((c) => {
+          const current = columnMap?.[c.index] || {};
+          const options = buildRoleOptions(c);
+          const isOpen = !!expanded[c.index];
 
-            {c.user_prompt && (
-              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{c.user_prompt}</div>
-            )}
+          return (
+            <div key={c.index} className="verify-item">
+              <div className="verify-head">
+                <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: "#6b7280" }}>
+                  Suggested role: {c.role || "-"}
+                </div>
+              </div>
 
-            <div className="mapping-row" style={{ marginTop: 10 }}>
-              <FormSelect
-                label="Role"
-                placeholder="Select role..."
-                options={options}
-                value={current.role || "skip"}
-                onChange={(e) => onSetRole(c.index, e.target.value)}
-              />
+              {c.user_prompt && (
+                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>{c.user_prompt}</div>
+              )}
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => onConfirmVerified(c.index)}
-                disabled={!!current.verified}
-              >
-                {current.verified ? "Confirmed" : "Confirm"}
-              </Button>
+              <div className="mapping-row" style={{ marginTop: 10 }}>
+                <FormSelect
+                  label="Role"
+                  placeholder="Select role..."
+                  options={options}
+                  value={current.role || "skip"}
+                  onChange={(e) => onSetRole(c.index, e.target.value)}
+                />
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => onConfirmVerified(c.index)}
+                  disabled={!!current.verified}
+                >
+                  {current.verified ? "Confirmed" : "Confirm"}
+                </Button>
+
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
+                >
+                  {isOpen ? "Hide details" : "Show details"}
+                </button>
+              </div>
+
+              {isOpen && <ColumnMeta column={c} />}
             </div>
-
-            <ColumnMeta column={c} />
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
