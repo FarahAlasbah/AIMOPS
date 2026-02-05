@@ -6,8 +6,9 @@ Why: Validate responses, auto-generate API docs
 
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date
+from enum import Enum
 
 
 # ============================================
@@ -224,7 +225,87 @@ class ProcessingResponse(BaseModel):
             }
         }
 
+class TargetField(str, Enum):
+    """Valid target fields that match database enum"""
+    date = "date"
+    product_code = "product_code"
+    product_name = "product_name"
+    category = "category"
+    quantity = "quantity"
+    unit_price = "unit_price"
+    total_amount = "total_amount"
+    discount = "discount"
+    customer_id = "customer_id"
+    location = "location"
+    payment_method = "payment_method"
+    other = "other"
+    
 
+class  ColumnMappingConfirm(BaseModel):
+    """Single column mapping confirmation"""
+    original_name: str
+    role: TargetField  # "date", "product_name", "quantity", "skip", etc.
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "original_name": "Sale DT",
+                "role": "date"
+            }
+        }
+
+
+class MappingConfirmation(BaseModel):
+    """Complete mapping confirmation from user"""
+    mappings: List[ColumnMappingConfirm]
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "mappings": [
+                    {"original_name": "Sale DT", "role": "date"},
+                    {"original_name": "Item Description", "role": "product_name"},
+                    {"original_name": "Qty Sold", "role": "quantity"},
+                    {"original_name": "Notes", "role": "skip"}
+                ]
+            }
+        }
+
+
+class ConfirmedMapping(BaseModel):
+    """Single confirmed mapping details"""
+    original_name: str
+    role: str
+    was_changed: bool  # Did user change from system's suggestion?
+    confidence: Optional[float] = None
+    
+
+class MappingConfirmationResponse(BaseModel):
+    """Response after confirming mappings"""
+    success: bool
+    batch_id: int
+    mappings_saved: int
+    confirmed_mappings: List[ConfirmedMapping]
+    file_type: str  # "single_product" or "multiple_products"
+    next_step: Dict[str, Any]
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "batch_id": 1,
+                "mappings_saved": 7,
+                "file_type": "multiple_products",
+                "next_step": {
+                    "type": "multiple_products",
+                    "details": {
+                        "unique_products_count": 6,
+                        "requires_extraction": True,
+                        "message": "Found 6 unique products"
+                    }
+                }
+            }
+        }
 # ============================================
 # Why These Schemas?
 # ============================================
