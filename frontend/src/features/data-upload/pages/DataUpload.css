@@ -178,6 +178,7 @@
   color: #374151;
   word-break: break-word;
 }
+
 .uploads-grid {
   margin-top: 16px;
   display: grid;
@@ -217,6 +218,7 @@
   flex-wrap: wrap;
   margin-top: 12px;
 }
+
 .uploads-header {
   display: flex;
   align-items: center;
