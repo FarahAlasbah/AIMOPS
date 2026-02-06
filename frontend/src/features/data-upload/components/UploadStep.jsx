@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/components/UploadStep.jsx
 import { Button, FormActions, FormSelect } from "../../../shared/components";
 import FileUpload from "../../../shared/components/FileUpload";
 
@@ -6,7 +7,6 @@ export default function UploadStep({
   selectedCampaign,
   onCampaignChange,
 
-  uploadedFile,
   onFileSelect,
 
   uploading,
@@ -15,6 +15,8 @@ export default function UploadStep({
 
   onCancel,
   onUpload,
+
+  fileInputKey, // IMPORTANT
 }) {
   return (
     <>
@@ -27,7 +29,12 @@ export default function UploadStep({
       />
 
       <div style={{ marginTop: 16 }}>
-        <FileUpload onFileSelect={onFileSelect} accept=".csv,.xlsx" maxSize={maxMb} />
+        <FileUpload
+          key={fileInputKey}
+          onFileSelect={onFileSelect}
+          accept=".csv,.xlsx"
+          maxSize={maxMb}
+        />
       </div>
 
       {uploading && (
@@ -45,7 +52,7 @@ export default function UploadStep({
         <Button variant="secondary" onClick={onCancel} disabled={uploading}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={onUpload} disabled={!uploadedFile || uploading}>
+        <Button variant="primary" onClick={onUpload} disabled={uploading}>
           Upload
         </Button>
       </FormActions>

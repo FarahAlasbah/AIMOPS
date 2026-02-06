@@ -1,3 +1,4 @@
+// frontend/src/api/data.js
 import api from "./api";
 
 export const uploadSalesData = async ({ file, campaignId, onProgress }) => {
@@ -21,12 +22,19 @@ export const analyzeSalesBatch = async (batchId) => {
   return res.data;
 };
 
-export const getAllUploads = async () => {
-  const res = await api.get("/api/data/uploads");
+// Backend pagination
+export const getUploadsPage = async ({ limit = 20, offset = 0 } = {}) => {
+  const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
   return res.data; // array
 };
 
-// Not in the doc: keep as TODO until backend adds it
+// Process endpoint requires body
+export const processSalesBatch = async (batchId, payload) => {
+  const res = await api.post(`/api/data/process/${batchId}`, payload);
+  return res.data;
+};
+
+// Keep as TODO (your backend doesn't have it yet)
 export const submitSalesMapping = async (batchId, payload) => {
   return { success: true, note: "No backend mapping endpoint yet", batchId, payload };
 };
