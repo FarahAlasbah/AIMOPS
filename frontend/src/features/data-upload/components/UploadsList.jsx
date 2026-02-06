@@ -1,8 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+// frontend/src/features/data-upload/components/UploadsList.jsx
+import { useEffect } from "react";
 import UploadCard from "./UploadCard";
 
 export default function UploadsList({
   uploads,
+  loading,
+
+  limit,
+  offset,
+  hasNext,
+
+  onPrev,
+  onNext,
+
   hasLocalMapping,
   hasCachedAnalysis,
   onAnalyze,
@@ -10,34 +20,27 @@ export default function UploadsList({
   onRefreshAnalysis,
   onClearLocal,
 }) {
-  const [page, setPage] = useState(1);
-  const pageSize = 6;
-
-  const total = Array.isArray(uploads) ? uploads.length : 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-    if (page < 1) setPage(1);
-  }, [page, totalPages]);
+    // if the user paged too far and got empty, go back one page automatically
+    if (!loading && Array.isArray(uploads) && uploads.length === 0 && offset > 0) {
+      onPrev?.();
+    }
+  }, [loading, uploads, offset, onPrev]);
 
-  const paged = useMemo(() => {
-    const list = Array.isArray(uploads) ? uploads : [];
-    const start = (page - 1) * pageSize;
-    return list.slice(start, start + pageSize);
-  }, [uploads, page]);
+  if (loading) {
+    return <div style={{ marginTop: 14, color: "#6b7280", fontSize: 13 }}>Loading uploads...</div>;
+  }
 
   if (!uploads || uploads.length === 0) {
     return <div style={{ marginTop: 14, color: "#6b7280", fontSize: 13 }}>No uploads yet.</div>;
   }
 
-  const startN = (page - 1) * pageSize + 1;
-  const endN = Math.min(page * pageSize, total);
+  const page = Math.floor(offset / limit) + 1;
 
   return (
     <>
       <div className="uploads-grid">
-        {paged.map((u) => (
+        {uploads.map((u) => (
           <UploadCard
             key={u.batchId}
             upload={u}
@@ -53,23 +56,19 @@ export default function UploadsList({
 
       <div className="pager">
         <div className="pager-info">
-          Showing {startN}-{endN} of {total}
+          Page {page} • Showing {uploads.length} item(s)
         </div>
 
         <div className="pager-actions">
-          <button className="pager-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+          <button className="pager-btn" onClick={onPrev} disabled={offset === 0}>
             Prev
           </button>
 
           <div className="pager-page">
-            Page {page} / {totalPages}
+            Offset {offset} • Limit {limit}
           </div>
 
-          <button
-            className="pager-btn"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
+          <button className="pager-btn" onClick={onNext} disabled={!hasNext}>
             Next
           </button>
         </div>
