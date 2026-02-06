@@ -412,13 +412,13 @@ async def analyze_uploaded_file_endpoint(
 
 
 # ============================================
-# ENDPOINT 5: Process/Import File
+# ENDPOINT 6: Process/Import File (UPDATED!)
 # ============================================
 
 @router.post("/process/{batch_id}", response_model=ProcessingResponse)
 async def process_sales_data(
     batch_id: int,
-    mappings: ColumnMappingRequest,
+    # REMOVED: mappings parameter - we read from database now!
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -426,35 +426,35 @@ async def process_sales_data(
     Process and import sales data into database
     
     **What this does:**
-    1. Takes user's confirmed column mappings
-    2. Reads and validates the data
+    1. Reads column mappings from database (saved in /confirm-mappings)
+    2. Validates the data
     3. Imports into sales_data table
     4. Updates batch statistics
     5. Calculates date range
     
-    **Request body example:**
-    ```json
-    {
-        "date_column": "sale_date",
-        "product_column": "product_name",
-        "quantity_column": "qty",
-        "price_column": "unit_price",
-        "category_column": "category",
-        "skip_columns": ["employee_id", "invoice_num"]
-    }
-    ```
+    **NOTE:** Must call /confirm-mappings first!
+    
+    **No request body needed** - mappings are read from database
     
     **Permissions:** Admin, Marketing User only
     """
     
+    from app.models.column_mapping import ColumnMapping
+    
+    # ============================================
     # Permission Check
+    # ============================================
+    
     if current_user.role.role_name not in ['admin', 'marketing_user']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Admin and Marketing Users can process files"
         )
     
+    # ============================================
     # Get Batch
+    # ============================================
+    
     batch = db.query(IngestionBatch).filter(
         IngestionBatch.batch_id == batch_id,
         IngestionBatch.deleted_at.is_(None)
@@ -466,14 +466,51 @@ async def process_sales_data(
             detail=f"Upload batch {batch_id} not found"
         )
     
-    # Check batch status
-    if batch.status not in ['mapping', 'pending']:
+    # ============================================
+    # Check batch status - FIXED!
+    # ============================================
+    
+    # Allow: pending, mapping, processing
+    # Block: completed, failed
+    if batch.status in ['completed', 'failed']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Batch cannot be processed. Current status: {batch.status}"
+            detail=f"Batch already processed (status: {batch.status})"
         )
     
-    # Check file exists
+    # ============================================
+    # Get Column Mappings from Database - NEW!
+    # ============================================
+    
+    mappings = db.query(ColumnMapping).filter(
+        ColumnMapping.batch_id == batch_id
+    ).all()
+    
+    if not mappings:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No column mappings found. Please confirm column mappings first using /confirm-mappings endpoint."
+        )
+    
+    # Build mapping dictionary
+    column_map = {}
+    for mapping in mappings:
+        column_map[mapping.target_field] = mapping.source_column_name
+    
+    # Validate required fields exist
+    required_fields = ['date', 'product_name', 'quantity']
+    missing_fields = [field for field in required_fields if field not in column_map]
+    
+    if missing_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Missing required field mappings: {', '.join(missing_fields)}"
+        )
+    
+    # ============================================
+    # Check File Exists
+    # ============================================
+    
     file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
     if not os.path.exists(file_path):
         raise HTTPException(
@@ -481,10 +518,19 @@ async def process_sales_data(
             detail="File not found on server"
         )
     
-    # Update status to processing
-    batch.status = 'processing'
+    # ============================================
+    # Update Status to Processing (if needed)
+    # ============================================
+    
+    if batch.status != 'processing':
+        batch.status = 'processing'
+    
     batch.processing_started_at = datetime.utcnow()
     db.commit()
+    
+    # ============================================
+    # Process File
+    # ============================================
     
     try:
         # Import the processing function
@@ -493,10 +539,10 @@ async def process_sales_data(
         # Parse file
         df = parse_uploaded_file(file_path, batch.file_type)
         
-        # Get column mappings from request
-        date_col = mappings.date_column
-        product_col = mappings.product_column
-        quantity_col = mappings.quantity_column
+        # Get column names from mappings
+        date_col = column_map['date']
+        product_col = column_map['product_name']
+        quantity_col = column_map['quantity']
         
         # TODO: Here you would actually import the data into your sales_data table
         # For now, we'll just update the batch statistics
