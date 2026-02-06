@@ -106,7 +106,7 @@ function App() {
             />
 
             <Route
-              path="data-upload"
+              path="data-upload/*"
               element={
                 <RequirePermission anyOf={["data.upload"]}>
                   <DataUpload />
