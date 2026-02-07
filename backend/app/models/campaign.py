@@ -104,7 +104,7 @@ class Campaign(Base):
     channels = relationship("CampaignChannel", back_populates="campaign", cascade="all, delete-orphan")
     
     # Link to events (many-to-many through campaign_events)
-    events = relationship("CampaignEvent", back_populates="campaign", cascade="all, delete-orphan")
+    # events = relationship("CampaignEvent", back_populates="campaign", cascade="all, delete-orphan")
     
     def __repr__(self):
         """String representation for debugging"""
@@ -217,29 +217,29 @@ class CampaignChannel(Base):
         return f"<CampaignChannel C{self.campaign_id}-{self.channel_name}>"
 
 
-class CampaignEvent(Base):
-    """
-    Links campaigns to seasonal events
+# class CampaignEvent(Base):
+#     """
+#     Links campaigns to seasonal events
     
-    Maps to: campaign_events table
-    Why: Track which events affect campaign (used in forecasting)
-         e.g., Ramadan campaign linked to Ramadan event
-    """
-    __tablename__ = "campaign_events"
+#     Maps to: campaign_events table
+#     Why: Track which events affect campaign (used in forecasting)
+#          e.g., Ramadan campaign linked to Ramadan event
+#     """
+#     __tablename__ = "campaign_events"
     
-    # Composite primary key
-    campaign_id = Column(Integer, ForeignKey('campaigns.campaign_id'), primary_key=True)
-    event_id = Column(Integer, ForeignKey('events.event_id'), primary_key=True)
+#     # Composite primary key
+#     campaign_id = Column(Integer, ForeignKey('campaigns.campaign_id'), primary_key=True)
+#     event_id = Column(Integer, ForeignKey('events.event_id'), primary_key=True)
     
-    # How relevant is this event? (0.00 to 1.00)
-    relevance_score = Column(DECIMAL(3, 2), default=1.00)
+#     # How relevant is this event? (0.00 to 1.00)
+#     relevance_score = Column(DECIMAL(3, 2), default=1.00)
     
-    # Relationships
-    campaign = relationship("Campaign", back_populates="events")
-    # Note: Event model will be created when we build Events feature
+#     # Relationships
+#     campaign = relationship("Campaign", back_populates="events")
+#     # Note: Event model will be created when we build Events feature
     
-    def __repr__(self):
-        return f"<CampaignEvent C{self.campaign_id}-E{self.event_id}>"
+#     def __repr__(self):
+#         return f"<CampaignEvent C{self.campaign_id}-E{self.event_id}>"
 
 
 # ============================================
