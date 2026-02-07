@@ -21,18 +21,17 @@ export default function UploadsList({
   onClearLocal,
 }) {
   useEffect(() => {
-    // if the user paged too far and got empty, go back one page automatically
     if (!loading && Array.isArray(uploads) && uploads.length === 0 && offset > 0) {
       onPrev?.();
     }
   }, [loading, uploads, offset, onPrev]);
 
   if (loading) {
-    return <div style={{ marginTop: 14, color: "#6b7280", fontSize: 13 }}>Loading uploads...</div>;
+    return <div className="uploads-state">Loading uploads...</div>;
   }
 
   if (!uploads || uploads.length === 0) {
-    return <div style={{ marginTop: 14, color: "#6b7280", fontSize: 13 }}>No uploads yet.</div>;
+    return <div className="uploads-state">No uploads yet.</div>;
   }
 
   const page = Math.floor(offset / limit) + 1;

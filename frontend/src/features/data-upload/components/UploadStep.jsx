@@ -16,7 +16,10 @@ export default function UploadStep({
   onCancel,
   onUpload,
 
-  fileInputKey, // IMPORTANT
+  fileInputKey,
+  canUpload,
+
+  selectedFile, // NEW: controlled file
 }) {
   return (
     <>
@@ -31,6 +34,7 @@ export default function UploadStep({
       <div style={{ marginTop: 16 }}>
         <FileUpload
           key={fileInputKey}
+          value={selectedFile}
           onFileSelect={onFileSelect}
           accept=".csv,.xlsx"
           maxSize={maxMb}
@@ -52,7 +56,7 @@ export default function UploadStep({
         <Button variant="secondary" onClick={onCancel} disabled={uploading}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={onUpload} disabled={uploading}>
+        <Button variant="primary" onClick={onUpload} disabled={!canUpload || uploading}>
           Upload
         </Button>
       </FormActions>

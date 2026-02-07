@@ -5,15 +5,33 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
-import { analyzeSalesBatch } from "../../../api/data";
-
+import { analyzeSalesBatch, confirmSalesMappings } from "../../../api/data";
 import MappingStep from "../components/MappingStep";
 
 import { getCachedAnalysis, setCachedAnalysis } from "../utils/analysisCache";
+import { buildConfirmMappingsPayload } from "../utils/confirmPayload";
+import { normalizeRole } from "../utils/analysisUtils";
 
-import "./DataUpload.css";
+const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
 
-const LS_MAPPING_KEY = (batchId) => `sales_batch_mapping_v1_${batchId}`;
+const extractApiError = (err, fallback) => {
+  const data = err?.response?.data;
+  if (!data) return fallback;
+
+  if (Array.isArray(data.detail)) {
+    return data.detail
+      .map((d) => {
+        const loc = Array.isArray(d.loc) ? d.loc.join(".") : "";
+        return `${loc}: ${d.msg || "Invalid input"}`;
+      })
+      .join(" | ");
+  }
+
+  if (typeof data.detail === "string") return data.detail;
+  if (typeof data.message === "string") return data.message;
+
+  return fallback;
+};
 
 export default function MappingPage() {
   const navigate = useNavigate();
@@ -30,6 +48,8 @@ export default function MappingPage() {
   const [columnMap, setColumnMap] = useState({});
   const [requiredMissingMap, setRequiredMissingMap] = useState({});
 
+  const [confirming, setConfirming] = useState(false);
+
   useEffect(() => {
     const run = async () => {
       if (!batchId) return;
@@ -45,9 +65,10 @@ export default function MappingPage() {
 
             const initial = {};
             (cached?.columns || []).forEach((c) => {
+              const role = normalizeRole(c.role); // employee_id/other -> skip
               initial[c.index] = {
-                role: c.role || "skip",
-                include: !!c.auto_include,
+                role,
+                include: role !== "skip" && !!c.auto_include,
                 verified: !c.verification_needed,
               };
             });
@@ -70,9 +91,10 @@ export default function MappingPage() {
 
         const initial = {};
         (res?.columns || []).forEach((c) => {
+          const role = normalizeRole(c.role); // employee_id/other -> skip
           initial[c.index] = {
-            role: c.role || "skip",
-            include: !!c.auto_include,
+            role,
+            include: role !== "skip" && !!c.auto_include,
             verified: !c.verification_needed,
           };
         });
@@ -84,12 +106,8 @@ export default function MappingPage() {
         });
         setRequiredMissingMap(rm);
       } catch (err) {
-        const msg =
-          err?.response?.data?.detail ||
-          err?.response?.data?.message ||
-          err?.message ||
-          "Analyze failed.";
-        setError(String(msg));
+        const fallback = err?.message || "Analyze failed.";
+        setError(extractApiError(err, fallback));
       } finally {
         setAnalysisLoading(false);
       }
@@ -103,10 +121,15 @@ export default function MappingPage() {
     return cols.map((c) => ({ value: String(c.index), label: c.name }));
   }, [analysis]);
 
-  const setRole = (colIndex, role) => {
+  const setRole = (colIndex, roleRaw) => {
+    const role = normalizeRole(roleRaw);
     setColumnMap((prev) => ({
       ...prev,
-      [colIndex]: { ...(prev[colIndex] || {}), role, include: role === "skip" ? false : true },
+      [colIndex]: {
+        ...(prev[colIndex] || {}),
+        role,
+        include: role === "skip" ? false : true,
+      },
     }));
   };
 
@@ -131,7 +154,12 @@ export default function MappingPage() {
     if (!Number.isNaN(colIndex)) {
       setColumnMap((prev) => ({
         ...prev,
-        [colIndex]: { ...(prev[colIndex] || {}), role: requiredRole, include: true, verified: true },
+        [colIndex]: {
+          ...(prev[colIndex] || {}),
+          role: normalizeRole(requiredRole),
+          include: true,
+          verified: true,
+        },
       }));
     }
   };
@@ -146,7 +174,7 @@ export default function MappingPage() {
 
     const needsMapping = analysis?.classified?.needs_mapping || [];
     for (const c of needsMapping) {
-      const role = columnMap?.[c.index]?.role;
+      const role = normalizeRole(columnMap?.[c.index]?.role);
       if (!role || role === "skip") return false;
     }
 
@@ -158,27 +186,25 @@ export default function MappingPage() {
     return true;
   }, [analysis, columnMap, requiredMissingMap]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setError("");
     if (!analysis || !batchId) return;
 
-    const mappings = (analysis.columns || []).map((c) => ({
-      index: c.index,
-      name: c.name,
-      role: columnMap?.[c.index]?.role || "skip",
-      include: !!columnMap?.[c.index]?.include,
-      verified: !!columnMap?.[c.index]?.verified,
-    }));
+    const payload = buildConfirmMappingsPayload({ analysis, columnMap });
 
-    const payload = {
-      batch_id: batchId,
-      mappings,
-      required_missing: requiredMissingMap,
-    };
+    try {
+      setConfirming(true);
 
-    localStorage.setItem(LS_MAPPING_KEY(batchId), JSON.stringify(payload));
+      const res = await confirmSalesMappings(batchId, payload);
 
-    navigate(`/app/data-upload/review/${batchId}`);
+      localStorage.setItem(LS_CONFIRMED_KEY(batchId), JSON.stringify(res));
+      navigate(`/app/data-upload/review/${batchId}`);
+    } catch (err) {
+      const fallback = err?.message || "Confirm mappings failed.";
+      setError(extractApiError(err, fallback));
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -211,6 +237,7 @@ export default function MappingPage() {
           onPickRequiredMissing={setRequiredMissing}
           canConfirm={canConfirm}
           onConfirm={handleConfirm}
+          confirming={confirming}
         />
       </Card>
     </div>
