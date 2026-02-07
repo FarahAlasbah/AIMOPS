@@ -28,13 +28,14 @@ export const getUploadsPage = async ({ limit = 20, offset = 0 } = {}) => {
   return res.data; // array
 };
 
-// Process endpoint requires body
-export const processSalesBatch = async (batchId, payload) => {
-  const res = await api.post(`/api/data/process/${batchId}`, payload);
+// NEW: Confirm mappings (saves to DB)
+export const confirmSalesMappings = async (batchId, payload) => {
+  const res = await api.post(`/api/data/confirm-mappings/${batchId}`, payload);
   return res.data;
 };
 
-// Keep as TODO (your backend doesn't have it yet)
-export const submitSalesMapping = async (batchId, payload) => {
-  return { success: true, note: "No backend mapping endpoint yet", batchId, payload };
+// Process endpoint requires body (as you showed in Postman)
+export const processSalesBatch = async (batchId, payload) => {
+  const res = await api.post(`/api/data/process/${batchId}`, payload);
+  return res.data;
 };

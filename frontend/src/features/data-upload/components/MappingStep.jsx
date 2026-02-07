@@ -1,9 +1,89 @@
 // frontend/src/features/data-upload/components/MappingStep.jsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, FormActions, FormSelect } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import ColumnMeta from "./ColumnMeta";
-import { buildRoleOptions } from "../utils/analysisUtils";
+import { ROLE_DEFS, normalizeRole, roleLabel } from "../utils/analysisUtils";
+
+function RolePills({ value, suggested, onChange }) {
+  const current = normalizeRole(value);
+  const sug = normalizeRole(suggested);
+
+  const showSuggested = sug && sug !== "skip" && sug !== current;
+
+  return (
+    <div className="role-picker">
+      {showSuggested && (
+        <div className="role-suggest">
+          Suggested: <strong>{roleLabel(sug)}</strong>
+        </div>
+      )}
+
+      <div className="role-pills">
+        {ROLE_DEFS.map((r) => {
+          const active = current === r.value;
+          const isSkip = r.value === "skip";
+          return (
+            <button
+              key={r.value}
+              type="button"
+              className={`role-pill ${active ? "active" : ""} ${isSkip ? "skip" : ""}`}
+              onClick={() => onChange(r.value)}
+              aria-pressed={active}
+            >
+              {r.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HighConfidenceCard({ highConfidence, columnMap, onSetRole }) {
+  const [expanded, setExpanded] = useState({});
+
+  if (!Array.isArray(highConfidence) || highConfidence.length === 0) return null;
+
+  return (
+    <div className="mapping-card">
+      <div className="mapping-title">Auto-mapped (high confidence)</div>
+      <div className="mapping-sub">Review these mappings (you can still change roles).</div>
+
+      {highConfidence.map((c) => {
+        const current = columnMap?.[c.index] || {};
+        const isOpen = !!expanded[c.index];
+
+        return (
+          <div key={c.index} className="verify-item">
+            <div className="verify-head">
+              <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
+              >
+                {isOpen ? "Hide details" : "Show details"}
+              </button>
+            </div>
+
+            <div className="mapping-row" style={{ marginTop: 10 }}>
+              <div className="role-label">Role</div>
+              <RolePills
+                value={current.role || c.role}
+                suggested={c.role}
+                onChange={(role) => onSetRole(c.index, role)}
+              />
+            </div>
+
+            {isOpen && <ColumnMeta column={c} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissingMap, onPick }) {
   if (!Array.isArray(requiredMissing) || requiredMissing.length === 0) return null;
@@ -46,7 +126,6 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole }) {
 
       {needsMapping.map((c) => {
         const current = columnMap?.[c.index] || {};
-        const options = buildRoleOptions(c);
 
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
@@ -57,12 +136,11 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole }) {
             )}
 
             <div className="mapping-row" style={{ marginTop: 10 }}>
-              <FormSelect
-                label="Role"
-                placeholder="Select role..."
-                options={options}
+              <div className="role-label">Role</div>
+              <RolePills
                 value={current.role || "skip"}
-                onChange={(e) => onSetRole(c.index, e.target.value)}
+                suggested={c.role}
+                onChange={(role) => onSetRole(c.index, role)}
               />
             </div>
 
@@ -104,11 +182,7 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
         <div className="pager-page">
           Page {page} / {totalPages}
         </div>
-        <button
-          className="pager-btn"
-          onClick={() => safeSetPage(page + 1)}
-          disabled={page === totalPages}
-        >
+        <button className="pager-btn" onClick={() => safeSetPage(page + 1)} disabled={page === totalPages}>
           Next
         </button>
       </div>
@@ -116,16 +190,18 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
       <div className="mapping-list">
         {pageItems.map((c) => {
           const current = columnMap?.[c.index] || {};
-          const options = buildRoleOptions(c);
           const isOpen = !!expanded[c.index];
+
+          const suggested = normalizeRole(c.role); // employee_id -> skip (hidden as suggested)
+          const showSuggested = suggested !== "skip" ? roleLabel(suggested) : "";
 
           return (
             <div key={c.index} className="verify-item">
               <div className="verify-head">
                 <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>
-                  Suggested role: {c.role || "-"}
-                </div>
+                {showSuggested ? (
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>Suggested role: {showSuggested}</div>
+                ) : null}
               </div>
 
               {c.user_prompt && (
@@ -133,12 +209,11 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
               )}
 
               <div className="mapping-row" style={{ marginTop: 10 }}>
-                <FormSelect
-                  label="Role"
-                  placeholder="Select role..."
-                  options={options}
+                <div className="role-label">Role</div>
+                <RolePills
                   value={current.role || "skip"}
-                  onChange={(e) => onSetRole(c.index, e.target.value)}
+                  suggested={c.role}
+                  onChange={(role) => onSetRole(c.index, role)}
                 />
 
                 <Button
@@ -185,9 +260,7 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude }) {
             <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
 
             {c.reason && (
-              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
-                Why skip: {c.reason}
-              </div>
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Why skip: {c.reason}</div>
             )}
 
             <div className="mapping-row" style={{ marginTop: 10 }}>
@@ -196,7 +269,7 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude }) {
               </Button>
 
               <div style={{ fontSize: 13, color: "#6b7280" }}>
-                Current role: {current.role || "skip"}
+                Current role: {roleLabel(current.role || "skip")}
               </div>
             </div>
 
@@ -223,18 +296,28 @@ export default function MappingStep({
 
   canConfirm,
   onConfirm,
+
+  confirming,
 }) {
   if (analysisLoading) return <InfoMessage type="info">Analyzing file...</InfoMessage>;
   if (!analysis) return <InfoMessage type="info">No analysis data yet.</InfoMessage>;
 
+  const highConfidence = analysis?.classified?.high_confidence || [];
   const requiredMissing = analysis?.classified?.required_missing || [];
   const needsVerification = analysis?.classified?.needs_verification || [];
   const needsMapping = analysis?.classified?.needs_mapping || [];
   const suggestedSkip = analysis?.classified?.suggested_skip || [];
 
+  const hasAnything =
+    highConfidence.length || requiredMissing.length || needsVerification.length || needsMapping.length || suggestedSkip.length;
+
   return (
     <>
+      {!hasAnything && <InfoMessage type="info">No columns to map.</InfoMessage>}
+
       <div className="mapping-section">
+        <HighConfidenceCard highConfidence={highConfidence} columnMap={columnMap} onSetRole={onSetRole} />
+
         <RequiredMissingCard
           requiredMissing={requiredMissing}
           allColumnsOptions={allColumnsOptions}
@@ -251,19 +334,15 @@ export default function MappingStep({
           onConfirmVerified={onConfirmVerified}
         />
 
-        <SuggestedSkipCard
-          suggestedSkip={suggestedSkip}
-          columnMap={columnMap}
-          onToggleInclude={onToggleInclude}
-        />
+        <SuggestedSkipCard suggestedSkip={suggestedSkip} columnMap={columnMap} onToggleInclude={onToggleInclude} />
       </div>
 
       <FormActions>
-        <Button variant="secondary" onClick={onBack}>
+        <Button variant="secondary" onClick={onBack} disabled={!!confirming}>
           Back
         </Button>
-        <Button variant="primary" onClick={onConfirm} disabled={!canConfirm}>
-          Confirm & Continue
+        <Button variant="primary" onClick={onConfirm} disabled={!canConfirm || !!confirming}>
+          {confirming ? "Confirming..." : "Confirm mappings"}
         </Button>
       </FormActions>
 
