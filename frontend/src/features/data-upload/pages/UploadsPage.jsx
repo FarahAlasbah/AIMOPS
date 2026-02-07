@@ -9,12 +9,14 @@ import { uploadSalesData, getUploadsPage } from "../../../api/data";
 import UploadStep from "../components/UploadStep";
 import UploadsList from "../components/UploadsList";
 
-import { MAX_MB, getFileKey, readDedupeSet, writeDedupeSet, validateSelectedFile } from "../utils/fileUtils";
+import {
+  MAX_MB,
+  getFileKey,
+  readDedupeSet,
+  writeDedupeSet,
+  validateSelectedFile,
+} from "../utils/fileUtils";
 import { getCachedAnalysis, clearCachedAnalysis } from "../utils/analysisCache";
-
-import "./DataUpload.css";
-
-const LS_MAPPING_KEY = (batchId) => `sales_batch_mapping_v1_${batchId}`;
 
 const normalizeUpload = (u) => ({
   batchId: u?.batch_id ?? u?.batchId,
@@ -27,25 +29,66 @@ const normalizeUpload = (u) => ({
   rejectedRows: u?.rejected_rows ?? u?.rejectedRows,
 });
 
+const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
+
+const extractApiError = (err, fallback = "Something went wrong.") => {
+  const data = err?.response?.data;
+
+  // FastAPI/Pydantic validation errors: { detail: [ ... ] }
+  if (Array.isArray(data?.detail)) {
+    return data.detail
+      .map((d) => {
+        const loc = Array.isArray(d?.loc) ? d.loc.join(".") : "";
+        const msg = d?.msg || "Invalid input";
+        return loc ? `${loc}: ${msg}` : msg;
+      })
+      .join(" | ");
+  }
+
+  // FastAPI common: { detail: "..." }
+  if (typeof data?.detail === "string") return data.detail;
+
+  // Your case: { detail: { message, existing_batch, ... } }
+  if (data?.detail && typeof data.detail === "object") {
+    if (typeof data.detail.message === "string") return data.detail.message;
+    try {
+      return JSON.stringify(data.detail);
+    } catch {
+      return fallback;
+    }
+  }
+
+  if (typeof data?.message === "string") return data.message;
+  if (typeof err?.message === "string") return err.message;
+
+  return fallback;
+};
+
+const getExistingBatchIdFrom409 = (err) => {
+  const id = err?.response?.data?.detail?.existing_batch?.batch_id;
+  return typeof id === "number" || typeof id === "string" ? String(id) : "";
+};
+
 export default function UploadsPage() {
   const navigate = useNavigate();
 
-  const [selectedCampaign, setSelectedCampaign] = useState("");
-
-  const [pickedFile, setPickedFile] = useState(null);
-  const [fileInputKey, setFileInputKey] = useState(1);
-
   const [error, setError] = useState("");
+
+  // upload form
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [selectedCampaign, setSelectedCampaign] = useState("");
 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // backend pagination
-  const [limit] = useState(20);
-  const [offset, setOffset] = useState(0);
+  // force reset FileUpload by key after successful upload
+  const [fileInputKey, setFileInputKey] = useState(1);
 
+  // uploads pagination
   const [uploadsLoading, setUploadsLoading] = useState(false);
   const [uploads, setUploads] = useState([]);
+  const [limit] = useState(20);
+  const [offset, setOffset] = useState(0);
   const [hasNext, setHasNext] = useState(false);
 
   const campaignOptions = useMemo(
@@ -57,41 +100,48 @@ export default function UploadsPage() {
     []
   );
 
-  const fetchUploads = async (nextOffset = offset) => {
+  const fetchUploads = async ({ nextOffset } = {}) => {
+    const off = typeof nextOffset === "number" ? nextOffset : offset;
+
     setUploadsLoading(true);
+    setError("");
     try {
-      const res = await getUploadsPage({ limit, offset: nextOffset });
+      const res = await getUploadsPage({ limit, offset: off });
       const list = Array.isArray(res) ? res.map(normalizeUpload) : [];
 
-      // if backend returns exactly limit, assume there may be next page
-      setHasNext(list.length === limit);
-
-      // keep stable ordering (newest first)
-      list.sort((a, b) => String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || "")));
+      // newest first (keep stable)
+      list.sort((a, b) =>
+        String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || ""))
+      );
       setUploads(list);
+
+      // best-effort "hasNext": if we got a full page, assume next exists
+      setHasNext(list.length === limit);
     } catch (e) {
-      setError((prev) => prev || "Failed to load uploads list.");
+      setError(extractApiError(e, "Failed to load uploads list."));
+      setUploads([]);
+      setHasNext(false);
     } finally {
       setUploadsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUploads(offset);
+    fetchUploads({ nextOffset: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offset]);
+  }, []);
 
   const handleFileSelect = (file) => {
     setError("");
 
     if (!file) {
-      setPickedFile(null);
+      setUploadedFile(null);
       return;
     }
 
     const validation = validateSelectedFile(file);
     if (!validation.ok) {
-      setPickedFile(null);
+      setUploadedFile(null);
       setError(validation.message);
       return;
     }
@@ -99,18 +149,18 @@ export default function UploadsPage() {
     const fileKey = getFileKey(file);
     const dedupe = readDedupeSet();
     if (dedupe.has(fileKey)) {
-      setPickedFile(null);
+      setUploadedFile(null);
       setError("This file was already uploaded before. Please choose a different file.");
       return;
     }
 
-    setPickedFile(file);
+    setUploadedFile(file);
   };
 
   const handleUpload = async () => {
     setError("");
 
-    if (!pickedFile) {
+    if (!uploadedFile) {
       setError("Please select a file first.");
       return;
     }
@@ -120,52 +170,78 @@ export default function UploadsPage() {
       setProgress(0);
 
       await uploadSalesData({
-        file: pickedFile,
+        file: uploadedFile,
         campaignId: selectedCampaign || undefined,
         onProgress: setProgress,
       });
 
-      // mark dedupe
+      // mark as uploaded locally (dedupe)
       const dedupe = readDedupeSet();
-      dedupe.add(getFileKey(pickedFile));
+      dedupe.add(getFileKey(uploadedFile));
       writeDedupeSet(dedupe);
 
-      // refresh first page (newest)
+      // refresh list
+      await fetchUploads({ nextOffset: 0 });
       setOffset(0);
-      await fetchUploads(0);
 
-      // clear picker fully
-      setPickedFile(null);
+      // clear selection and reset FileUpload UI
+      setUploadedFile(null);
       setProgress(0);
       setFileInputKey((k) => k + 1);
     } catch (err) {
-      const msg =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Upload failed.";
+      // Handle backend duplicate upload (409 Conflict)
+      if (err?.response?.status === 409) {
+        const existingId = getExistingBatchIdFrom409(err);
+        const msg = extractApiError(err, "This file was already uploaded.");
 
-      if (err?.response?.status === 409) setError("Duplicate upload detected. This file was already processed.");
-      else setError(String(msg));
+        // Add to local dedupe too (so next time user selects it, they get blocked early)
+        try {
+          const dedupe = readDedupeSet();
+          dedupe.add(getFileKey(uploadedFile));
+          writeDedupeSet(dedupe);
+        } catch {}
+
+        // Refresh list so user can see the existing batch
+        await fetchUploads({ nextOffset: 0 });
+        setOffset(0);
+
+        // Reset file input (prevents stuck state)
+        setUploadedFile(null);
+        setProgress(0);
+        setFileInputKey((k) => k + 1);
+
+        // Either show a clean message OR jump directly to the existing batch
+        if (existingId) {
+          // Navigate to mapping for the existing batch (best UX for duplicates)
+          navigate(`/app/data-upload/map/${existingId}`);
+          return;
+        }
+
+        setError(msg);
+        return;
+      }
+
+      // All other errors (always stringify safely)
+      setError(extractApiError(err, "Upload failed."));
     } finally {
       setUploading(false);
     }
   };
 
-  const hasLocalMapping = (id) => {
+  const hasLocalMapping = (batchId) => {
     try {
-      return !!localStorage.getItem(LS_MAPPING_KEY(id));
+      return !!localStorage.getItem(LS_CONFIRMED_KEY(batchId));
     } catch {
       return false;
     }
   };
 
-  const hasCachedAnalysis = (id) => !!getCachedAnalysis(id);
+  const hasCachedAnalysis = (batchId) => !!getCachedAnalysis(batchId);
 
-  const clearLocalForBatch = (id) => {
-    clearCachedAnalysis(id);
+  const clearLocalForBatch = (batchId) => {
+    clearCachedAnalysis(batchId);
     try {
-      localStorage.removeItem(LS_MAPPING_KEY(id));
+      localStorage.removeItem(LS_CONFIRMED_KEY(batchId));
     } catch {}
   };
 
@@ -194,49 +270,45 @@ export default function UploadsPage() {
           uploading={uploading}
           progress={progress}
           maxMb={MAX_MB}
-          fileInputKey={fileInputKey}
           onCancel={() => {
-            setPickedFile(null);
+            setUploadedFile(null);
             setError("");
             setProgress(0);
             setFileInputKey((k) => k + 1);
           }}
           onUpload={handleUpload}
+          fileInputKey={fileInputKey}
+          canUpload={!!uploadedFile}
         />
 
         <div style={{ marginTop: 18 }}>
           <div className="uploads-header">
             <div style={{ fontWeight: 800, color: "#111827" }}>Uploads</div>
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Button
-                variant="secondary"
-                onClick={() => fetchUploads(offset)}
-                disabled={uploadsLoading}
-              >
-                {uploadsLoading ? "Refreshing..." : "Refresh"}
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={() => setOffset((o) => Math.max(0, o - limit))}
-                disabled={uploadsLoading || offset === 0}
-              >
-                Prev
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={() => setOffset((o) => o + limit)}
-                disabled={uploadsLoading || !hasNext}
-              >
-                Next
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              onClick={() => fetchUploads({ nextOffset: offset })}
+              disabled={uploadsLoading}
+            >
+              {uploadsLoading ? "Refreshing..." : "Refresh"}
+            </Button>
           </div>
 
           <UploadsList
             uploads={uploads}
+            loading={uploadsLoading}
+            limit={limit}
+            offset={offset}
+            hasNext={hasNext}
+            onPrev={() => {
+              const nextOff = Math.max(0, offset - limit);
+              setOffset(nextOff);
+              fetchUploads({ nextOffset: nextOff });
+            }}
+            onNext={() => {
+              const nextOff = offset + limit;
+              setOffset(nextOff);
+              fetchUploads({ nextOffset: nextOff });
+            }}
             hasLocalMapping={hasLocalMapping}
             hasCachedAnalysis={hasCachedAnalysis}
             onAnalyze={(id) => navigate(`/app/data-upload/map/${id}`)}
@@ -244,10 +316,6 @@ export default function UploadsPage() {
             onRefreshAnalysis={(id) => navigate(`/app/data-upload/map/${id}?refresh=1`)}
             onClearLocal={clearLocalForBatch}
           />
-
-          <div style={{ marginTop: 10, fontSize: 13, color: "#6b7280" }}>
-            Offset: {offset} • Limit: {limit}
-          </div>
         </div>
       </Card>
     </div>
