@@ -6,6 +6,20 @@ const kbToMb = (kb) => {
   return `${(n / 1024).toFixed(1)} MB`;
 };
 
+const fmtStatus = (s) => {
+  const v = String(s || "unknown").trim();
+  if (!v) return "unknown";
+  return v.charAt(0).toUpperCase() + v.slice(1);
+};
+
+const statusClass = (s) => {
+  const v = String(s || "").toLowerCase();
+  if (v === "processed" || v === "done" || v === "success") return "good";
+  if (v === "pending" || v === "mapping") return "warn";
+  if (v === "failed" || v === "error" || v === "rejected") return "bad";
+  return "";
+};
+
 export default function UploadCard({
   upload,
   hasLocalMapping,
@@ -16,30 +30,47 @@ export default function UploadCard({
   onClearLocal,
 }) {
   const uploadedAt = upload?.uploadedAt ? new Date(upload.uploadedAt) : null;
+  const status = upload?.status || "unknown";
 
   return (
     <div className="upload-card">
-      <div className="upload-card-top">
-        <div className="upload-card-title">{upload?.fileName || "Untitled file"}</div>
-
-        <div className="upload-card-sub">
-          Batch ID: <strong>{upload?.batchId}</strong>
-          {uploadedAt ? ` • ${uploadedAt.toLocaleString()}` : ""}
+      <div className="upload-card-head">
+        <div className="upload-card-title-row">
+          <div className="upload-card-title">{upload?.fileName || "Untitled file"}</div>
+          <span className={`status-pill ${statusClass(status)}`}>{fmtStatus(status)}</span>
         </div>
 
-        <div className="upload-card-meta">
-          <span className="meta-pill">Type: {upload?.fileType || "-"}</span>
-          <span className="meta-pill">Size: {kbToMb(upload?.fileSizeKb)}</span>
-          <span className="meta-pill">Status: {upload?.status || "-"}</span>
-          <span className="meta-pill">
-            Rows: {upload?.validRows ?? 0} valid / {upload?.rejectedRows ?? 0} rejected
-          </span>
+        {/* <div className="upload-card-sub">
+          Batch <strong>#{upload?.batchId ?? "-"}</strong>
+          {uploadedAt ? ` • ${uploadedAt.toLocaleString()}` : ""}
+        </div> */}
+      </div>
+
+      <div className="upload-kv-grid">
+        <div className="upload-kv">
+          <div className="upload-k">Type</div>
+          <div className="upload-v">{upload?.fileType || "-"}</div>
+        </div>
+
+        <div className="upload-kv">
+          <div className="upload-k">Size</div>
+          <div className="upload-v">{kbToMb(upload?.fileSizeKb)}</div>
+        </div>
+
+        <div className="upload-kv">
+          <div className="upload-k">Valid rows</div>
+          <div className="upload-v">{upload?.validRows ?? 0}</div>
+        </div>
+
+        <div className="upload-kv">
+          <div className="upload-k">Rejected rows</div>
+          <div className="upload-v">{upload?.rejectedRows ?? 0}</div>
         </div>
       </div>
 
-      <div className="chip-row" style={{ marginTop: 10 }}>
+      <div className="upload-flags">
         <span className={`chip ${hasLocalMapping ? "good" : "warn"}`}>
-          Mapping: {hasLocalMapping ? "Saved" : "Not saved"}
+          Mappings: {hasLocalMapping ? "Saved" : "Not saved"}
         </span>
 
         <span className={`chip ${hasCachedAnalysis ? "good" : ""}`}>
@@ -47,22 +78,38 @@ export default function UploadCard({
         </span>
       </div>
 
-      <div className="upload-card-actions">
-        <Button variant="primary" onClick={() => onAnalyze(upload.batchId)}>
-          Analyze / Map
-        </Button>
+      <div className="upload-actions-row">
+        <div className="upload-actions-main">
+          <Button variant="primary" onClick={() => onAnalyze(upload.batchId)}>
+            Analyze / Map
+          </Button>
 
-        <Button variant="secondary" onClick={() => onReview(upload.batchId)} disabled={!hasLocalMapping}>
-          Review
-        </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onReview(upload.batchId)}
+            disabled={!hasLocalMapping}
+          >
+            Process
+          </Button>
+        </div>
 
-        <Button variant="secondary" onClick={() => onRefreshAnalysis(upload.batchId)}>
-          Refresh analysis
-        </Button>
+        <div className="upload-actions-aux">
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => onRefreshAnalysis(upload.batchId)}
+          >
+            Refresh analysis
+          </button>
 
-        <Button variant="secondary" onClick={() => onClearLocal(upload.batchId)}>
-          Clear local
-        </Button>
+          <button
+            type="button"
+            className="ghost-btn danger"
+            onClick={() => onClearLocal(upload.batchId)}
+          >
+            Clear local
+          </button>
+        </div>
       </div>
     </div>
   );

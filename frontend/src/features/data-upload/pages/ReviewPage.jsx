@@ -2,124 +2,107 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Card, PageHeader, Button, FormActions } from "../../../shared/components";
+import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
 import { analyzeSalesBatch, processSalesBatch } from "../../../api/data";
-import { getCachedAnalysis, setCachedAnalysis } from "../utils/analysisCache";
-import { buildProcessPayload } from "../utils/processPayload";
+import ReviewStep from "../components/ReviewStep";
 
-import "./DataUpload.css";
-
-const LS_MAPPING_KEY = (batchId) => `sales_batch_mapping_v1_${batchId}`;
+const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
 
 export default function ReviewPage() {
   const navigate = useNavigate();
   const { batchId } = useParams();
 
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
 
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [mapping, setMapping] = useState(null);
+
+  const [confirmResult, setConfirmResult] = useState(null);
 
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState(null);
+  const [processResult, setProcessResult] = useState(null);
 
   useEffect(() => {
+    if (!batchId) return;
+
+    // load confirm result from localStorage (saved in MappingPage)
+    try {
+      const raw = localStorage.getItem(LS_CONFIRMED_KEY(batchId));
+      setConfirmResult(raw ? JSON.parse(raw) : null);
+    } catch {
+      setConfirmResult(null);
+    }
+
+    // fetch analysis again (we need column names to build process body reliably)
     const run = async () => {
-      if (!batchId) return;
-
+      setAnalysisLoading(true);
       setError("");
-      setInfo("");
-
-      // mapping from localStorage
-      let local = null;
-      try {
-        const raw = localStorage.getItem(LS_MAPPING_KEY(batchId));
-        local = raw ? JSON.parse(raw) : null;
-      } catch {
-        local = null;
-      }
-      setMapping(local);
-
-      // analysis from cache or backend
-      const cached = getCachedAnalysis(batchId);
-      if (cached) {
-        setAnalysis(cached);
-        return;
-      }
-
       try {
         const res = await analyzeSalesBatch(batchId);
         setAnalysis(res);
-        setCachedAnalysis(batchId, res);
       } catch (err) {
-        const msg =
-          err?.response?.data?.detail ||
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to load analysis.";
+        const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "Analyze failed.";
         setError(String(msg));
+      } finally {
+        setAnalysisLoading(false);
       }
     };
 
     run();
   }, [batchId]);
 
-  const columnMap = useMemo(() => {
-    const m = {};
-    const list = mapping?.mappings || [];
-    list.forEach((x) => {
-      m[x.index] = {
-        role: x.role,
-        include: !!x.include,
-        verified: !!x.verified,
-      };
-    });
-    return m;
-  }, [mapping]);
+  const roleToOriginalName = useMemo(() => {
+    const confirmed = confirmResult?.confirmed_mappings || [];
+    const map = {};
+    for (const m of confirmed) {
+      if (m?.role && m?.original_name) map[String(m.role)] = String(m.original_name);
+    }
+    return map;
+  }, [confirmResult]);
 
-  const payload = useMemo(() => {
-    if (!analysis) return null;
-    return buildProcessPayload({ analysis, columnMap });
-  }, [analysis, columnMap]);
+  const buildProcessPayload = () => {
+    const cols = analysis?.columns || [];
+    const mappedNames = new Set(Object.values(roleToOriginalName).filter(Boolean));
 
-  const canProcess = !!payload && !!analysis;
+    const skip_columns = cols
+      .map((c) => String(c.name))
+      .filter((name) => name && !mappedNames.has(name));
+
+    return {
+      date_column: roleToOriginalName.date || "",
+      product_column: roleToOriginalName.product_name || "",
+      quantity_column: roleToOriginalName.quantity || "",
+      price_column: roleToOriginalName.unit_price || "",
+      total_amount_column: roleToOriginalName.total_amount || "",
+      category_column: roleToOriginalName.category || "",
+      skip_columns,
+    };
+  };
+
+  const canProcess = useMemo(() => {
+    if (!confirmResult?.success) return false;
+
+    // basic check: at least date/product/quantity exist
+    if (!roleToOriginalName.date) return false;
+    if (!roleToOriginalName.product_name) return false;
+    if (!roleToOriginalName.quantity) return false;
+
+    return true;
+  }, [confirmResult, roleToOriginalName]);
 
   const handleProcess = async () => {
     setError("");
-    setInfo("");
-    setResult(null);
-
     if (!batchId) return;
-    if (!payload) {
-      setError("Missing payload. Please go back and confirm mapping again.");
-      return;
-    }
-
-    // quick frontend validation (avoid 422)
-    const required = [
-      ["date_column", payload.date_column],
-      ["product_column", payload.product_column],
-      ["quantity_column", payload.quantity_column],
-      ["price_column", payload.price_column],
-      ["total_amount_column", payload.total_amount_column],
-      ["category_column", payload.category_column],
-    ];
-
-    for (const [k, v] of required) {
-      if (!v) {
-        setError(`Missing required field: ${k}. Please go back and map columns.`);
-        return;
-      }
-    }
 
     try {
       setProcessing(true);
+
+      const payload = buildProcessPayload();
       const res = await processSalesBatch(batchId, payload);
-      setResult(res);
-      setInfo(res?.message || "Processed.");
+
+      setProcessResult(res);
     } catch (err) {
       const msg =
         err?.response?.data?.detail ||
@@ -135,89 +118,47 @@ export default function ReviewPage() {
   return (
     <div className="data-upload-page">
       <PageHeader
-        title="Review & Process"
+        title="Confirm and Process"
         breadcrumbs={[
           { label: "Upload Sales Data", link: true, onClick: () => navigate("/app/data-upload/uploads") },
-          { label: "Map Columns", link: true, onClick: () => navigate(`/app/data-upload/map/${batchId}`) },
-          { label: `Review Batch ${batchId}`, link: false },
+          { label: `Batch ${batchId}`, link: false },
         ]}
       />
 
       <Card>
-        {error && (
-          <div style={{ marginBottom: 16 }}>
-            <InfoMessage type="error">{error}</InfoMessage>
+        {analysisLoading && (
+          <div style={{ marginBottom: 12 }}>
+            <InfoMessage type="info">Loading analysis...</InfoMessage>
           </div>
         )}
 
-        {info && (
-          <div style={{ marginBottom: 16 }}>
-            <InfoMessage type="info">{info}</InfoMessage>
-          </div>
-        )}
-
-        {!mapping && (
-          <div style={{ marginBottom: 16 }}>
-            <InfoMessage type="info">
-              No local mapping found for this batch. Please go back to mapping and confirm.
+        {!confirmResult?.success && (
+          <div style={{ marginBottom: 12 }}>
+            <InfoMessage type="warn">
+              No confirmed mappings found for this batch on this device. Go back and confirm mappings again.
             </InfoMessage>
           </div>
         )}
 
-        {payload && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontWeight: 800, color: "#111827", marginBottom: 10 }}>Payload Preview</div>
-            <div className="mapping-card">
-              <pre style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(payload, null, 2)}
-              </pre>
-            </div>
+        {!canProcess && confirmResult?.success && (
+          <div style={{ marginBottom: 12 }}>
+            <InfoMessage type="info">
+              Processing needs at least: date, product_name, quantity. Confirm mappings if something is missing.
+            </InfoMessage>
           </div>
         )}
 
-        <FormActions>
-          <Button variant="secondary" onClick={() => navigate(`/app/data-upload/map/${batchId}`)} disabled={processing}>
-            Back
-          </Button>
-
-          <Button variant="primary" onClick={handleProcess} disabled={!canProcess || processing}>
-            {processing ? "Processing..." : "Process File"}
-          </Button>
-
-          <Button variant="secondary" onClick={() => navigate("/app/data-upload/uploads")} disabled={processing}>
-            Finish
-          </Button>
-        </FormActions>
-
-        {result?.statistics && (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontWeight: 800, color: "#111827", marginBottom: 10 }}>Result</div>
-
-            <div className="mapping-card">
-              <div className="chip-row" style={{ marginTop: 0 }}>
-                <span className="chip">Status: {result?.status || "-"}</span>
-                <span className="chip">Total rows: {result?.statistics?.total_rows ?? "-"}</span>
-                <span className="chip good">Valid rows: {result?.statistics?.valid_rows ?? "-"}</span>
-                <span className="chip warn">Rejected rows: {result?.statistics?.rejected_rows ?? "-"}</span>
-                <span className="chip">
-                  Success rate: {result?.statistics?.success_rate ?? "-"}%
-                </span>
-              </div>
-
-              {result?.date_range && (
-                <div style={{ marginTop: 10, fontSize: 13, color: "#374151" }}>
-                  Date range: {result.date_range.start} → {result.date_range.end}
-                </div>
-              )}
-
-              {typeof result?.processing_time_seconds === "number" && (
-                <div style={{ marginTop: 6, fontSize: 13, color: "#374151" }}>
-                  Processing time: {result.processing_time_seconds}s
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <ReviewStep
+          batchId={batchId}
+          confirming={false}
+          confirmResult={confirmResult}
+          processing={processing}
+          processResult={processResult}
+          error={error}
+          onBack={() => navigate(`/app/data-upload/map/${batchId}`)}
+          onProcess={canProcess ? handleProcess : () => {}}
+          onFinish={() => navigate("/app/data-upload/uploads")}
+        />
       </Card>
     </div>
   );
