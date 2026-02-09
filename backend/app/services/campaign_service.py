@@ -13,7 +13,7 @@ from fastapi import HTTPException, status
 from typing import List, Optional
 from datetime import datetime
 
-from app.models.campaign import Campaign, Product, CampaignProduct, CampaignChannel, CampaignEvent
+from app.models.campaign import Campaign, Product, CampaignProduct, CampaignChannel # CampaignEvent
 from app.schemas.campaign import (
     CampaignCreate, CampaignUpdate, CampaignProductLink, 
     CampaignChannelInput
@@ -203,14 +203,14 @@ def create_campaign(
             db.add(campaign_channel)
     
     # Step 5: Link events
-    if campaign_data.event_ids:
-        for event_id in campaign_data.event_ids:
-            campaign_event = CampaignEvent(
-                campaign_id=campaign.campaign_id,
-                event_id=event_id,
-                relevance_score=1.00  # Default: fully relevant
-            )
-            db.add(campaign_event)
+    # if campaign_data.event_ids:
+    #     for event_id in campaign_data.event_ids:
+    #         campaign_event = CampaignEvent(
+    #             campaign_id=campaign.campaign_id,
+    #             event_id=event_id,
+    #             relevance_score=1.00  # Default: fully relevant
+    #         )
+    #         db.add(campaign_event)
     
     # Step 6: Save everything
     db.commit()
