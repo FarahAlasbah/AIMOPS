@@ -1,2 +1,3 @@
-// Change this if your backend runs on a different host/port
-export const API_BASE_URL = "aimops-db.ct6uaeowk5fg.eu-north-1.rds.amazonaws.com";
+// frontend/src/api/config.js
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
