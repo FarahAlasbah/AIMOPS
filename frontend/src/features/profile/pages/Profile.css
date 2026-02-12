@@ -43,7 +43,7 @@
 
 .field-input:focus {
   outline: none;
-  border-color: #065f46;
+  border-color: #03045e;
   box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
 }
 
