@@ -26,7 +26,7 @@
 
 /* Left Side - Branding */
 .login-brand {
-  background: #065f46;
+  background: #03045e;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -66,7 +66,7 @@
   width: 48px;
   height: 48px;
   background-color: white;
-  color: #065f46;
+  color: #03045e;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
@@ -187,7 +187,7 @@
 .field-input:focus {
   outline: none;
   background-color: white;
-  border-color: #065f46;
+  border-color: #03045e;
   box-shadow: 0 0 0 4px rgba(6, 95, 70, 0.1);
 }
 
@@ -257,14 +257,14 @@
 .checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #065f46;
+  accent-color: #03045e;
   border-radius: 4px;
 }
 
 .forgot-password-link {
   background: none;
   border: none;
-  color: #065f46;
+  color: #03045e;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -272,7 +272,7 @@
 }
 
 .forgot-password-link:hover {
-  color: #047857;
+  color: #02033F;
 }
 
 /* Button */
@@ -283,7 +283,7 @@
   font-size: 14px;
   font-weight: 600;
   color: white;
-  background-color: #065f46;
+  background-color: #03045e;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -292,7 +292,7 @@
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: #047857;
+  background-color: #02033F;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(6, 95, 70, 0.2);
 }
@@ -338,7 +338,7 @@
 .signup-link {
   background: none;
   border: none;
-  color: #065f46;
+  color: #03045e;
   font-weight: 600;
   cursor: pointer;
   margin-left: 4px;

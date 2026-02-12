@@ -15,12 +15,12 @@
 
 .breadcrumb-link {
   cursor: pointer;
-  color: #065f46;
+  color: #03045e;
   transition: color 0.2s;
 }
 
 .breadcrumb-link:hover {
-  color: #047857;
+  color: #02033F;
   text-decoration: underline;
 }
 

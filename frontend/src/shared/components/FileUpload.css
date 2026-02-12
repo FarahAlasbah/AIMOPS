@@ -13,12 +13,12 @@
 }
 
 .file-upload-dropzone.dragging {
-  border-color: #065f46;
-  background-color: #ecfdf5;
+  border-color: #03045e;
+  background-color: #e1ecf7;
 }
 
 .file-upload-dropzone.has-file {
-  border-color: #065f46;
+  border-color: #03045e;
   background-color: #f0fdf4;
 }
 
@@ -31,7 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #065f46;
+  color: #03045e;
 }
 
 .upload-title {
@@ -71,7 +71,7 @@
   padding: 12px 32px;
   font-size: 14px;
   font-weight: 500;
-  background-color: #065f46;
+  background-color: #03045e;
   color: white;
   border: none;
   border-radius: 8px;
@@ -81,7 +81,7 @@
 }
 
 .btn-browse:hover {
-  background-color: #047857;
+  background-color: #02033F;
   box-shadow: 0 4px 6px -1px rgba(6, 95, 70, 0.2);
 }
 

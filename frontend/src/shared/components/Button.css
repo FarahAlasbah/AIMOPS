@@ -19,12 +19,12 @@
 }
 
 .btn-primary {
-  background-color: #065f46;
+  background-color: #03045e;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #047857;
+  background-color: #02033F;
   box-shadow: 0 4px 6px -1px rgba(6, 95, 70, 0.2);
 }
 

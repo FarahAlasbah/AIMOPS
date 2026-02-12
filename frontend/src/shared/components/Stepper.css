@@ -28,13 +28,13 @@
 }
 
 .stepper-circle.active {
-  background-color: #065f46;
+  background-color: #03045e;
   color: white;
   box-shadow: 0 0 0 4px rgba(6, 95, 70, 0.1);
 }
 
 .stepper-circle.completed {
-  background-color: #065f46;
+  background-color: #03045e;
   color: white;
 }
 
@@ -50,7 +50,7 @@
 }
 
 .stepper-label.active {
-  color: #065f46;
+  color: #03045e;
   font-weight: 600;
 }
 
