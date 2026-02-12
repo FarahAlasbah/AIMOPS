@@ -96,7 +96,7 @@
 
 .campaign-name {
   font-weight: 500;
-  color: #065f46;
+  color: #03045e;
 }
 
 .comment-cell {
@@ -117,7 +117,7 @@
 
 .sentiment-positive {
   background-color: #d1fae5;
-  color: #065f46;
+  color: #03045e;
 }
 
 .sentiment-neutral {
@@ -135,16 +135,16 @@
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: #065f46;
+  color: #03045e;
   background-color: transparent;
-  border: 1px solid #065f46;
+  border: 1px solid #03045e;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-action-small:hover {
-  background-color: #065f46;
+  background-color: #03045e;
   color: white;
 }
 

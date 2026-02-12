@@ -31,14 +31,14 @@
 .brand-icon {
   width: 32px;
   height: 32px;
-  background-color: #065f46;
+  background-color: #03045e;
   border-radius: 6px;
 }
 
 .brand-text {
   font-size: 20px;
   font-weight: 700;
-  color: #065f46;
+  color: #03045e;
   letter-spacing: 0.5px;
 }
 
@@ -66,16 +66,16 @@
 
 .nav-item:hover {
   background-color: #f3f4f6;
-  color: #065f46;
+  color: #03045e;
 }
 
 .nav-item.active {
-  background-color: #ecfdf5;
-  color: #065f46;
+  background-color: #e1ecf7;
+  color: #03045e;
 }
 
 .nav-item.active .nav-icon {
-  color: #065f46;
+  color: #03045e;
 }
 
 .nav-icon {
@@ -84,7 +84,7 @@
 }
 
 .nav-item:hover .nav-icon {
-  color: #065f46;
+  color: #03045e;
 }
 
 .nav-text {
@@ -117,7 +117,7 @@
 .user-avatar {
   width: 40px;
   height: 40px;
-  background-color: #065f46;
+  background-color: #03045e;
   border-radius: 50%;
   display: flex;
   align-items: center;
