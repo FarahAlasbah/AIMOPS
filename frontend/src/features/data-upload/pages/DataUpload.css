@@ -34,7 +34,7 @@
 
 .upload-progress-bar {
   height: 100%;
-  background: #065f46;
+  background: #03045e;
   width: 0%;
   transition: width 0.2s ease;
 }
@@ -121,9 +121,9 @@
 }
 
 .status-pill.good {
-  background: #ecfdf5;
+  background: #e1ecf7;
   border-color: #bbf7d0;
-  color: #065f46;
+  color: #03045e;
 }
 
 .status-pill.warn {
@@ -313,9 +313,9 @@
 }
 
 .chip.good {
-  background: #ecfdf5;
+  background: #e1ecf7;
   border-color: #bbf7d0;
-  color: #065f46;
+  color: #03045e;
 }
 
 .chip.warn {
@@ -429,7 +429,7 @@
   border: none;
   padding: 0;
   font-size: 13px;
-  color: #065f46;
+  color: #03045e;
   cursor: pointer;
   font-weight: 700;
 }
@@ -476,9 +476,9 @@
 }
 
 .role-pill.active {
-  background: #ecfdf5;
+  background: #e1ecf7;
   border-color: #bbf7d0;
-  color: #065f46;
+  color: #03045e;
 }
 
 .role-pill.skip.active {

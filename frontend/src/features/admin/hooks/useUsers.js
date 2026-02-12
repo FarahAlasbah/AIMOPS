@@ -26,7 +26,8 @@ const formatApiError = (error) => {
       .join(" | ");
   }
 
-  if (detail && typeof detail === "object") return detail?.msg || "Validation error";
+  if (detail && typeof detail === "object")
+    return detail?.msg || "Validation error";
 
   return data?.message || error?.message || "Something went wrong";
 };
@@ -39,12 +40,38 @@ export const useUsers = () => {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getUsers();
-      setUsers(Array.isArray(response) ? response : []);
+
+      const raw = await getUsers();
+
+      // raw is already an array in your response, but keep it safe anyway
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.users)
+          ? raw.users
+          : Array.isArray(raw?.data)
+            ? raw.data
+            : [];
+
+      // Normalize + add compatibility fields for UI components
+      const normalized = list.map((u) => {
+        const status = (u.status || "").toLowerCase(); // "active" / "inactive" / ...
+        return {
+          ...u,
+
+          // common aliases some components expect
+          id: u.user_id ?? u.id,
+          name: u.full_name ?? u.name ?? "",
+          role: u.role_name ?? u.role ?? "",
+          is_active: status === "active",
+          status, // keep normalized lower-case
+        };
+      });
+
+      setUsers(normalized);
       setApiError("");
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      setApiError("Failed to load users");
+      setApiError(formatApiError(error)); // show real backend error if any
       setUsers([]);
     } finally {
       setLoading(false);
@@ -103,15 +130,18 @@ export const useUsers = () => {
   }, []);
 
   // Password change (used by your UserManagement.jsx)
-  const changePassword = useCallback(async (userId, currentPassword, newPassword) => {
-    try {
-      setApiError("");
-      return await changeUserPassword(userId, currentPassword, newPassword);
-    } catch (error) {
-      setApiError(formatApiError(error));
-      throw error;
-    }
-  }, []);
+  const changePassword = useCallback(
+    async (userId, currentPassword, newPassword) => {
+      try {
+        setApiError("");
+        return await changeUserPassword(userId, currentPassword, newPassword);
+      } catch (error) {
+        setApiError(formatApiError(error));
+        throw error;
+      }
+    },
+    [],
+  );
 
   return {
     users,
@@ -120,10 +150,10 @@ export const useUsers = () => {
     setApiError,
     fetchUsers,
     addUser,
-    changeRole,       // now defined
+    changeRole, // now defined
     updateUserInfo,
     removeUser,
     undoDelete,
-    changePassword,   // for EditUserModal
+    changePassword, // for EditUserModal
   };
 };

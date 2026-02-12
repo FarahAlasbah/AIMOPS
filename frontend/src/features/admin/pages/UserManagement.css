@@ -30,7 +30,7 @@
 
 .field-input:focus {
   outline: none;
-  border-color: #065f46;
+  border-color: #03045e;
   box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
 }
 
@@ -118,7 +118,7 @@
 
 .username-cell {
   font-weight: 500;
-  color: #065f46;
+  color: #03045e;
 }
 
 /* Role Badges */
@@ -156,7 +156,7 @@
 
 .status-active {
   background-color: #d1fae5;
-  color: #065f46;
+  color: #03045e;
 }
 
 .status-inactive {
@@ -565,7 +565,7 @@
 
   .user-card-username {
     font-weight: 700;
-    color: #065f46;
+    color: #03045e;
     font-size: 14px;
     line-height: 1.2;
   }

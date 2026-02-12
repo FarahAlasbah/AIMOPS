@@ -33,7 +33,7 @@
 .link-button {
   background: none;
   border: none;
-  color: #065f46;
+  color: #03045e;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -43,5 +43,5 @@
 }
 
 .link-button:hover {
-  color: #047857;
+  color: #02033F;
 }
