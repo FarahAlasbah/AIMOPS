@@ -11,7 +11,9 @@ from app.models.role import Role
 from app.api.auth import router as auth_router 
 from app.api import users, campaigns
 from app.api import data_upload
-
+from app.api import column_mapping
+from app.api import product_ingestion
+from app.api import products
 
 app = FastAPI(
     title="AIMOPS API",
@@ -34,10 +36,13 @@ app.include_router(auth_router)
 app.include_router(users.router)
 app.include_router(campaigns.router)
 app.include_router(data_upload.router)
+app.include_router(column_mapping.router)
+app.include_router(product_ingestion.router)
+app.include_router(products.router)
+
 
 @app.get("/")
 def root():
-    """API root"""
     return {
         "message": "AIMOPS API is running",
         "version": "1.0.0",
@@ -48,7 +53,6 @@ def root():
 
 @app.get("/health")
 def health_check():
-    """Health check"""
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
@@ -56,7 +60,6 @@ def health_check():
     }
 
 
-# Keep test endpoints for now
 @app.get("/api/test/users")
 def test_get_users(db: Session = Depends(get_db)):
     """TEST ENDPOINT"""
