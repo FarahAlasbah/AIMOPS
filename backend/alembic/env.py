@@ -42,6 +42,7 @@ from app.models.user import User
 from app.models.role import Role, Permission
 from app.models.ingestion_batch import IngestionBatch
 from app.models.column_mapping import ColumnMapping
+from app.models.sales_record import SalesRecord
 from app.models.campaign import (
     Campaign, 
     Product, 
