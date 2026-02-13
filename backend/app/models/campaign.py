@@ -141,6 +141,10 @@ class Product(Base):
     unit_price = Column(DECIMAL(10, 2), nullable=True)
     cost_price = Column(DECIMAL(10, 2), nullable=True)
     
+    normalized_name = Column(String(200), nullable=True, index=True)
+    # QUERY: SELECT * FROM products WHERE normalized_name = 'premium dates 500g'
+    # WITH INDEX: Direct lookup via B-tree
+    
     # Status
     is_active = Column(Boolean, default=True)  # Can be discontinued
     deleted_at = Column(TIMESTAMP, nullable=True)
