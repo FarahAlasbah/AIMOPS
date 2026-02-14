@@ -1,6 +1,7 @@
 // frontend/src/features/data-upload/components/UploadsList.jsx
 import { useEffect } from "react";
 import UploadCard from "./UploadCard";
+import { UploadsListSkeleton } from "./Skeletons";
 
 export default function UploadsList({
   uploads,
@@ -27,7 +28,7 @@ export default function UploadsList({
   }, [loading, uploads, offset, onPrev]);
 
   if (loading) {
-    return <div className="uploads-state">Loading uploads...</div>;
+    return <UploadsListSkeleton count={6} />;
   }
 
   if (!uploads || uploads.length === 0) {

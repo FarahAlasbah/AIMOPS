@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/components/UploadCard.jsx
 import { Button } from "../../../shared/components";
 
 const kbToMb = (kb) => {
@@ -29,7 +30,6 @@ export default function UploadCard({
   onRefreshAnalysis,
   onClearLocal,
 }) {
-  const uploadedAt = upload?.uploadedAt ? new Date(upload.uploadedAt) : null;
   const status = upload?.status || "unknown";
 
   return (
@@ -39,11 +39,6 @@ export default function UploadCard({
           <div className="upload-card-title">{upload?.fileName || "Untitled file"}</div>
           <span className={`status-pill ${statusClass(status)}`}>{fmtStatus(status)}</span>
         </div>
-
-        {/* <div className="upload-card-sub">
-          Batch <strong>#{upload?.batchId ?? "-"}</strong>
-          {uploadedAt ? ` • ${uploadedAt.toLocaleString()}` : ""}
-        </div> */}
       </div>
 
       <div className="upload-kv-grid">
@@ -84,29 +79,17 @@ export default function UploadCard({
             Analyze / Map
           </Button>
 
-          <Button
-            variant="secondary"
-            onClick={() => onReview(upload.batchId)}
-            disabled={!hasLocalMapping}
-          >
-            Process
+          <Button variant="secondary" onClick={() => onReview(upload.batchId)} disabled={!hasLocalMapping}>
+            Products
           </Button>
         </div>
 
         <div className="upload-actions-aux">
-          <button
-            type="button"
-            className="ghost-btn"
-            onClick={() => onRefreshAnalysis(upload.batchId)}
-          >
+          <button type="button" className="ghost-btn" onClick={() => onRefreshAnalysis(upload.batchId)}>
             Refresh analysis
           </button>
 
-          <button
-            type="button"
-            className="ghost-btn danger"
-            onClick={() => onClearLocal(upload.batchId)}
-          >
+          <button type="button" className="ghost-btn danger" onClick={() => onClearLocal(upload.batchId)}>
             Clear local
           </button>
         </div>
