@@ -28,14 +28,22 @@ export const getUploadsPage = async ({ limit = 20, offset = 0 } = {}) => {
   return res.data; // array
 };
 
-// NEW: Confirm mappings (saves to DB)
+// Confirm mappings (saves to DB)
 export const confirmSalesMappings = async (batchId, payload) => {
   const res = await api.post(`/api/data/confirm-mappings/${batchId}`, payload);
   return res.data;
 };
 
-// Process endpoint requires body (as you showed in Postman)
-export const processSalesBatch = async (batchId, payload) => {
-  const res = await api.post(`/api/data/process/${batchId}`, payload);
+// NEW: Extract products
+export const extractProducts = async (batchId, payload) => {
+  const res = await api.post(`/api/data/extract-products/${batchId}`, payload);
   return res.data;
 };
+
+// NEW: Confirm products (imports final sales records)
+export const confirmProducts = async (batchId, payload) => {
+  const res = await api.post(`/api/data/confirm-products/${batchId}`, payload);
+  return res.data;
+};
+
+// NOTE: processSalesBatch removed (endpoint is deleted from the flow)
