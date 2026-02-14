@@ -410,3 +410,87 @@ async def analyze_uploaded_file_endpoint(
         "sample_data": analysis_result["sample_data"]
     }
 
+# ============================================
+# ENDPOINT 5: Delete Upload Batch
+# ============================================
+
+@router.delete("/uploads/{batch_id}")
+async def delete_upload_batch(
+    batch_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete an upload batch and its sales records.
+    Products are kept (they may be used by other batches).
+    """
+    from app.models.sales_record import SalesRecord
+
+    # ── Permission Check ──
+    if current_user.role.role_name not in ['admin', 'marketing_user']:
+        raise HTTPException(
+            status_code=403,
+            detail="Only Admin and Marketing Users can delete uploads"
+        )
+
+    # ── Get Batch ──
+    batch = db.query(IngestionBatch).filter(
+        IngestionBatch.batch_id == batch_id,
+        IngestionBatch.deleted_at.is_(None)
+    ).first()
+
+    if not batch:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Batch {batch_id} not found"
+        )
+
+    # ── Count sales records before deleting ──
+    # WHY: So we can tell user exactly what was deleted
+    # One query to get the count before we delete
+    sales_count = db.query(SalesRecord).filter(
+        SalesRecord.batch_id == batch_id
+    ).count()
+
+    # ── Delete sales records first ──
+    # WHY FIRST: sales_records has foreign key pointing to ingestion_batches
+    # If we delete the batch first → database error
+    # Like removing a building before removing the people inside
+    db.query(SalesRecord).filter(
+        SalesRecord.batch_id == batch_id
+    ).delete(synchronize_session='fetch')
+
+    # ── Soft delete the batch ──
+    # WHY SOFT DELETE: Keep audit trail
+    # Admin can see "this batch was deleted on X date by Y user"
+    batch.deleted_at = datetime.utcnow()
+    batch.status = 'failed'
+
+    db.commit()
+
+    # ── Delete file from disk ──
+    # WHY: No point keeping the file if batch is deleted
+    # Saves disk space
+    file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
+    file_deleted = False
+
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            file_deleted = True
+        except Exception:
+            # File deletion failed but DB is already committed
+            # Not critical enough to fail the whole request
+            file_deleted = False
+
+    return {
+        "success": True,
+        "message": f"Batch {batch_id} deleted successfully",
+        "deleted": {
+            "batch_id": batch_id,
+            "file_name": batch.file_name,
+            "sales_records_deleted": sales_count,
+            "file_removed_from_disk": file_deleted
+        },
+        "note": "Products are kept. Only sales records from this batch were deleted."
+    }
