@@ -1,7 +1,6 @@
 // frontend/src/features/data-upload/components/UploadsList.jsx
 import { useEffect } from "react";
 import UploadCard from "./UploadCard";
-import { UploadsListSkeleton } from "./Skeletons";
 
 export default function UploadsList({
   uploads,
@@ -20,6 +19,9 @@ export default function UploadsList({
   onReview,
   onRefreshAnalysis,
   onClearLocal,
+
+  onDelete, // NEW
+  deletingId, // NEW
 }) {
   useEffect(() => {
     if (!loading && Array.isArray(uploads) && uploads.length === 0 && offset > 0) {
@@ -28,7 +30,7 @@ export default function UploadsList({
   }, [loading, uploads, offset, onPrev]);
 
   if (loading) {
-    return <UploadsListSkeleton count={6} />;
+    return <div className="uploads-state">Loading uploads...</div>;
   }
 
   if (!uploads || uploads.length === 0) {
@@ -50,6 +52,8 @@ export default function UploadsList({
             onReview={onReview}
             onRefreshAnalysis={onRefreshAnalysis}
             onClearLocal={onClearLocal}
+            onDelete={onDelete}
+            deleting={String(deletingId) === String(u.batchId)}
           />
         ))}
       </div>

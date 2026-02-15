@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   Users,
+  Package, // ✅ ADD
 } from "lucide-react";
 import "./AdminSidebar.css";
 
@@ -23,20 +24,18 @@ const AdminSidebar = ({ isOpen }) => {
 
   const isActive = (path) => location.pathname === path;
 
-  // One menu list, filtered by permissions
   const menuItems = [
     { title: "Overview", path: "/app/overview", icon: LayoutDashboard, perm: "dashboard.view" },
 
     { title: "Campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
-    // Optional: you can hide "new" from sidebar and show it as a button inside CampaignList instead
-    // { title: "New Campaign", path: "/app/campaigns/new", icon: Megaphone, perm: "campaigns.create" },
 
     { title: "Feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
-    // { title: "Feedback Upload", path: "/app/feedback/upload", icon: Upload, perm: "feedback.upload" },
 
     { title: "Data Upload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
 
-    // If you actually have these pages, guard them by system.* (admin-only)
+    // ✅ NEW: Products page
+    { title: "Products", path: "/app/products", icon: Package, perm: "products.view" },
+
     { title: "Audit & Data Quality", path: "/app/audit", icon: UserCheck, perm: "system.audit" },
     { title: "Data Sources", path: "/app/data-sources", icon: Database, perm: "system.settings" },
     { title: "Reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
@@ -76,11 +75,7 @@ const AdminSidebar = ({ isOpen }) => {
           <span className="nav-text">Support</span>
         </Link>
 
-        <Link
-          to="/app/profile"
-          className="user-profile"
-          style={{ textDecoration: "none" }}
-        >
+        <Link to="/app/profile" className="user-profile" style={{ textDecoration: "none" }}>
           <div className="user-avatar">
             <User size={20} />
           </div>
