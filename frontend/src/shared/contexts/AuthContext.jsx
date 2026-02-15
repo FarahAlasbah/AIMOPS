@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { loginUser as apiLogin, logoutUser as apiLogout } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
+import { getRoleName, mergePermissions } from "../permissions/rolePermissions";
 
 const AuthContext = createContext();
 
@@ -14,7 +15,6 @@ const safeParse = (v) => {
 };
 
 const buildFieldErrorsFromFastApi = (detail) => {
-  // FastAPI 422 example: detail: [{ loc: ["body","username"], msg: "...", type: "..." }, ...]
   if (!Array.isArray(detail)) return null;
 
   const fieldErrors = {};
@@ -35,7 +35,6 @@ const normalizeLoginError = (err) => {
   const status = err?.response?.status;
   const data = err?.response?.data;
 
-  // Try to get a useful "detail"
   const detail =
     data?.detail ??
     data?.message ??
@@ -43,7 +42,6 @@ const normalizeLoginError = (err) => {
     err?.message ??
     null;
 
-  // Field errors (FastAPI validation)
   const fieldErrors = buildFieldErrorsFromFastApi(data?.detail);
 
   let message = "Login failed. Please try again.";
@@ -55,7 +53,6 @@ const normalizeLoginError = (err) => {
   } else if (status === 429) {
     message = "Too many attempts. Please wait a bit and try again.";
   } else if (!err?.response) {
-    // Network / CORS / server down
     message = "Cannot reach the server. Please check your connection and try again.";
   } else if (typeof detail === "string" && detail.trim()) {
     message = detail;
@@ -66,6 +63,21 @@ const normalizeLoginError = (err) => {
   e.data = data;
   if (fieldErrors) e.fieldErrors = fieldErrors;
   return e;
+};
+
+const normalizeUser = (rawUser) => {
+  if (!rawUser) return null;
+
+  const roleName = getRoleName(rawUser);
+
+  const normalized = {
+    ...rawUser,
+    role_name: rawUser?.role_name || roleName || rawUser?.role_name,
+    permissions: mergePermissions(rawUser),
+    is_admin: rawUser?.is_admin === true,
+  };
+
+  return normalized;
 };
 
 export const AuthProvider = ({ children }) => {
@@ -79,7 +91,7 @@ export const AuthProvider = ({ children }) => {
 
     if (token && userData) {
       const parsed = safeParse(userData);
-      if (parsed) setUser(parsed);
+      if (parsed) setUser(normalizeUser(parsed));
       else {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
@@ -93,21 +105,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await apiLogin(credentials);
 
-      // Ensure permissions exists (array)
-      const normalizedUser = {
-        ...response.user,
-        permissions: Array.isArray(response.user?.permissions)
-          ? response.user.permissions
-          : [],
-      };
+      const normalizedUser = normalizeUser(response.user);
 
       localStorage.setItem("auth_token", response.access_token);
       localStorage.setItem("user_data", JSON.stringify(normalizedUser));
       setUser(normalizedUser);
 
-      // Everyone lands in /app (guards will handle access)
       navigate("/app/overview", { replace: true });
-
       return response;
     } catch (err) {
       throw normalizeLoginError(err);
@@ -128,6 +132,7 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (permission) => {
     if (!permission) return true;
     if (user?.is_admin === true) return true;
+
     const perms = Array.isArray(user?.permissions) ? user.permissions : [];
     return perms.includes(permission);
   };

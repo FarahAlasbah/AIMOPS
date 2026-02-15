@@ -15,6 +15,9 @@ import FeedbackUpload from "./features/feedback/pages/FeedbackUpload";
 import UserManagement from "./features/admin/pages/UserManagement";
 import Denied from "./shared/pages/Denied";
 
+// ✅ ADD THIS
+import ProductsPage from "./features/products/pages/ProductsPage";
+
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -33,7 +36,7 @@ function useDirection() {
 }
 
 function App() {
-  useDirection(); // IMPORTANT: make the effect run
+  useDirection();
 
   return (
     <BrowserRouter>
@@ -62,6 +65,7 @@ function App() {
                 </RequirePermission>
               }
             />
+
             <Route
               path="profile"
               element={
@@ -114,6 +118,16 @@ function App() {
               }
             />
 
+            {/* ✅ NEW PRODUCTS PAGE ROUTE */}
+            <Route
+              path="products"
+              element={
+                <RequirePermission anyOf={["products.view"]}>
+                  <ProductsPage />
+                </RequirePermission>
+              }
+            />
+
             <Route
               path="user-management"
               element={
@@ -123,7 +137,6 @@ function App() {
               }
             />
 
-            {/* This matches your RequirePermission redirect to "/app/denied" */}
             <Route path="denied" element={<Denied />} />
           </Route>
 

@@ -29,8 +29,12 @@ export default function UploadCard({
   onReview,
   onRefreshAnalysis,
   onClearLocal,
+
+  onDelete, // NEW
+  deleting, // NEW
 }) {
   const status = upload?.status || "unknown";
+  const busy = !!deleting;
 
   return (
     <div className="upload-card">
@@ -75,22 +79,46 @@ export default function UploadCard({
 
       <div className="upload-actions-row">
         <div className="upload-actions-main">
-          <Button variant="primary" onClick={() => onAnalyze(upload.batchId)}>
-            Analyze / Map
+          <Button variant="primary" onClick={() => onAnalyze(upload.batchId)} disabled={busy}>
+            {busy ? "Deleting..." : "Analyze / Map"}
           </Button>
 
-          <Button variant="secondary" onClick={() => onReview(upload.batchId)} disabled={!hasLocalMapping}>
+          <Button
+            variant="secondary"
+            onClick={() => onReview(upload.batchId)}
+            disabled={!hasLocalMapping || busy}
+          >
             Products
           </Button>
         </div>
 
         <div className="upload-actions-aux">
-          <button type="button" className="ghost-btn" onClick={() => onRefreshAnalysis(upload.batchId)}>
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => onRefreshAnalysis(upload.batchId)}
+            disabled={busy}
+          >
             Refresh analysis
           </button>
 
-          <button type="button" className="ghost-btn danger" onClick={() => onClearLocal(upload.batchId)}>
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => onClearLocal(upload.batchId)}
+            disabled={busy}
+          >
             Clear local
+          </button>
+
+          <button
+            type="button"
+            className="ghost-btn danger"
+            onClick={() => onDelete?.(upload)}
+            disabled={busy}
+            title="Deletes this batch sales records from the server"
+          >
+            Delete
           </button>
         </div>
       </div>

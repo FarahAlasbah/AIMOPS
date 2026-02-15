@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/utils/fileUtils.js
 const MAX_MB = 50;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
 const ALLOWED_EXT = new Set(["csv", "xlsx"]);
@@ -40,6 +41,26 @@ const validateSelectedFile = (file) => {
   return { ok: true, message: "" };
 };
 
+// NEW: allow re-upload after delete (best-effort)
+const removeDedupeKeysForFileName = (fileName) => {
+  const name = String(fileName || "").trim();
+  if (!name) return;
+
+  const set = readDedupeSet();
+  const next = new Set();
+
+  // fileKey format: `${file.name}__${file.size}__${file.lastModified}`
+  // Remove any keys that start with `${fileName}__`
+  const prefix = `${name}__`;
+
+  for (const k of set) {
+    const s = String(k || "");
+    if (!s.startsWith(prefix)) next.add(s);
+  }
+
+  writeDedupeSet(next);
+};
+
 export {
   MAX_MB,
   MAX_BYTES,
@@ -49,4 +70,5 @@ export {
   readDedupeSet,
   writeDedupeSet,
   validateSelectedFile,
+  removeDedupeKeysForFileName, // NEW
 };
