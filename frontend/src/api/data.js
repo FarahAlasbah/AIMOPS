@@ -46,4 +46,8 @@ export const confirmProducts = async (batchId, payload) => {
   return res.data;
 };
 
-// NOTE: processSalesBatch removed (endpoint is deleted from the flow)
+export const deleteUploadBatch = async (batchId) => {
+  const id = encodeURIComponent(String(batchId));
+  const res = await api.delete(`/api/data/uploads/${id}`);
+  return res.data;
+};
