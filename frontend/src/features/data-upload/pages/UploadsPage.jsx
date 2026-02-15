@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { Card, PageHeader, Button } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
-import { uploadSalesData, getUploadsPage } from "../../../api/data";
+import { uploadSalesData, getUploadsPage, deleteUploadBatch } from "../../../api/data";
 import UploadStep from "../components/UploadStep";
 import UploadsList from "../components/UploadsList";
+import ConfirmDialog from "../components/ConfirmDialog"; // NEW
 
 import {
   MAX_MB,
@@ -15,6 +16,7 @@ import {
   readDedupeSet,
   writeDedupeSet,
   validateSelectedFile,
+  removeDedupeKeysForFileName,
 } from "../utils/fileUtils";
 import { getCachedAnalysis, clearCachedAnalysis } from "../utils/analysisCache";
 
@@ -31,10 +33,15 @@ const normalizeUpload = (u) => ({
 
 const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
 
+// local keys used by MappingPage + ReviewPage (cleanup on delete)
+const LS_MAPPING_DRAFT_KEY = (batchId) => `sales_mapping_draft_v1_${batchId}`;
+const LS_EXTRACTED_PRODUCTS_KEY = (batchId) => `sales_extracted_products_v1_${batchId}`;
+const LS_PRODUCTS_DRAFT_KEY = (batchId) => `sales_products_draft_v1_${batchId}`;
+const LS_CONFIRMED_PRODUCTS_KEY = (batchId) => `sales_confirmed_products_v1_${batchId}`;
+
 const extractApiError = (err, fallback = "Something went wrong.") => {
   const data = err?.response?.data;
 
-  // FastAPI/Pydantic validation errors: { detail: [ ... ] }
   if (Array.isArray(data?.detail)) {
     return data.detail
       .map((d) => {
@@ -45,10 +52,8 @@ const extractApiError = (err, fallback = "Something went wrong.") => {
       .join(" | ");
   }
 
-  // FastAPI common: { detail: "..." }
   if (typeof data?.detail === "string") return data.detail;
 
-  // Your case: { detail: { message, existing_batch, ... } }
   if (data?.detail && typeof data.detail === "object") {
     if (typeof data.detail.message === "string") return data.detail.message;
     try {
@@ -91,6 +96,13 @@ export default function UploadsPage() {
   const [offset, setOffset] = useState(0);
   const [hasNext, setHasNext] = useState(false);
 
+  // deleting state
+  const [deletingId, setDeletingId] = useState(null);
+
+  // NEW: custom confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+
   const campaignOptions = useMemo(
     () => [
       { value: "1", label: "Summer Sale 2025" },
@@ -109,13 +121,11 @@ export default function UploadsPage() {
       const res = await getUploadsPage({ limit, offset: off });
       const list = Array.isArray(res) ? res.map(normalizeUpload) : [];
 
-      // newest first (keep stable)
       list.sort((a, b) =>
         String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || ""))
       );
       setUploads(list);
 
-      // best-effort "hasNext": if we got a full page, assume next exists
       setHasNext(list.length === limit);
     } catch (e) {
       setError(extractApiError(e, "Failed to load uploads list."));
@@ -175,44 +185,35 @@ export default function UploadsPage() {
         onProgress: setProgress,
       });
 
-      // mark as uploaded locally (dedupe)
       const dedupe = readDedupeSet();
       dedupe.add(getFileKey(uploadedFile));
       writeDedupeSet(dedupe);
 
-      // refresh list
       await fetchUploads({ nextOffset: 0 });
       setOffset(0);
 
-      // clear selection and reset FileUpload UI
       setUploadedFile(null);
       setProgress(0);
       setFileInputKey((k) => k + 1);
     } catch (err) {
-      // Handle backend duplicate upload (409 Conflict)
       if (err?.response?.status === 409) {
         const existingId = getExistingBatchIdFrom409(err);
         const msg = extractApiError(err, "This file was already uploaded.");
 
-        // Add to local dedupe too (so next time user selects it, they get blocked early)
         try {
           const dedupe = readDedupeSet();
           dedupe.add(getFileKey(uploadedFile));
           writeDedupeSet(dedupe);
         } catch {}
 
-        // Refresh list so user can see the existing batch
         await fetchUploads({ nextOffset: 0 });
         setOffset(0);
 
-        // Reset file input (prevents stuck state)
         setUploadedFile(null);
         setProgress(0);
         setFileInputKey((k) => k + 1);
 
-        // Either show a clean message OR jump directly to the existing batch
         if (existingId) {
-          // Navigate to mapping for the existing batch (best UX for duplicates)
           navigate(`/app/data-upload/map/${existingId}`);
           return;
         }
@@ -221,7 +222,6 @@ export default function UploadsPage() {
         return;
       }
 
-      // All other errors (always stringify safely)
       setError(extractApiError(err, "Upload failed."));
     } finally {
       setUploading(false);
@@ -240,10 +240,61 @@ export default function UploadsPage() {
 
   const clearLocalForBatch = (batchId) => {
     clearCachedAnalysis(batchId);
+
     try {
       localStorage.removeItem(LS_CONFIRMED_KEY(batchId));
+      localStorage.removeItem(LS_MAPPING_DRAFT_KEY(batchId));
+      localStorage.removeItem(LS_EXTRACTED_PRODUCTS_KEY(batchId));
+      localStorage.removeItem(LS_PRODUCTS_DRAFT_KEY(batchId));
+      localStorage.removeItem(LS_CONFIRMED_PRODUCTS_KEY(batchId));
     } catch {}
   };
+
+  // OPEN modal (instead of window.confirm)
+  const requestDelete = (upload) => {
+    if (!upload?.batchId) return;
+    setError("");
+    setConfirmTarget(upload);
+    setConfirmOpen(true);
+  };
+
+  const closeConfirm = () => {
+    setConfirmOpen(false);
+    setConfirmTarget(null);
+  };
+
+  const confirmDelete = async () => {
+    const upload = confirmTarget;
+    const id = upload?.batchId;
+    if (id == null) return;
+
+    setError("");
+
+    try {
+      setDeletingId(id);
+
+      await deleteUploadBatch(id);
+
+      // clear local for that batch
+      clearLocalForBatch(id);
+
+      // allow re-upload same filename (best-effort)
+      removeDedupeKeysForFileName(upload?.fileName);
+
+      closeConfirm();
+
+      await fetchUploads({ nextOffset: 0 });
+      setOffset(0);
+    } catch (err) {
+      setError(extractApiError(err, "Delete failed."));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const confirmMsg = confirmTarget
+    ? `Delete  (${confirmTarget.fileName || "file"})?\n\nThis will delete sales records for this batch on the server. Products are kept.`
+    : "";
 
   return (
     <div className="data-upload-page">
@@ -279,6 +330,7 @@ export default function UploadsPage() {
           onUpload={handleUpload}
           fileInputKey={fileInputKey}
           canUpload={!!uploadedFile}
+          selectedFile={uploadedFile}
         />
 
         <div style={{ marginTop: 18 }}>
@@ -287,7 +339,7 @@ export default function UploadsPage() {
             <Button
               variant="secondary"
               onClick={() => fetchUploads({ nextOffset: offset })}
-              disabled={uploadsLoading}
+              disabled={uploadsLoading || deletingId != null}
             >
               {uploadsLoading ? "Refreshing..." : "Refresh"}
             </Button>
@@ -315,9 +367,25 @@ export default function UploadsPage() {
             onReview={(id) => navigate(`/app/data-upload/review/${id}`)}
             onRefreshAnalysis={(id) => navigate(`/app/data-upload/map/${id}?refresh=1`)}
             onClearLocal={clearLocalForBatch}
+            onDelete={requestDelete}
+            deletingId={deletingId}
           />
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete upload"
+        message={confirmMsg}
+        cancelText="Cancel"
+        confirmText="Delete"
+        busy={deletingId != null}
+        onCancel={() => {
+          if (deletingId != null) return; // don’t close while deleting
+          closeConfirm();
+        }}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

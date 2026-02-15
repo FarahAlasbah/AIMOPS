@@ -1,0 +1,369 @@
+/* frontend/src/features/products/pages/ProductsPage.css */
+
+.products-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.products-toolbar {
+  display: flex;
+  gap: 16px;
+  padding: 14px 14px 6px;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.products-toolbar-left {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.products-toolbar-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.field.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: auto;
+}
+
+.field label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.text {
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 10px;
+  outline: none;
+  font-size: 14px;
+}
+
+.text:focus {
+  border-color: #c7d2fe;
+  box-shadow: 0 0 0 3px rgba(199, 210, 254, 0.45);
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.table-wrap {
+  overflow: auto;
+  border-top: 1px solid #f3f4f6;
+  margin-top: 10px;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.products-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  font-size: 12px;
+  color: #374151;
+  text-align: left;
+  padding: 10px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.products-table thead th.click {
+  cursor: pointer;
+  user-select: none;
+}
+
+.products-table tbody td {
+  padding: 10px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+  font-size: 14px;
+  color: #111827;
+}
+
+.products-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.products-table .empty {
+  text-align: center;
+  padding: 30px;
+  color: #6b7280;
+}
+
+.row-suspicious {
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.name-cell .name {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.name-cell .sub {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #e5e7eb;
+}
+
+.chip-ok {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.chip-warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.flag .sub {
+  margin-top: 6px;
+  font-size: 12px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 14px;
+}
+
+.pager-left,
+.pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Skeleton */
+.sk {
+  height: 14px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  overflow: hidden;
+  position: relative;
+}
+
+.sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-60%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: sk 1.1s infinite;
+}
+
+@keyframes sk {
+  0% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 50;
+}
+
+.modal-card {
+  width: min(820px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.modal-x {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-foot {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 14px;
+}
+
+.picklist {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.picklist ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.picklist li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #111827;
+}
+
+.link {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+}
+
+.warn-box {
+  margin-top: 10px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  border-radius: 12px;
+  padding: 10px;
+  color: #92400e;
+  font-size: 13px;
+}
+
+.checkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #111827;
+}
+
+/* NEW: Soft delete button style (not full red) */
+/* .btn-danger-soft {
+  background: #ffffff ;
+  border: 1px solid #e5e7eb ;
+  color: #b91c1c;
+}
+
+.btn-danger-soft:hover {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+} */
+/* --- Delete button (text always visible + hover darken) --- */
+.danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.danger-btn:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* small version for row actions */
+.danger-btn.sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
