@@ -50,6 +50,8 @@ from app.models.campaign import (
     CampaignChannel, 
     # CampaignEvent
 )
+from app.models.event import Event, EventImpactResult
+from app.models.notification import Notification
 
 target_metadata = Base.metadata
 
