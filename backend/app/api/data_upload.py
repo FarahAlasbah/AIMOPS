@@ -493,4 +493,4 @@ async def delete_upload_batch(
             "file_removed_from_disk": file_deleted
         },
         "note": "Products are kept. Only sales records from this batch were deleted."
-    }
+    } 
