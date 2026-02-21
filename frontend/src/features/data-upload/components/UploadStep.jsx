@@ -6,20 +6,15 @@ export default function UploadStep({
   campaignOptions,
   selectedCampaign,
   onCampaignChange,
-
   onFileSelect,
-
   uploading,
   progress,
   maxMb,
-
   onCancel,
   onUpload,
-
   fileInputKey,
   canUpload,
-
-  selectedFile, // NEW: controlled file
+  selectedFile,
 }) {
   return (
     <>
@@ -43,7 +38,7 @@ export default function UploadStep({
 
       {uploading && (
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>
+          <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 6 }}>
             Uploading... {progress}%
           </div>
           <div className="upload-progress">

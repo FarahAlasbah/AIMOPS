@@ -8,7 +8,7 @@ import InfoMessage from "../../../shared/components/InfoMessage";
 import { uploadSalesData, getUploadsPage, deleteUploadBatch } from "../../../api/data";
 import UploadStep from "../components/UploadStep";
 import UploadsList from "../components/UploadsList";
-import ConfirmDialog from "../components/ConfirmDialog"; // NEW
+import ConfirmDialog from "../components/ConfirmDialog";
 
 import {
   MAX_MB,
@@ -74,10 +74,64 @@ const getExistingBatchIdFrom409 = (err) => {
   return typeof id === "number" || typeof id === "string" ? String(id) : "";
 };
 
+const cleanStr = (v) => String(v ?? "").trim();
+
+const extractOverlapWarning = (res) => {
+  // Try multiple possible backend shapes (best-effort)
+  const warning =
+    res?.overlap_warning ||
+    res?.overlapWarning ||
+    res?.warning ||
+    res?.warnings ||
+    "";
+
+  if (typeof warning === "string" && warning.trim()) return warning.trim();
+
+  const overlap =
+    res?.overlap ||
+    res?.overlapping_range ||
+    res?.overlappingRange ||
+    res?.dedupe ||
+    res?.deduplication;
+
+  const from = cleanStr(overlap?.from ?? overlap?.start ?? overlap?.from_date ?? overlap?.start_date);
+  const to = cleanStr(overlap?.to ?? overlap?.end ?? overlap?.to_date ?? overlap?.end_date);
+  const deleted =
+    overlap?.deleted_rows ??
+    overlap?.deletedRows ??
+    overlap?.replaced_rows ??
+    overlap?.replacedRows;
+
+  if (from && to) {
+    const rowsPart =
+      deleted != null && deleted !== ""
+        ? ` (${deleted} row(s) replaced)`
+        : "";
+    return `Overlapping date range detected (${from} → ${to}). Existing records in that range were replaced to avoid duplicates.${rowsPart}`;
+  }
+
+  const msg = cleanStr(res?.message);
+  if (msg) {
+    const m = msg.toLowerCase();
+    if (
+      m.includes("overlap") ||
+      m.includes("overlapping") ||
+      m.includes("duplicate") ||
+      m.includes("dedup") ||
+      m.includes("replaced")
+    ) {
+      return msg;
+    }
+  }
+
+  return "";
+};
+
 export default function UploadsPage() {
   const navigate = useNavigate();
 
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState(""); // NEW
 
   // upload form
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -99,7 +153,7 @@ export default function UploadsPage() {
   // deleting state
   const [deletingId, setDeletingId] = useState(null);
 
-  // NEW: custom confirm dialog state
+  // confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
 
@@ -143,6 +197,8 @@ export default function UploadsPage() {
 
   const handleFileSelect = (file) => {
     setError("");
+    // don’t wipe warning automatically (user might want to read it)
+    // setWarning("");
 
     if (!file) {
       setUploadedFile(null);
@@ -169,6 +225,7 @@ export default function UploadsPage() {
 
   const handleUpload = async () => {
     setError("");
+    setWarning(""); // NEW: clear previous warning on new upload attempt
 
     if (!uploadedFile) {
       setError("Please select a file first.");
@@ -179,11 +236,14 @@ export default function UploadsPage() {
       setUploading(true);
       setProgress(0);
 
-      await uploadSalesData({
+      const res = await uploadSalesData({
         file: uploadedFile,
         campaignId: selectedCampaign || undefined,
         onProgress: setProgress,
       });
+
+      const overlapWarning = extractOverlapWarning(res);
+      if (overlapWarning) setWarning(overlapWarning);
 
       const dedupe = readDedupeSet();
       dedupe.add(getFileKey(uploadedFile));
@@ -250,7 +310,6 @@ export default function UploadsPage() {
     } catch {}
   };
 
-  // OPEN modal (instead of window.confirm)
   const requestDelete = (upload) => {
     if (!upload?.batchId) return;
     setError("");
@@ -275,10 +334,7 @@ export default function UploadsPage() {
 
       await deleteUploadBatch(id);
 
-      // clear local for that batch
       clearLocalForBatch(id);
-
-      // allow re-upload same filename (best-effort)
       removeDedupeKeysForFileName(upload?.fileName);
 
       closeConfirm();
@@ -310,6 +366,24 @@ export default function UploadsPage() {
         {error && (
           <div style={{ marginBottom: 16 }}>
             <InfoMessage type="error">{error}</InfoMessage>
+          </div>
+        )}
+
+        {warning && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ flex: "1 1 auto" }}>
+                <InfoMessage type="warn">{warning}</InfoMessage>
+              </div>
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => setWarning("")}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
 
@@ -381,7 +455,7 @@ export default function UploadsPage() {
         confirmText="Delete"
         busy={deletingId != null}
         onCancel={() => {
-          if (deletingId != null) return; // don’t close while deleting
+          if (deletingId != null) return;
           closeConfirm();
         }}
         onConfirm={confirmDelete}

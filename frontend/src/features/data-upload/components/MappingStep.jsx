@@ -109,7 +109,11 @@ function RolePickerWithConfirm({
               Cancel
             </button>
 
-            <button type="button" className="mini-btn primary" onClick={() => commitNow(pendingRole)}>
+            <button
+              type="button"
+              className="mini-btn primary"
+              onClick={() => commitNow(pendingRole)}
+            >
               Confirm change
             </button>
           </div>
@@ -137,7 +141,7 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
         return (
           <div key={c.index} className="verify-item">
             <div className="verify-head">
-              <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+              <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
 
               <button
                 type="button"
@@ -182,12 +186,14 @@ function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissi
 
       {requiredMissing.map((r) => (
         <div key={r.role} style={{ marginTop: 10 }}>
-          <div style={{ fontWeight: 600, color: "#111827", marginBottom: 6 }}>
+          <div style={{ fontWeight: 600, color: "var(--c-text)", marginBottom: 6 }}>
             {r.name} (required)
           </div>
 
           {r.user_prompt && (
-            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>{r.user_prompt}</div>
+            <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 8 }}>
+              {r.user_prompt}
+            </div>
           )}
 
           <FormSelect
@@ -219,10 +225,12 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
 
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
 
             {c.user_prompt && (
-              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{c.user_prompt}</div>
+              <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 4 }}>
+                {c.user_prompt}
+              </div>
             )}
 
             <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
@@ -294,11 +302,13 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
           return (
             <div key={c.index} className="verify-item">
               <div className="verify-head">
-                <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+                <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
               </div>
 
               {c.user_prompt && (
-                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>{c.user_prompt}</div>
+                <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 6 }}>
+                  {c.user_prompt}
+                </div>
               )}
 
               <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
@@ -366,10 +376,12 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
         const current = columnMap?.[c.index] || {};
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 700, color: "#111827" }}>{c.name}</div>
+            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
 
             {c.reason && (
-              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Why skip: {c.reason}</div>
+              <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 4 }}>
+                Why skip: {c.reason}
+              </div>
             )}
 
             <div className="mapping-row" style={{ marginTop: 10 }}>
@@ -383,7 +395,7 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
                 {current.include ? "Included" : "Skipped"}
               </Button>
 
-              <div style={{ fontSize: 13, color: "#6b7280" }}>
+              <div style={{ fontSize: 13, color: "var(--c-text-muted)" }}>
                 Current role: {roleLabel(current.role || "skip")}
               </div>
             </div>
@@ -402,18 +414,14 @@ export default function MappingStep({
   allColumnsOptions,
   columnMap,
   requiredMissingMap,
-
   alreadyConfirmed,
-
   onBack,
   onSetRole,
   onConfirmVerified,
   onToggleInclude,
   onPickRequiredMissing,
-
   canConfirm,
   onConfirm,
-
   confirming,
 }) {
   if (analysisLoading) return <MappingStepSkeleton />;
