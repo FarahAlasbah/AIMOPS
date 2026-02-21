@@ -15,11 +15,13 @@ import FeedbackUpload from "./features/feedback/pages/FeedbackUpload";
 import UserManagement from "./features/admin/pages/UserManagement";
 import Denied from "./shared/pages/Denied";
 
-// ✅ ADD THIS
 import ProductsPage from "./features/products/pages/ProductsPage";
 
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+
+// NEW: theme bootstrap
+import { applyTheme } from "./shared/theme/themeToCssVars";
 
 const RTL_LANGS = new Set(["ar"]);
 
@@ -35,8 +37,16 @@ function useDirection() {
   }, [i18n.language]);
 }
 
+// NEW: apply CSS variables from theme.js once
+function useTheme() {
+  useEffect(() => {
+    applyTheme();
+  }, []);
+}
+
 function App() {
   useDirection();
+  useTheme();
 
   return (
     <BrowserRouter>
@@ -118,7 +128,6 @@ function App() {
               }
             />
 
-            {/* ✅ NEW PRODUCTS PAGE ROUTE */}
             <Route
               path="products"
               element={
