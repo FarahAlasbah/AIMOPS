@@ -15,6 +15,8 @@ from app.api import column_mapping
 from app.api import product_ingestion
 from app.api import products
 from app.api import events
+from app.api import notifications
+
 
 app = FastAPI(
     title="AIMOPS API",
@@ -41,6 +43,7 @@ app.include_router(column_mapping.router)
 app.include_router(product_ingestion.router)
 app.include_router(products.router)
 app.include_router(events.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def root():

@@ -863,16 +863,26 @@ async def analyze_event_impact(
 
 @router.get("/reminders/upcoming")
 async def get_upcoming_reminders(
+    create_notifications: bool = True,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
     Check for recurring events from last year that are
-    coming up in the next 60 days.
+    coming up in the next  30 days.
     System suggests creating new instances for this year.
+    
+    **Parameters:**
+    - create_notifications: If true, creates notifications for reminders (default: true)
+    
+    **Use Cases:**
+    - User opens app → system checks for upcoming events → creates notifications
+    - Background job runs daily → creates reminders automatically
     """
+    from app.models.notification import Notification
+    
     today = date.today()
-    sixty_days_later = today + timedelta(days=60)
+    sixty_days_later = today + timedelta(days= 30)
 
     # ── Find recurring events from last year ──
     # that fall in the same calendar period this year
@@ -883,6 +893,7 @@ async def get_upcoming_reminders(
     ).all()
 
     reminders = []
+    notifications_created = 0
 
     for event in recurring_events:
         # Calculate what the dates would be this year
@@ -894,7 +905,7 @@ async def get_upcoming_reminders(
             this_year_start = event.start_date.replace(year=today.year, day=28)
             this_year_end = event.end_date.replace(year=today.year, day=28)
 
-        # Check if this year's version falls in the next 60 days
+        # Check if this year's version falls in the next  30 days
         if today <= this_year_start <= sixty_days_later:
             # Check if this year's event already exists
             already_exists = db.query(Event).filter(
@@ -903,7 +914,10 @@ async def get_upcoming_reminders(
             ).first()
 
             if not already_exists:
-                reminders.append({
+                days_until = (this_year_start - today).days
+                event_name_base = event.event_name.rsplit(' ', 1)[0]  # Remove year from name
+                
+                reminder_info = {
                     "original_event_id": event.event_id,
                     "event_name": event.event_name,
                     "event_type": event.event_type,
@@ -915,14 +929,48 @@ async def get_upcoming_reminders(
                         "start": this_year_start.isoformat(),
                         "end": this_year_end.isoformat()
                     },
-                    "days_until": (this_year_start - today).days,
-                    "message": f"'{event.event_name}' is coming up in {(this_year_start - today).days} days. "
+                    "days_until": days_until,
+                    "message": f"'{event_name_base}' is coming up in {days_until} days. "
                                f"Last year it was {event.start_date} to {event.end_date}. "
                                f"Review and confirm dates for this year."
-                })
+                }
+                reminders.append(reminder_info)
+                
+                # ── Create Notification ──
+                if create_notifications:
+                    # Check if we already created a notification for this event this year
+                    # WHY: Don't spam user with same notification every time they check
+                    # Only create if no notification exists for this event in the last  30 days
+                    existing_notification = db.query(Notification).filter(
+                        Notification.user_id == current_user.user_id,
+                        Notification.notification_type == "event_reminder",
+                        Notification.related_id == event.event_id,
+                        Notification.created_at >= datetime.utcnow() - timedelta(days=30)
+                    ).first()
+                    
+                    if not existing_notification:
+                        notification = Notification(
+                            user_id=current_user.user_id,
+                            title=f"{event_name_base} {today.year} is coming up",
+                            message=f"Coming in {days_until} days. "
+                                   f"Last year: {event.start_date} to {event.end_date}. "
+                                   f"Suggested dates: {this_year_start} to {this_year_end}. "
+                                   f"Review and confirm.",
+                            notification_type="event_reminder",
+                            related_id=event.event_id,
+                            related_type="event",
+                            is_read=False
+                        )
+                        db.add(notification)
+                        notifications_created += 1
+
+    # ── Commit Notifications ──
+    if create_notifications and notifications_created > 0:
+        db.commit()
 
     return {
         "success": True,
         "reminders_count": len(reminders),
+        "notifications_created": notifications_created,
         "reminders": reminders
     }
