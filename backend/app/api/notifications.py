@@ -279,3 +279,140 @@ async def create_notification(
             "created_at": new_notification.created_at.isoformat() if new_notification.created_at else None
         }
     }
+
+
+# ============================================
+# ENDPOINT 6: Broadcast Notification
+# ============================================
+
+@router.post("/broadcast")
+async def broadcast_notification(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Send notification to multiple users at once.
+    
+    **Permission:** Admin only
+    
+    **Target Options:**
+    - "all": All active users
+    - "role": Specific role (admin, marketing_user, business_owner)
+    - "users": List of specific user IDs
+    """
+    from app.models.role import Role
+    
+    # ── Permission Check ──
+    if current_user.role.role_name != 'admin':
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can broadcast notifications"
+        )
+    
+    # ── Get Request Data ──
+    title = request.get("title", "").strip()
+    message = request.get("message", "").strip()
+    notification_type = request.get("type", "system")
+    target_type = request.get("target_type")
+    target_value = request.get("target_value")
+    related_id = request.get("related_id")
+    related_type = request.get("related_type")
+    
+    # ── Validate ──
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+    if not message:
+        raise HTTPException(status_code=400, detail="message is required")
+    if not target_type:
+        raise HTTPException(status_code=400, detail="target_type is required (all/role/users)")
+    
+    # ── Determine Target Users ──
+    target_users = []
+    
+    if target_type == "all":
+        # Send to all active users
+        # FIXED: Removed deleted_at check (User model doesn't have it)
+        target_users = db.query(User).filter(
+            User.status == 'active'
+        ).all()
+        
+    elif target_type == "role":
+        # Send to all users with specific role
+        if not target_value:
+            raise HTTPException(status_code=400, detail="target_value (role_name) is required")
+        
+        # FIXED: Removed deleted_at check
+        target_users = db.query(User).join(Role).filter(
+            Role.role_name == target_value,
+            User.status == 'active'
+        ).all()
+        
+        if not target_users:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No active users found with role '{target_value}'"
+            )
+        
+    elif target_type == "users":
+        # Send to specific user IDs
+        if not target_value or not isinstance(target_value, list):
+            raise HTTPException(
+                status_code=400,
+                detail="target_value must be a list of user IDs"
+            )
+        
+        # FIXED: Removed deleted_at check
+        target_users = db.query(User).filter(
+            User.user_id.in_(target_value),
+            User.status == 'active'
+        ).all()
+        
+        if len(target_users) != len(target_value):
+            found_ids = {u.user_id for u in target_users}
+            missing_ids = [uid for uid in target_value if uid not in found_ids]
+            raise HTTPException(
+                status_code=404,
+                detail=f"Users not found or inactive: {missing_ids}"
+            )
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="target_type must be 'all', 'role', or 'users'"
+        )
+    
+    # ── Create Notifications ──
+    notifications_created = []
+    
+    for user in target_users:
+        notification = Notification(
+            user_id=user.user_id,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            related_id=related_id,
+            related_type=related_type,
+            is_read=False
+        )
+        db.add(notification)
+        notifications_created.append(user.user_id)
+    
+    db.commit()
+    
+    # ── Build Response ──
+    return {
+        "success": True,
+        "message": f"Notification sent to {len(notifications_created)} users",
+        "broadcast_type": target_type,
+        "target_value": target_value,
+        "recipients": [
+            {
+                "user_id": u.user_id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role.role_name
+            }
+            for u in target_users
+        ],
+        "total_recipients": len(notifications_created)
+    }
