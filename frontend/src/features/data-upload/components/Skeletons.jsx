@@ -5,6 +5,31 @@ function S({ className = "", style = {} }) {
   return <div className={`skeleton ${className}`} style={style} />;
 }
 
+export function AnalyzeProgress({
+  percent = 0,
+  label = "Analyzing & preparing mapping...",
+}) {
+  const p = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+
+  return (
+    <div className="analyze-progress-wrap" role="status" aria-live="polite">
+      <div className="analyze-progress-card">
+        <div className="analyze-circle" style={{ ["--p"]: p }}>
+          <div className="analyze-circle-inner">
+            <div className="analyze-percent">{p}%</div>
+            <div className="analyze-sub">Loading</div>
+          </div>
+        </div>
+
+        <div className="analyze-label">{label}</div>
+        <div className="analyze-hint">
+          This may take a few seconds depending on the file size.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function UploadCardSkeleton() {
   return (
     <div className="upload-card">
@@ -53,7 +78,7 @@ export function UploadCardSkeleton() {
 
 export function UploadsListSkeleton({ count = 6 }) {
   return (
-    <React.Fragment>
+    <>
       <div className="uploads-grid">
         {Array.from({ length: count }).map((_, i) => (
           <UploadCardSkeleton key={i} />
@@ -70,7 +95,7 @@ export function UploadsListSkeleton({ count = 6 }) {
           <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }
 
@@ -84,7 +109,13 @@ function MappingCardSkeleton({ rows = 3 }) {
 
       <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} style={{ borderTop: "1px solid #e5e7eb", paddingTop: 12 }}>
+          <div
+            key={i}
+            style={{
+              borderTop: "1px solid var(--c-border)",
+              paddingTop: 12,
+            }}
+          >
             <S className="skeleton-line" style={{ height: 14, width: "55%" }} />
             <div style={{ marginTop: 10 }}>
               <S className="skeleton-line" style={{ height: 34, width: "100%" }} />
@@ -102,7 +133,7 @@ function MappingCardSkeleton({ rows = 3 }) {
 
 export function MappingStepSkeleton() {
   return (
-    <React.Fragment>
+    <>
       <div className="mapping-section">
         <MappingCardSkeleton rows={3} />
         <MappingCardSkeleton rows={2} />
@@ -113,7 +144,7 @@ export function MappingStepSkeleton() {
         <S className="skeleton-btn" style={{ height: 38, width: 90 }} />
         <S className="skeleton-btn" style={{ height: 38, width: 160 }} />
       </div>
-    </React.Fragment>
+    </>
   );
 }
 
@@ -158,7 +189,15 @@ export function ProductsListSkeleton({ count = 6 }) {
           <S className="skeleton-line" style={{ height: 38, width: 140 }} />
         </div>
 
-        <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
           <S className="skeleton-line" style={{ height: 12, width: 160 }} />
           <S className="skeleton-btn" style={{ height: 34, width: 70 }} />

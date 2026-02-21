@@ -1,549 +1,363 @@
 // frontend/src/features/data-upload/components/ReviewStep.jsx
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, FormActions } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
-import { ProductsListSkeleton, ConfirmProductsSkeleton } from "./Skeletons";
+import "./ReviewStep.css";
 
-const money = (v) => {
-  const n = Number(v);
-  if (Number.isNaN(n)) return "-";
-  return n.toFixed(2);
+const safeArr = (v) => (Array.isArray(v) ? v : []);
+const uniq = (arr) => Array.from(new Set(arr));
+const cleanStr = (v) => String(v ?? "").trim();
+
+const getSelectedMerges = (productsDraft, normalized_name) => {
+  const key = cleanStr(normalized_name);
+  if (!key) return [];
+
+  const found = safeArr(productsDraft).find(
+    (x) => cleanStr(x?.normalized_name) === key,
+  );
+
+  return uniq(
+    safeArr(found?.merge_with)
+      .map(cleanStr)
+      .filter(Boolean),
+  );
 };
 
-function ProductCard({ product, draft, expanded, onToggleExpand, onToggleMerge }) {
-  const normalized = product?.normalized_name || "";
-  const primaryName = product?.primary_name || "-";
-  const stats = product?.stats || {};
+function MergeModal({
+  open,
+  product,
+  candidates,
+  selected,
+  locked,
+  onToggle,
+  onClose,
+}) {
+  const [q, setQ] = useState("");
 
-  const variations = Array.isArray(product?.name_variations) ? product.name_variations : [];
-  const possibleTypos = Array.isArray(product?.possible_typos) ? product.possible_typos : [];
+  useEffect(() => {
+    if (!open) return;
+    setQ("");
 
-  const category = (draft?.category ?? product?.category ?? "") || "";
-  const mergeWith = Array.isArray(draft?.merge_with) ? draft.merge_with : [];
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
 
-  const mergeCandidates = variations
-    .map((v) => String(v))
-    .filter((v) => v && v !== String(product?.primary_name ?? ""));
+    document.addEventListener("keydown", onKeyDown);
 
-  const hasTypos = possibleTypos.length > 0;
-  const hasVariations = mergeCandidates.length > 0;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-  const toggleAll = () => {
-    const allSelected =
-      mergeCandidates.length > 0 && mergeCandidates.every((v) => mergeWith.includes(v));
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open, onClose]);
 
-    mergeCandidates.forEach((v) => {
-      const shouldSelect = !allSelected;
-      const isSelected = mergeWith.includes(v);
-      if (shouldSelect && !isSelected) onToggleMerge(normalized, v);
-      if (!shouldSelect && isSelected) onToggleMerge(normalized, v);
-    });
-  };
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return candidates;
+    return candidates.filter((c) => c.toLowerCase().includes(s));
+  }, [q, candidates]);
+
+  if (!open || !product) return null;
 
   return (
-    <div className="mapping-card" style={{ marginTop: 10 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 800, color: "#111827", wordBreak: "break-word" }}>
-            {primaryName}
-          </div>
-
-          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4, wordBreak: "break-word" }}>
-            {normalized}
-          </div>
-
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            <span className="chip">Occ: {stats?.occurrences ?? "-"}</span>
-            <span className="chip">Qty: {stats?.total_quantity ?? "-"}</span>
-            <span className="chip">Rev: {money(stats?.total_revenue)}</span>
-
-            {category ? (
-              <span className="chip good">Category: {category}</span>
-            ) : (
-              <span className="chip warn">Category: -</span>
-            )}
-
-            {hasVariations ? <span className="chip warn">Variations</span> : null}
-            {hasTypos ? <span className="chip warn">Typos</span> : null}
-            {mergeWith.length > 0 ? <span className="chip good">Merges: {mergeWith.length}</span> : null}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className="ghost-btn"
-            onClick={onToggleExpand}
-            style={{ whiteSpace: "nowrap" }}
-          >
-            {expanded ? "Collapse" : "Merge"}
+    <div
+      className="merge-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Manage merges"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div className="merge-modal">
+        <div className="merge-modal-head">
+          <div className="merge-modal-title">Manage merges</div>
+          <button type="button" className="merge-close" onClick={onClose}>
+            Close
           </button>
         </div>
-      </div>
 
-      {expanded && (
-        <>
-          <div className="meta-grid" style={{ marginTop: 10 }}>
-            <div className="meta-item">
-              <div className="meta-label">Occurrences</div>
-              <div className="meta-value">{stats?.occurrences ?? "-"}</div>
-            </div>
+        <div className="merge-modal-sub">
+          <div className="merge-product-name">{product.primary_name}</div>
+          <div className="merge-product-meta" title={product.normalized_name}>
+            Normalized: {product.normalized_name}
+          </div>
+        </div>
 
-            <div className="meta-item">
-              <div className="meta-label">Total quantity</div>
-              <div className="meta-value">{stats?.total_quantity ?? "-"}</div>
-            </div>
-
-            <div className="meta-item">
-              <div className="meta-label">Total revenue</div>
-              <div className="meta-value">{money(stats?.total_revenue)}</div>
-            </div>
-
-            <div className="meta-item" style={{ gridColumn: "1 / -1" }}>
-              <div className="meta-label">Date range</div>
-              <div className="meta-value">{stats?.date_range ?? "-"}</div>
-            </div>
+        <div className="merge-section">
+          <div className="merge-section-title">
+            Selected merges <span className="muted">({selected.length})</span>
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="meta-label" style={{ marginBottom: 6 }}>
-              Merge variations (only action)
-            </div>
-
-            {mergeCandidates.length === 0 ? (
-              <div style={{ fontSize: 13, color: "#6b7280" }}>No variations detected.</div>
-            ) : (
-              <>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                  <button type="button" className="ghost-btn" onClick={toggleAll}>
-                    {mergeCandidates.every((v) => mergeWith.includes(v)) ? "Clear all" : "Select all"}
-                  </button>
-
-                  {mergeWith.length > 0 ? (
-                    <div style={{ fontSize: 13, color: "#6b7280", alignSelf: "center" }}>
-                      Selected merges: <strong style={{ color: "#111827" }}>{mergeWith.length}</strong>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {mergeCandidates.map((v) => {
-                    const checked = mergeWith.includes(v);
-                    return (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => onToggleMerge(normalized, v)}
-                        className={`role-pill ${checked ? "active" : ""}`}
-                        aria-pressed={checked}
-                        title="Toggle merge"
-                      >
-                        {v}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
-          {possibleTypos.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <div className="meta-label" style={{ marginBottom: 6 }}>
-                Possible typos (read-only)
-              </div>
-
-              <div style={{ display: "grid", gap: 6 }}>
-                {possibleTypos.slice(0, 8).map((t, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 10,
-                      padding: 10,
-                      background: "#fff",
-                      fontSize: 13,
-                      color: "#111827",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800 }}>{t?.product ?? "-"}</div>
-                    <div style={{ color: "#6b7280", marginTop: 4 }}>
-                      edit_distance: {t?.edit_distance ?? "-"} • {t?.suggestion ?? ""}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {selected.length === 0 ? (
+            <div className="merge-empty">No merges selected.</div>
+          ) : (
+            <div className="merge-selected">
+              {selected.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="selected-chip"
+                  onClick={() => onToggle(name)}
+                  disabled={locked}
+                  title="Remove"
+                >
+                  {name}
+                  <span className="x">×</span>
+                </button>
+              ))}
             </div>
           )}
-        </>
-      )}
+        </div>
+
+        <div className="merge-section">
+          <div className="merge-section-title">
+            Candidates <span className="muted">({candidates.length})</span>
+          </div>
+
+          <div className="merge-search-row">
+            <input
+              className="merge-search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search candidates..."
+              disabled={locked}
+            />
+            <div className="merge-count">{filtered.length} shown</div>
+          </div>
+
+          {candidates.length === 0 ? (
+            <div className="merge-empty">No other product names found in this batch.</div>
+          ) : filtered.length === 0 ? (
+            <div className="merge-empty">No matches.</div>
+          ) : (
+            <div className="merge-list">
+              {filtered.map((name) => {
+                const active = selected.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className={`merge-item ${active ? "active" : ""}`}
+                    onClick={() => onToggle(name)}
+                    disabled={locked}
+                    aria-pressed={active}
+                    title={active ? "Remove" : "Add"}
+                  >
+                    <span className="merge-item-text">{name}</span>
+                    <span className="merge-item-action">{active ? "Remove" : "Add"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="merge-modal-foot">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Done
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function ReviewStep({
-  batchId,
-
   confirmResult,
   confirmedMappings,
-
   extracting,
   extractResult,
-
   productsDraft,
-  onToggleMerge,
-
-  confirmingProducts,
   confirmProductsResult,
-
+  confirmingProducts,
   onExtract,
+  onToggleMerge,
   onConfirmProducts,
-
   onBack,
   onFinish,
 }) {
-  const products = Array.isArray(extractResult?.products) ? extractResult.products : [];
+  const [activeNorm, setActiveNorm] = useState("");
+  const locked = !!confirmProductsResult?.success;
 
-  const draftByNorm = {};
-  (productsDraft || []).forEach((p) => {
-    if (p?.normalized_name) draftByNorm[String(p.normalized_name)] = p;
-  });
+  const extractedProducts = useMemo(() => {
+    const list = Array.isArray(extractResult?.products) ? extractResult.products : [];
+    return list
+      .map((p) => ({
+        primary_name: cleanStr(p?.primary_name),
+        normalized_name: cleanStr(p?.normalized_name),
+        category: p?.category == null ? "" : cleanStr(p?.category),
+      }))
+      .filter((p) => p.primary_name && p.normalized_name);
+  }, [extractResult]);
 
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [pageSize, setPageSize] = useState(20);
-  const [page, setPage] = useState(1);
-  const [expanded, setExpanded] = useState({});
+  const byNorm = useMemo(() => {
+    const m = new Map();
+    extractedProducts.forEach((p) => m.set(p.normalized_name, p));
+    return m;
+  }, [extractedProducts]);
 
-  const confirmRef = useRef(null);
+  const allPrimaryNames = useMemo(() => {
+    return uniq(extractedProducts.map((p) => p.primary_name)).filter(Boolean);
+  }, [extractedProducts]);
 
-  const confirmDisabled =
-    confirmingProducts || !extractResult?.success || !!confirmProductsResult?.success;
+  const extractedCount = extractedProducts.length;
 
-  const filtered = useMemo(() => {
-    const q = String(query || "").trim().toLowerCase();
-    const list = products || [];
+  const mergedTotal = useMemo(() => {
+    return safeArr(productsDraft).reduce((acc, p) => {
+      const merges = safeArr(p?.merge_with).map(cleanStr).filter(Boolean);
+      return acc + merges.length;
+    }, 0);
+  }, [productsDraft]);
 
-    return list.filter((p) => {
-      const primary = String(p?.primary_name || "").toLowerCase();
-      const norm = String(p?.normalized_name || "").toLowerCase();
-      const variations = Array.isArray(p?.name_variations) ? p.name_variations : [];
-      const possibleTypos = Array.isArray(p?.possible_typos) ? p.possible_typos : [];
+  const canShowExtracted = !!extractResult?.success && extractedCount > 0;
 
-      const draft = draftByNorm[String(p?.normalized_name || "")];
-      const category = String(draft?.category ?? p?.category ?? "").trim();
+  const activeProduct = activeNorm ? byNorm.get(activeNorm) : null;
+  const activeSelected = useMemo(() => {
+    if (!activeProduct) return [];
+    return getSelectedMerges(productsDraft, activeProduct.normalized_name);
+  }, [productsDraft, activeProduct]);
 
-      const mergeCandidates = variations
-        .map((v) => String(v))
-        .filter((v) => v && v !== String(p?.primary_name ?? ""));
-
-      const matchesQuery =
-        !q ||
-        primary.includes(q) ||
-        norm.includes(q) ||
-        variations.some((v) => String(v).toLowerCase().includes(q));
-
-      if (!matchesQuery) return false;
-
-      if (filter === "typos") return possibleTypos.length > 0;
-      if (filter === "variations") return mergeCandidates.length > 0;
-      if (filter === "no_category") return !category;
-
-      return true;
-    });
-  }, [products, query, filter, draftByNorm]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(Math.max(1, page), totalPages);
-
-  const pageItems = useMemo(() => {
-    const start = (safePage - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, safePage, pageSize]);
-
-  const setExpandedForPage = (value) => {
-    const next = { ...expanded };
-    pageItems.forEach((p) => {
-      const k = String(p?.normalized_name || "");
-      if (!k) return;
-      next[k] = value;
-    });
-    setExpanded(next);
-  };
-
-  const scrollToConfirm = () => {
-    const el = confirmRef.current;
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const handleFilterChange = (v) => {
-    setFilter(v);
-    setPage(1);
-  };
-  const handleQueryChange = (v) => {
-    setQuery(v);
-    setPage(1);
-  };
-  const handlePageSizeChange = (v) => {
-    const n = Number(v);
-    setPageSize(Number.isNaN(n) ? 20 : n);
-    setPage(1);
-  };
-
-  const showExtractButton = !extractResult?.success && !confirmProductsResult?.success;
-
-  const showProductsSkeleton = extracting && !extractResult?.success;
-  const showConfirmSkeleton = confirmingProducts && !confirmProductsResult?.success;
+  const activeCandidates = useMemo(() => {
+    if (!activeProduct) return [];
+    return allPrimaryNames.filter((n) => n !== activeProduct.primary_name);
+  }, [allPrimaryNames, activeProduct]);
 
   return (
-    <div style={{ padding: 12, position: "relative" }}>
-      <h3 style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 10 }}>
-        Products
-      </h3>
+    <div className="review-step">
+      <div className="review-header">
+        <div>
+          <div className="review-title">Merge duplicates, then confirm products</div>
+          <div className="review-sub">
+            {extractResult?.success
+              ? `${extractedCount} products extracted • ${mergedTotal} merges selected`
+              : "Extract products from this batch first"}
+          </div>
+        </div>
 
-      <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>
-        Batch ID: <strong style={{ color: "#111827" }}>{batchId}</strong>
+        <div className="review-header-right">
+          {confirmResult?.success ? (
+            <span className="badge ok">
+              Mappings confirmed ({Array.isArray(confirmedMappings) ? confirmedMappings.length : 0})
+            </span>
+          ) : (
+            <span className="badge warn">Mappings not found</span>
+          )}
+
+          {extractResult?.success ? (
+            <span className="badge ok">Extracted</span>
+          ) : (
+            <span className="badge muted">Not extracted</span>
+          )}
+        </div>
       </div>
 
-      {confirmResult?.success ? (
-        <div style={{ marginBottom: 12 }}>
-          <InfoMessage type="success">
-            Mappings saved:{" "}
-            {confirmResult.mappings_saved ??
-              (Array.isArray(confirmedMappings) ? confirmedMappings.length : 0)}
-          </InfoMessage>
-        </div>
-      ) : (
-        <div style={{ marginBottom: 12 }}>
-          <InfoMessage type="warn">Mappings are not saved for this batch on this device.</InfoMessage>
+      {confirmProductsResult?.success && (
+        <InfoMessage type="success">Products confirmed successfully. You can finish now.</InfoMessage>
+      )}
+
+      {!extractResult?.success && (
+        <div className="top-actions">
+          <Button type="button" variant="secondary" onClick={onBack}>
+            Back
+          </Button>
+
+          <Button type="button" onClick={onExtract} disabled={extracting}>
+            {extracting ? "Extracting..." : "Extract products"}
+          </Button>
         </div>
       )}
 
-      <div className="mapping-card" style={{ marginTop: 10 }}>
-        <div className="mapping-title">Step 1: Extract products</div>
-        <div className="mapping-sub">This finds unique products and variations from your uploaded file.</div>
+      {extractResult?.success && !canShowExtracted && (
+        <InfoMessage type="info">No products were extracted from this batch.</InfoMessage>
+      )}
 
-        {extracting ? (
-          <div style={{ marginTop: 10 }}>
-            <div className="skeleton skeleton-line" style={{ height: 12, width: 180 }} />
-            <div style={{ marginTop: 10 }}>
-              <div className="skeleton" style={{ height: 8, width: "100%", borderRadius: 999 }} />
-            </div>
-          </div>
-        ) : null}
-
-        {extractResult?.success && (
-          <div style={{ marginTop: 10 }}>
-            <InfoMessage type="success">
-              {extractResult.message ||
-                `Extracted ${
-                  extractResult.total_unique_products ?? products.length
-                } unique products`}
-            </InfoMessage>
-          </div>
-        )}
-
-        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {showExtractButton ? (
-            <Button
-              variant="secondary"
-              onClick={onExtract}
-              disabled={!confirmResult?.success || extracting}
-            >
-              {extracting ? "Extracting..." : "Extract products"}
-            </Button>
-          ) : null}
-
-          {extractResult?.success ? (
-            <button type="button" className="ghost-btn" onClick={scrollToConfirm}>
-              Jump to confirm
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {showProductsSkeleton ? <ProductsListSkeleton count={6} /> : null}
-
-      {extractResult?.success && (
-        <div style={{ marginTop: 14 }}>
-          <div className="mapping-card" style={{ marginTop: 10 }}>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ flex: "1 1 240px", minWidth: 220 }}>
-                <div className="meta-label" style={{ marginBottom: 6 }}>
-                  Search
-                </div>
-                <input
-                  value={query}
-                  onChange={(e) => handleQueryChange(e.target.value)}
-                  placeholder="Search by name..."
-                  style={{
-                    width: "100%",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    color: "#111827",
-                  }}
-                />
-              </div>
-
-              <div style={{ flex: "0 0 220px", minWidth: 200 }}>
-                <div className="meta-label" style={{ marginBottom: 6 }}>
-                  Filter
-                </div>
-                <select
-                  value={filter}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                  style={{
-                    width: "100%",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    color: "#111827",
-                    background: "#fff",
-                  }}
-                >
-                  <option value="all">All</option>
-                  <option value="no_category">No category</option>
-                  <option value="variations">Has variations</option>
-                  <option value="typos">Has typos</option>
-                </select>
-              </div>
-
-              <div style={{ flex: "0 0 140px" }}>
-                <div className="meta-label" style={{ marginBottom: 6 }}>
-                  Page size
-                </div>
-                <select
-                  value={pageSize}
-                  onChange={(e) => handlePageSizeChange(e.target.value)}
-                  style={{
-                    width: "100%",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    color: "#111827",
-                    background: "#fff",
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ fontSize: 13, color: "#6b7280" }}>
-                Showing <strong style={{ color: "#111827" }}>{pageItems.length}</strong> of{" "}
-                <strong style={{ color: "#111827" }}>{filtered.length}</strong> products
-              </div>
-
-              <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" className="ghost-btn" onClick={() => setExpandedForPage(true)}>
-                  Expand page
-                </button>
-                <button type="button" className="ghost-btn" onClick={() => setExpandedForPage(false)}>
-                  Collapse page
-                </button>
-                <button type="button" className="ghost-btn" onClick={scrollToConfirm}>
-                  Jump to confirm
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                className="pager-btn"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage === 1}
-              >
-                Prev
-              </button>
-
-              <div className="pager-page">
-                Page {safePage} / {totalPages}
-              </div>
-
-              <button
-                className="pager-btn"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage === totalPages}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            {pageItems.map((p) => {
-              const key = String(p?.normalized_name || p?.primary_name || "");
-              const isOpen = !!expanded[key];
+      {canShowExtracted && (
+        <>
+          <div className="products-list">
+            {extractedProducts.map((p) => {
+              const selected = getSelectedMerges(productsDraft, p.normalized_name);
 
               return (
-                <ProductCard
-                  key={key}
-                  product={p}
-                  draft={draftByNorm[String(p?.normalized_name || "")]}
-                  expanded={isOpen}
-                  onToggleExpand={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
-                  onToggleMerge={onToggleMerge}
-                />
+                <div className="product-row" key={p.normalized_name}>
+                  <div className="product-main">
+                    <div className="product-name">{p.primary_name}</div>
+                    <div className="product-meta">
+                      <span>Category: {p.category || "—"}</span>
+                      <span className="sep">•</span>
+                      <span title={p.normalized_name}>Normalized: {p.normalized_name}</span>
+                    </div>
+
+                    {selected.length > 0 ? (
+                      <div className="selected-wrap">
+                        {selected.slice(0, 4).map((v) => (
+                          <span key={v} className="selected-chip readonly" title={v}>
+                            {v}
+                          </span>
+                        ))}
+                        {selected.length > 4 ? (
+                          <span className="more-chip">+{selected.length - 4} more</span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="selected-empty">No merges selected</div>
+                    )}
+                  </div>
+
+                  <div className="product-actions">
+                    <button
+                      type="button"
+                      className="manage-btn"
+                      onClick={() => setActiveNorm(p.normalized_name)}
+                      disabled={locked}
+                      title={locked ? "Already confirmed" : ""}
+                    >
+                      Manage merges
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
 
-          <div ref={confirmRef} style={{ marginTop: 16 }}>
-            {showConfirmSkeleton ? (
-              <ConfirmProductsSkeleton />
-            ) : (
-              <div className="mapping-card">
-                <div className="mapping-title">Step 2: Confirm products</div>
-                <div className="mapping-sub">This will import your sales records using your merge decisions.</div>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={onBack}>
+              Back
+            </Button>
 
-                {confirmProductsResult?.success && (
-                  <div style={{ marginTop: 10 }}>
-                    <InfoMessage type="success">
-                      {confirmProductsResult.message || "Products confirmed."}
-                    </InfoMessage>
-                  </div>
-                )}
+            <div className="right-actions">
+              <Button
+                type="button"
+                onClick={onConfirmProducts}
+                disabled={confirmingProducts || locked}
+              >
+                {locked ? "Confirmed" : confirmingProducts ? "Confirming..." : "Confirm products"}
+              </Button>
 
-                <div style={{ marginTop: 12 }}>
-                  <Button variant="primary" onClick={onConfirmProducts} disabled={confirmDisabled}>
-                    {confirmingProducts
-                      ? "Confirming..."
-                      : confirmProductsResult?.success
-                      ? "Confirmed"
-                      : "Confirm products"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onFinish}
+                disabled={!locked}
+              >
+                Finish
+              </Button>
+            </div>
+          </FormActions>
+
+          <MergeModal
+            open={!!activeNorm}
+            product={activeProduct}
+            candidates={activeCandidates}
+            selected={activeSelected}
+            locked={locked}
+            onToggle={(name) => onToggleMerge(activeProduct?.normalized_name, name)}
+            onClose={() => setActiveNorm("")}
+          />
+        </>
       )}
-
-      <FormActions>
-        <Button variant="secondary" onClick={onBack} disabled={extracting || confirmingProducts}>
-          Back
-        </Button>
-
-        <Button variant="primary" onClick={onFinish} disabled={!confirmProductsResult?.success}>
-          Finish
-        </Button>
-      </FormActions>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/components/ColumnMeta.jsx
 import {
   boolText,
   formatConfidence,
@@ -24,7 +25,9 @@ export default function ColumnMeta({ column }) {
           Confidence: {formatConfidence(column.confidence)} ({confidenceLevel})
         </span>
 
-        <span className="chip">Classification: {column.classification || "-"}</span>
+        <span className="chip">
+          Classification: {column.classification || "-"}
+        </span>
 
         <span className={`chip ${verify ? "warn" : "good"}`}>
           Verification needed: {boolText(verify)}

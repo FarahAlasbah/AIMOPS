@@ -7,6 +7,7 @@ import InfoMessage from "../../../shared/components/InfoMessage";
 
 import { analyzeSalesBatch, confirmSalesMappings } from "../../../api/data";
 import MappingStep from "../components/MappingStep";
+import { AnalyzeProgress } from "../components/Skeletons"; // NEW
 
 import { getCachedAnalysis, setCachedAnalysis } from "../utils/analysisCache";
 import { buildConfirmMappingsPayload } from "../utils/confirmPayload";
@@ -85,7 +86,9 @@ const buildRequiredMissingInit = (analysis) => {
 // If we have confirmed mappings saved locally, rebuild columnMap from them
 const buildColumnMapFromConfirmed = (analysis, confirmResult) => {
   const confirmedList = extractConfirmedMappingsList(confirmResult);
-  const byName = new Map(confirmedList.map((m) => [String(m.original_name), normalizeRole(m.role)]));
+  const byName = new Map(
+    confirmedList.map((m) => [String(m.original_name), normalizeRole(m.role)]),
+  );
 
   const next = {};
   (analysis?.columns || []).forEach((c) => {
@@ -111,7 +114,9 @@ const buildRequiredMissingFromColumnMap = (analysis, columnMap) => {
     const requiredRole = normalizeRole(r.role);
 
     // find a column that currently has that role
-    const found = Object.entries(columnMap || {}).find(([, st]) => normalizeRole(st?.role) === requiredRole);
+    const found = Object.entries(columnMap || {}).find(
+      ([, st]) => normalizeRole(st?.role) === requiredRole,
+    );
     if (found) {
       rm[r.role] = String(found[0]); // store index as string
     }
@@ -125,7 +130,8 @@ const mergeDraftIntoBase = (analysis, baseMap, draft) => {
   const next = { ...(baseMap || {}) };
   const cols = analysis?.columns || [];
 
-  const draftColumnMap = draft?.columnMap && typeof draft.columnMap === "object" ? draft.columnMap : null;
+  const draftColumnMap =
+    draft?.columnMap && typeof draft.columnMap === "object" ? draft.columnMap : null;
   if (!draftColumnMap) return next;
 
   cols.forEach((c) => {
@@ -141,6 +147,49 @@ const mergeDraftIntoBase = (analysis, baseMap, draft) => {
   });
 
   return next;
+};
+
+// NEW: fake progress hook (0..95 while loading, then 100 on finish)
+const useFakeProgress = (active) => {
+  const [pct, setPct] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setPct(0);
+      return;
+    }
+
+    let mounted = true;
+    let t = null;
+
+    setPct(0);
+
+    t = window.setInterval(() => {
+      if (!mounted) return;
+
+      setPct((prev) => {
+        // ease out as we approach 95
+        const cap = 95;
+        if (prev >= cap) return cap;
+
+        const remaining = cap - prev;
+        // step gets smaller near the cap
+        const step = Math.max(1, Math.round(remaining * 0.12));
+        return Math.min(cap, prev + step);
+      });
+    }, 220);
+
+    return () => {
+      mounted = false;
+      if (t) window.clearInterval(t);
+    };
+  }, [active]);
+
+  const finish = () => {
+    setPct(100);
+  };
+
+  return { pct, finish, setPct };
 };
 
 export default function MappingPage() {
@@ -161,6 +210,9 @@ export default function MappingPage() {
   const [confirming, setConfirming] = useState(false);
 
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+
+  // NEW: progress for Analyze/Map load
+  const { pct: analyzePct, finish: finishAnalyzePct } = useFakeProgress(analysisLoading);
 
   // Load analysis + hydrate UI state (base -> confirmed OR draft)
   useEffect(() => {
@@ -237,11 +289,14 @@ export default function MappingPage() {
         const fallback = err?.message || "Analyze failed.";
         setError(extractApiError(err, fallback));
       } finally {
-        setAnalysisLoading(false);
+        // NEW: show 100% briefly then reveal UI
+        finishAnalyzePct();
+        window.setTimeout(() => setAnalysisLoading(false), 220);
       }
     };
 
     run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchId, refresh]);
 
   // Persist a local draft so reopening Map shows the same state without re-confirm
@@ -398,7 +453,11 @@ export default function MappingPage() {
       <PageHeader
         title="Map Columns"
         breadcrumbs={[
-          { label: "Upload Sales Data", link: true, onClick: () => navigate("/app/data-upload/uploads") },
+          {
+            label: "Upload Sales Data",
+            link: true,
+            onClick: () => navigate("/app/data-upload/uploads"),
+          },
           { label: `Batch ${batchId}`, link: false },
         ]}
       />
@@ -418,22 +477,27 @@ export default function MappingPage() {
           </div>
         )}
 
-        <MappingStep
-          analysisLoading={analysisLoading}
-          analysis={analysis}
-          allColumnsOptions={allColumnsOptions}
-          columnMap={columnMap}
-          requiredMissingMap={requiredMissingMap}
-          alreadyConfirmed={alreadyConfirmed}
-          onBack={() => navigate("/app/data-upload/uploads")}
-          onSetRole={setRole}
-          onConfirmVerified={confirmVerified}
-          onToggleInclude={toggleInclude}
-          onPickRequiredMissing={setRequiredMissing}
-          canConfirm={canConfirm}
-          onConfirm={handleConfirm}
-          confirming={confirming}
-        />
+        {/* NEW: circle progress while analysisLoading */}
+        {analysisLoading ? (
+          <AnalyzeProgress percent={analyzePct} />
+        ) : (
+          <MappingStep
+            analysisLoading={false}
+            analysis={analysis}
+            allColumnsOptions={allColumnsOptions}
+            columnMap={columnMap}
+            requiredMissingMap={requiredMissingMap}
+            alreadyConfirmed={alreadyConfirmed}
+            onBack={() => navigate("/app/data-upload/uploads")}
+            onSetRole={setRole}
+            onConfirmVerified={confirmVerified}
+            onToggleInclude={toggleInclude}
+            onPickRequiredMissing={setRequiredMissing}
+            canConfirm={canConfirm}
+            onConfirm={handleConfirm}
+            confirming={confirming}
+          />
+        )}
       </Card>
     </div>
   );

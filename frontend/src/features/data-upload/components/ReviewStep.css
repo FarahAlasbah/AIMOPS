@@ -1,0 +1,387 @@
+/* frontend/src/features/data-upload/components/ReviewStep.css */
+
+.review-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.review-title {
+  font-size: 16px;
+  font-weight: var(--fw-extra);
+  color: var(--c-text);
+}
+
+.review-sub {
+  margin-top: 4px;
+  font-size: var(--fs-md);
+  color: var(--c-text-muted);
+}
+
+.review-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  border: 1px solid transparent;
+}
+
+/* mapped to your theme tokens (blue primary), keeping “ok/warn/muted” behavior */
+.badge.ok {
+  color: var(--c-primary);
+  background: var(--c-primary-soft);
+  border-color: var(--c-success-border);
+}
+
+.badge.warn {
+  color: var(--c-warn-text);
+  background: var(--c-warn-bg);
+  border-color: var(--c-warn-border);
+}
+
+.badge.muted {
+  color: var(--c-text-muted);
+  background: var(--c-surface-muted);
+  border-color: var(--c-border);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.products-list {
+  display: grid;
+  gap: 10px;
+}
+
+.product-row {
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.product-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.product-name {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-extra);
+  color: var(--c-text);
+}
+
+.product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.sep {
+  color: var(--c-border-strong);
+}
+
+.selected-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-chip {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  border-radius: var(--r-pill);
+  padding: 6px 10px;
+  font-size: var(--fs-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.selected-chip.readonly {
+  cursor: default;
+}
+
+.selected-chip .x {
+  color: var(--c-primary);
+  opacity: 0.85;
+}
+
+.more-chip {
+  border: 1px dashed var(--c-border);
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+  border-radius: var(--r-pill);
+  padding: 6px 10px;
+  font-size: var(--fs-sm);
+}
+
+.selected-empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--c-border);
+  background: var(--c-surface-muted);
+}
+
+.product-actions {
+  display: flex;
+  align-items: center;
+}
+
+.manage-btn {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extra);
+  cursor: pointer;
+  color: var(--c-text);
+}
+
+.manage-btn:hover {
+  background: var(--c-surface-muted);
+}
+
+.manage-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Modal */
+.merge-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--c-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 50;
+}
+
+.merge-modal {
+  width: min(720px, 100%);
+  max-height: 85vh;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+
+  /* Move modal down a bit */
+  margin-top: 40px;
+}
+
+.merge-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.merge-modal-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  color: var(--c-text);
+}
+
+.merge-close {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extra);
+  cursor: pointer;
+}
+
+.merge-close:hover {
+  background: var(--c-surface-muted);
+}
+
+.merge-modal-sub {
+  padding: 12px 14px 4px 14px;
+}
+
+.merge-product-name {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  color: var(--c-text);
+}
+
+.merge-product-meta {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merge-section {
+  padding: 10px 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.merge-section-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-black);
+  color: var(--c-text-subtle);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.muted {
+  color: var(--c-text-muted);
+  font-weight: var(--fw-extra);
+}
+
+.merge-empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--c-surface-muted);
+  border: 1px dashed var(--c-border);
+}
+
+.merge-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.merge-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.merge-search {
+  width: 100%;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: var(--fs-md);
+  outline: none;
+  background: var(--c-surface);
+}
+
+.merge-search:focus {
+  border-color: var(--c-focus);
+  box-shadow: var(--sh-focus);
+}
+
+.merge-count {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+/* Scrollable list inside modal */
+.merge-list {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  overflow: auto;
+  max-height: 320px;
+  background: var(--c-surface);
+  display: grid;
+}
+
+.merge-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  cursor: pointer;
+  text-align: left;
+}
+
+.merge-item:last-child {
+  border-bottom: 0;
+}
+
+.merge-item:hover {
+  background: var(--c-surface-muted);
+}
+
+.merge-item.active {
+  background: var(--c-primary-soft);
+}
+
+.merge-item-text {
+  font-size: var(--fs-md);
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merge-item-action {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-black);
+  color: var(--c-text-muted);
+}
+
+.merge-item.active .merge-item-action {
+  color: var(--c-primary);
+}
+
+.merge-modal-foot {
+  padding: 12px 14px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  justify-content: flex-end;
+}
