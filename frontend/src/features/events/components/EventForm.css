@@ -1,0 +1,28 @@
+/* frontend/src/features/events/components/EventForm.css */
+/* Make the date inputs match the blue theme (override the global green-ish focus shadow) */
+.events-form .form-input[type="date"] {
+  border-color: #d1d5db;
+  background: #ffffff;
+}
+
+.events-form .form-input[type="date"]:focus {
+  border-color: #03045e;
+  box-shadow: 0 0 0 3px rgba(3, 4, 94, 0.12);
+}
+
+/* Make the calendar icon feel on-theme (Chrome/WebKit) */
+.events-form .form-input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.75;
+  cursor: pointer;
+  transition: 0.2s;
+  filter: invert(10%) sepia(50%) saturate(2500%) hue-rotate(215deg) brightness(85%) contrast(95%);
+}
+
+.events-form .form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Keep the recurring block aligned nicely */
+.events-form .events-checkbox {
+  padding-top: 4px;
+}

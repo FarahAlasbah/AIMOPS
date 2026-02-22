@@ -1,0 +1,237 @@
+/* frontend/src/features/events/components/ImpactAnalysisDetails.css */
+
+.impact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.impact-top {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .impact-top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.impact-kpi {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.impact-kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.impact-kpi-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.impact-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.impact-box-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.impact-box-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid #f3f4f6;
+  font-size: 13px;
+  color: #374151;
+}
+
+.impact-box-row:first-of-type {
+  border-top: none;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.impact-products {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+}
+
+.impact-products-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.impact-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.impact-tab {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.impact-tab:hover {
+  background: #f3f4f6;
+}
+
+.impact-tab.active {
+  border-color: #bfdbfe;
+  background: #e1ecf7;
+  color: #03045e;
+}
+
+.impact-tab-count {
+  color: #6b7280;
+  font-weight: 800;
+}
+
+.impact-search {
+  min-width: 260px;
+  flex: 1;
+  max-width: 420px;
+}
+
+.impact-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.impact-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.impact-table th {
+  text-align: left;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 800;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.impact-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+  font-size: 13px;
+  color: #111827;
+}
+
+.p-name {
+  font-weight: 800;
+  color: #111827;
+}
+
+.p-sub {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.p-note {
+  color: #374151;
+  line-height: 1.45;
+}
+
+.pos {
+  color: #0f172a;
+}
+
+.neg {
+  color: #0f172a;
+}
+
+.impact-empty {
+  padding: 20px;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.impact-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+}
+
+.impact-pill.veryhigh {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.impact-pill.high {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.impact-pill.medium {
+  border-color: #bfdbfe;
+  background: #f0f7ff;
+  color: #1e40af;
+}
+
+.impact-pill.low {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.impact-pill.neutral {
+  border-color: #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+}
