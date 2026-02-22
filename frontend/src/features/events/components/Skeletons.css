@@ -1,0 +1,82 @@
+/* frontend/src/features/events/components/Skeletons.css */
+.sk-wrap {
+  width: 100%;
+}
+
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: #eef2f7;
+  border-radius: 10px;
+}
+
+.sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: sk 1.2s infinite;
+}
+
+@keyframes sk {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.sk-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.sk-title {
+  height: 18px;
+  width: 220px;
+}
+
+.sk-chip {
+  height: 18px;
+  width: 86px;
+  border-radius: 999px;
+}
+
+.sk-line {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.sk-wide {
+  height: 16px;
+}
+
+.sk-mid {
+  height: 16px;
+}
+
+.sk-block {
+  height: 160px;
+  border-radius: 16px;
+}
+
+.sk-calendar-head {
+  height: 26px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.sk-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.sk-cell {
+  height: 110px;
+  border-radius: 12px;
+}

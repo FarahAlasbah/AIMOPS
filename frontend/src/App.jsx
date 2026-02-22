@@ -17,10 +17,13 @@ import Denied from "./shared/pages/Denied";
 
 import ProductsPage from "./features/products/pages/ProductsPage";
 
+// NEW: Events
+import EventsPage from "./features/events/pages/EventsPage";
+import EventDetailsPage from "./features/events/pages/EventDetailsPage";
+import CalendarPage from "./features/events/pages/CalendarPage";
+
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-
-// NEW: theme bootstrap
 import { applyTheme } from "./shared/theme/themeToCssVars";
 
 const RTL_LANGS = new Set(["ar"]);
@@ -37,7 +40,6 @@ function useDirection() {
   }, [i18n.language]);
 }
 
-// NEW: apply CSS variables from theme.js once
 function useTheme() {
   useEffect(() => {
     applyTheme();
@@ -133,6 +135,32 @@ function App() {
               element={
                 <RequirePermission anyOf={["products.view"]}>
                   <ProductsPage />
+                </RequirePermission>
+              }
+            />
+
+            {/* NEW: Events + Calendar */}
+            <Route
+              path="events"
+              element={
+                <RequirePermission anyOf={["events.view"]}>
+                  <EventsPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="events/:eventId"
+              element={
+                <RequirePermission anyOf={["events.view_detail"]}>
+                  <EventDetailsPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="calendar"
+              element={
+                <RequirePermission anyOf={["calendar.view"]}>
+                  <CalendarPage />
                 </RequirePermission>
               }
             />

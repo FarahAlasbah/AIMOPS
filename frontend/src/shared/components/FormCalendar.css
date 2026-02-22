@@ -1,23 +1,179 @@
-/* Inherits most styles from FormInput.css, but adds specific calendar tweaks */
+/* frontend/src/shared/components/FormCalendar.css */
+
+/* Wrapper around input + button + popup */
 .form-calendar {
   position: relative;
 }
 
-/* Ensure the calendar icon looks consistent across browsers */
-.form-input[type="date"] {
-  font-family: 'Inria Serif', serif;
-  appearance: none;
-  -webkit-appearance: none;
+.fc-field {
   position: relative;
 }
 
-/* Add custom calendar icon style if needed, or rely on browser default */
-.form-input[type="date"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.6;
-  transition: 0.2s;
+.fc-input {
+  padding-right: 44px; /* room for button */
 }
 
-.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
+.fc-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #03045e;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+}
+
+html[dir="rtl"] .fc-btn {
+  right: auto;
+  left: 10px;
+}
+
+.fc-btn:hover:not(:disabled) {
+  background: #e1ecf7;
+  border-color: #bfdbfe;
+}
+
+.fc-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fc-pop {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.12);
+  padding: 12px;
+}
+
+html[dir="rtl"] .fc-pop {
+  left: auto;
+  right: 0;
+}
+
+.fc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 4px 10px 4px;
+}
+
+.fc-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.fc-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #03045e;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.fc-nav:hover:not(:disabled) {
+  background: #e1ecf7;
+  border-color: #bfdbfe;
+}
+
+.fc-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fc-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 0 2px 8px 2px;
+}
+
+.fc-wd {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-align: center;
+}
+
+.fc-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.fc-day {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: 0.15s;
+}
+
+.fc-day.in:hover:not(:disabled) {
+  background: #e1ecf7;
+  border-color: #bfdbfe;
+  color: #03045e;
+}
+
+.fc-day.out {
+  opacity: 0.45;
+}
+
+.fc-day.today {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.35);
+}
+
+.fc-day.sel {
+  background: #03045e;
+  border-color: #03045e;
+  color: #ffffff;
+}
+
+.fc-day:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fc-foot {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+}
+
+.fc-link {
+  border: none;
+  background: transparent;
+  color: #03045e;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: 0.15s;
+}
+
+.fc-link:hover {
+  background: #e1ecf7;
 }
