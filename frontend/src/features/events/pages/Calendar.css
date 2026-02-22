@@ -1,0 +1,12 @@
+/* frontend/src/features/events/pages/Calendar.css */
+.calendar-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.calendar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}

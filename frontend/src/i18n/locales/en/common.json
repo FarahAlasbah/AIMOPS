@@ -3,7 +3,17 @@
   "nav": {
     "overview": "Overview",
     "campaigns": "Campaigns",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "dataUpload": "Data Upload",
+    "products": "Products",
+    "events": "Events",
+    "calendar": "Calendar",
+    "audit": "Audit & Data Quality",
+    "dataSources": "Data Sources",
+    "reports": "Reports",
+    "settings": "Settings",
+    "userManagement": "User Management",
+    "support": "Support"
   },
   "actions": {
     "save": "Save",

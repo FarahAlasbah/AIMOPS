@@ -1,0 +1,137 @@
+/* frontend/src/features/events/pages/Events.css */
+.events-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.events-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.events-toggle {
+  display: inline-flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.seg-btn {
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.seg-btn:hover {
+  background: #f3f4f6;
+}
+
+.seg-btn.active {
+  background: #e1ecf7;
+  color: #03045e;
+}
+
+.events-empty {
+  padding: 34px 10px;
+  text-align: center;
+}
+
+.events-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.events-empty-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.events-create-card {
+  margin-bottom: 24px;
+}
+
+.events-checkbox {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding-top: 6px;
+}
+
+.checkbox-line {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  user-select: none;
+  cursor: pointer;
+}
+
+.checkbox-line input {
+  width: 16px;
+  height: 16px;
+}
+
+.recurrence-wrap {
+  flex: 1;
+}
+
+.recurrence-wrap.disabled {
+  opacity: 0.7;
+}
+
+.event-details-grid,
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .event-details-grid,
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.event-desc {
+  margin-top: 18px;
+}
+
+.detail-text {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
