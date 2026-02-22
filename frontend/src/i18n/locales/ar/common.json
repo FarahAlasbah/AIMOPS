@@ -3,7 +3,17 @@
   "nav": {
     "overview": "نظرة عامة",
     "campaigns": "الحملات",
-    "feedback": "الآراء"
+    "feedback": "الآراء",
+    "dataUpload": "رفع البيانات",
+    "products": "المنتجات",
+    "events": "الفعاليات",
+    "calendar": "التقويم",
+    "audit": "التدقيق وجودة البيانات",
+    "dataSources": "مصادر البيانات",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "userManagement": "إدارة المستخدمين",
+    "support": "الدعم"
   },
   "actions": {
     "save": "حفظ",

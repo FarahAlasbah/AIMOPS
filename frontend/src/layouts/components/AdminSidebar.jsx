@@ -14,34 +14,37 @@ import {
   User,
   LogOut,
   Users,
-  Package, // ✅ ADD
+  Package,
+  CalendarDays,
+  Calendar,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "./AdminSidebar.css";
 
 const AdminSidebar = ({ isOpen }) => {
   const location = useLocation();
   const { user, logout, hasPermission } = useAuth();
+  const { t } = useTranslation(); // defaultNS is "common"
 
   const isActive = (path) => location.pathname === path;
 
   const menuItems = [
-    { title: "Overview", path: "/app/overview", icon: LayoutDashboard, perm: "dashboard.view" },
+    { key: "overview", path: "/app/overview", icon: LayoutDashboard, perm: "dashboard.view" },
+    { key: "campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
+    { key: "feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
+    { key: "dataUpload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
 
-    { title: "Campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
+    { key: "products", path: "/app/products", icon: Package, perm: "products.view" },
 
-    { title: "Feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
+    { key: "events", path: "/app/events", icon: CalendarDays, perm: "events.view" },
+    { key: "calendar", path: "/app/calendar", icon: Calendar, perm: "calendar.view" },
 
-    { title: "Data Upload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
+    { key: "audit", path: "/app/audit", icon: UserCheck, perm: "system.audit" },
+    { key: "dataSources", path: "/app/data-sources", icon: Database, perm: "system.settings" },
+    { key: "reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
+    { key: "settings", path: "/app/settings", icon: Settings, perm: "system.settings" },
 
-    // ✅ NEW: Products page
-    { title: "Products", path: "/app/products", icon: Package, perm: "products.view" },
-
-    { title: "Audit & Data Quality", path: "/app/audit", icon: UserCheck, perm: "system.audit" },
-    { title: "Data Sources", path: "/app/data-sources", icon: Database, perm: "system.settings" },
-    { title: "Reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
-    { title: "Settings", path: "/app/settings", icon: Settings, perm: "system.settings" },
-
-    { title: "User Management", path: "/app/user-management", icon: Users, perm: "users.view" },
+    { key: "userManagement", path: "/app/user-management", icon: Users, perm: "users.view" },
   ].filter((item) => hasPermission(item.perm));
 
   return (
@@ -63,7 +66,7 @@ const AdminSidebar = ({ isOpen }) => {
               className={`nav-item ${isActive(item.path) ? "active" : ""}`}
             >
               <Icon className="nav-icon" size={20} />
-              <span className="nav-text">{item.title}</span>
+              <span className="nav-text">{t(`nav.${item.key}`)}</span>
             </Link>
           );
         })}
@@ -72,7 +75,7 @@ const AdminSidebar = ({ isOpen }) => {
       <div className="sidebar-footer">
         <Link to="/app/support" className="nav-item">
           <HelpCircle className="nav-icon" size={20} />
-          <span className="nav-text">Support</span>
+          <span className="nav-text">{t("nav.support")}</span>
         </Link>
 
         <Link to="/app/profile" className="user-profile" style={{ textDecoration: "none" }}>
