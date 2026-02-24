@@ -48,7 +48,7 @@ const buildGrid = (monthDate) => {
   const y = first.getFullYear();
   const m = first.getMonth();
 
-  // Sunday-based week like your screenshot
+  // Sunday-based week
   const startOffset = first.getDay(); // 0..6
   const gridStart = new Date(y, m, 1 - startOffset);
 
@@ -64,10 +64,28 @@ const buildGrid = (monthDate) => {
   return days;
 };
 
-const monthTitle = (d) =>
-  d.toLocaleString(undefined, { month: "long", year: "numeric" });
-
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+const getMonthLabels = () => {
+  const labels = [];
+  for (let i = 0; i < 12; i++) {
+    labels.push(new Date(2000, i, 1).toLocaleString(undefined, { month: "long" }));
+  }
+  return labels;
+};
+
+const clampAnchorToMinMax = (monthDate, minD, maxD) => {
+  const first = startOfMonth(monthDate);
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+
+  if (minD && clampDay(last).getTime() < clampDay(minD).getTime()) {
+    return startOfMonth(minD);
+  }
+  if (maxD && clampDay(first).getTime() > clampDay(maxD).getTime()) {
+    return startOfMonth(maxD);
+  }
+  return first;
+};
 
 const FormCalendar = ({
   label,
@@ -93,9 +111,24 @@ const FormCalendar = ({
     return startOfMonth(new Date());
   });
 
+  // NEW: month/year controls (typed)
+  const monthLabels = useMemo(() => getMonthLabels(), []);
+  const [monthIdx, setMonthIdx] = useState(anchor.getMonth());
+  const [yearText, setYearText] = useState(String(anchor.getFullYear()));
+
   useEffect(() => {
-    if (selected) setAnchor(startOfMonth(selected));
-  }, [value]); // keep month synced when value changes
+    if (selected) {
+      const next = startOfMonth(selected);
+      setAnchor(clampAnchorToMinMax(next, minD, maxD));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  // sync controls when anchor changes
+  useEffect(() => {
+    setMonthIdx(anchor.getMonth());
+    setYearText(String(anchor.getFullYear()));
+  }, [anchor]);
 
   useEffect(() => {
     const onDoc = (e) => {
@@ -110,7 +143,6 @@ const FormCalendar = ({
   const today = useMemo(() => new Date(), []);
 
   const fireChange = (iso) => {
-    // mimic native event shape your forms expect
     onChange?.({ target: { value: iso } });
   };
 
@@ -141,6 +173,14 @@ const FormCalendar = ({
     if (!maxD) return true;
     const nextMonthFirst = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1);
     return clampDay(nextMonthFirst).getTime() <= clampDay(maxD).getTime();
+  };
+
+  const setAnchorSafe = (d) => setAnchor(clampAnchorToMinMax(d, minD, maxD));
+
+  const applyMonthYear = (nextMonthIdx, nextYear) => {
+    if (Number.isNaN(nextYear) || nextYear < 1000 || nextYear > 9999) return;
+    const next = new Date(nextYear, nextMonthIdx, 1);
+    setAnchorSafe(next);
   };
 
   return (
@@ -179,19 +219,57 @@ const FormCalendar = ({
               <button
                 type="button"
                 className="fc-nav"
-                onClick={() => setAnchor((d) => addMonths(d, -1))}
+                onClick={() => setAnchorSafe(addMonths(anchor, -1))}
                 disabled={!canPrev()}
                 aria-label="Previous month"
               >
                 ‹
               </button>
 
-              <div className="fc-title">{monthTitle(anchor)}</div>
+              {/* NEW: month + year typing */}
+              <div className="fc-ctrls" aria-label="Month and year">
+                <select
+                  className="fc-month"
+                  value={monthIdx}
+                  onChange={(e) => {
+                    const nextM = Number(e.target.value);
+                    setMonthIdx(nextM);
+                    const y = Number(yearText);
+                    applyMonthYear(nextM, y);
+                  }}
+                >
+                  {monthLabels.map((lbl, idx) => (
+                    <option key={lbl} value={idx}>
+                      {lbl}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  className="fc-year"
+                  type="number"
+                  value={yearText}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setYearText(v);
+
+                    const y = Number(v);
+                    if (!Number.isNaN(y)) applyMonthYear(monthIdx, y);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const y = Number(yearText);
+                      applyMonthYear(monthIdx, y);
+                    }
+                  }}
+                  aria-label="Year"
+                />
+              </div>
 
               <button
                 type="button"
                 className="fc-nav"
-                onClick={() => setAnchor((d) => addMonths(d, 1))}
+                onClick={() => setAnchorSafe(addMonths(anchor, 1))}
                 disabled={!canNext()}
                 aria-label="Next month"
               >

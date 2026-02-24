@@ -6,6 +6,8 @@ import { Menu } from "lucide-react";
 import "./MainLayout.css";
 import { useTranslation } from "react-i18next";
 
+import NotificationBell from "./components/NotificationBell";
+
 const MainLayout = ({ userRole = "Admin" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { t, i18n } = useTranslation();
@@ -48,7 +50,8 @@ const MainLayout = ({ userRole = "Admin" }) => {
               </select>
             </div>
 
-            {/* Add notifications, profile dropdown, etc. */}
+            {/* Notifications */}
+            <NotificationBell />
           </div>
         </header>
 

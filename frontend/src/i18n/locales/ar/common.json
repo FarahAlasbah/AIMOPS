@@ -18,5 +18,49 @@
   "actions": {
     "save": "حفظ",
     "cancel": "إلغاء"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "reminders": "التذكيرات",
+    "inbox": "الوارد",
+    "loading": "جارٍ التحميل...",
+    "empty": "لا توجد إشعارات حالياً.",
+    "noReminders": "لا توجد تذكيرات قادمة.",
+    "untitled": "بدون عنوان",
+    "suggested": "المقترح:",
+    "daysUntil": "{{n}} أيام",
+    "ariaOpen": "فتح الإشعارات",
+    "loadError": "فشل تحميل الإشعارات.",
+    "create": "جديد",
+    "createTitle": "إنشاء إشعار",
+    "target": "إرسال إلى",
+    "targetAll": "جميع المستخدمين",
+    "targetUser": "مستخدم واحد",
+    "targetRole": "حسب الدور",
+    "role": "الدور",
+    "user": "المستخدم",
+    "fields": {
+      "title": "العنوان",
+      "message": "الرسالة",
+      "type": "النوع"
+    },
+    "placeholders": {
+      "title": "عنوان...",
+      "message": "رسالة..."
+    },
+    "types": {
+      "system": "نظام",
+      "info": "معلومات",
+      "warning": "تحذير"
+    },
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال...",
+    "sentOk": "تم إرسال الإشعار.",
+    "sendError": "فشل إرسال الإشعار.",
+    "roleHint": "الإرسال حسب الدور يعمل فقط إذا كان السيرفر يدعم target_type=role.",
+    "errors": {
+      "userRequired": "اختر مستخدماً.",
+      "roleRequired": "اختر دوراً."
+    }
   }
 }
