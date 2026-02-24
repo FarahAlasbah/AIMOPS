@@ -1,3 +1,4 @@
+/* frontend/src/layouts/MainLayout.css */
 .main-layout {
   display: flex;
   min-height: 100vh;
@@ -12,13 +13,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  width: calc(100% - 260px); /* Add this */
-  min-width: 0; /* Add this - important for flex items */
+  width: calc(100% - 260px);
+  min-width: 0;
 }
 
 .main-content.sidebar-closed {
   margin-left: 0;
-  width: 100%; /* Add this */
+  width: 100%;
 }
 
 .app-header {
@@ -31,7 +32,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  width: 100%; /* Add this */
+  width: 100%;
 }
 
 .menu-button {
@@ -45,7 +46,7 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
-  flex-shrink: 0; /* Add this */
+  flex-shrink: 0;
 }
 
 .menu-button:hover {
@@ -58,23 +59,23 @@
   color: #111827;
   margin: 0;
   flex: 1;
-  white-space: nowrap; /* Add this */
-  overflow: hidden; /* Add this */
-  text-overflow: ellipsis; /* Add this */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0; /* Add this */
+  flex-shrink: 0;
 }
 
 .content-area {
   flex: 1;
   padding: 24px;
-  width: 100%; /* Add this */
-  overflow-x: auto; /* Add this */
+  width: 100%;
+  overflow-x: auto;
 }
 
 @media (max-width: 768px) {
@@ -82,13 +83,13 @@
     margin-left: 0;
     width: 100%;
   }
-  
+
   .main-content.sidebar-open {
     margin-left: 0;
   }
 }
 
-/* Add to frontend/src/layouts/MainLayout.css */
+/* header-actions + lang switcher */
 .header-actions {
   display: flex;
   align-items: center;
