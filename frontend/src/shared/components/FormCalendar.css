@@ -72,12 +72,6 @@ html[dir="rtl"] .fc-pop {
   padding: 6px 4px 10px 4px;
 }
 
-.fc-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #111827;
-}
-
 .fc-nav {
   width: 32px;
   height: 32px;
@@ -87,6 +81,7 @@ html[dir="rtl"] .fc-pop {
   color: #03045e;
   cursor: pointer;
   transition: 0.15s;
+  flex-shrink: 0;
 }
 
 .fc-nav:hover:not(:disabled) {
@@ -97,6 +92,44 @@ html[dir="rtl"] .fc-pop {
 .fc-nav:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* NEW: Month + Year controls (type / jump) */
+.fc-ctrls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.fc-month,
+.fc-year {
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #111827;
+  outline: none;
+}
+
+.fc-month {
+  flex: 1;
+  min-width: 0;
+}
+
+.fc-year {
+  width: 92px;
+}
+
+.fc-month:focus,
+.fc-year:focus {
+  border-color: #9bbce6;
+  box-shadow: 0 0 0 4px rgba(3, 4, 94, 0.08);
 }
 
 .fc-week {
