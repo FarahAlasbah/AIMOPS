@@ -18,5 +18,49 @@
   "actions": {
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "reminders": "Reminders",
+    "inbox": "Inbox",
+    "loading": "Loading...",
+    "empty": "You're all caught up.",
+    "noReminders": "No upcoming reminders.",
+    "untitled": "Untitled",
+    "suggested": "Suggested:",
+    "daysUntil": "{{n}} days",
+    "ariaOpen": "Open notifications",
+    "loadError": "Failed to load notifications.",
+    "create": "New",
+    "createTitle": "Create notification",
+    "target": "Send to",
+    "targetAll": "All users",
+    "targetUser": "Single user",
+    "targetRole": "Users by role",
+    "role": "Role",
+    "user": "User",
+    "fields": {
+      "title": "Title",
+      "message": "Message",
+      "type": "Type"
+    },
+    "placeholders": {
+      "title": "Title...",
+      "message": "Message..."
+    },
+    "types": {
+      "system": "System",
+      "info": "Info",
+      "warning": "Warning"
+    },
+    "send": "Send",
+    "sending": "Sending...",
+    "sentOk": "Notification sent.",
+    "sendError": "Failed to send notification.",
+    "roleHint": "Role targeting only works if your backend supports target_type=role.",
+    "errors": {
+      "userRequired": "Select a user.",
+      "roleRequired": "Select a role."
+    }
   }
 }
