@@ -1,4 +1,5 @@
 // frontend/src/features/data-upload/components/UploadStep.jsx
+import { useTranslation } from "react-i18next";
 import { Button, FormActions, FormSelect } from "../../../shared/components";
 import FileUpload from "../../../shared/components/FileUpload";
 
@@ -16,15 +17,17 @@ export default function UploadStep({
   canUpload,
   selectedFile,
 }) {
+  const { t } = useTranslation("upload");
+
   return (
     <>
-      <FormSelect
-        label="Related Campaign (optional)"
-        placeholder="Select a campaign..."
+      {/* <FormSelect
+        label={t("uploadStep.campaignLabel")}
+        placeholder={t("uploadStep.campaignPlaceholder")}
         options={campaignOptions}
         value={selectedCampaign}
         onChange={onCampaignChange}
-      />
+      /> */}
 
       <div style={{ marginTop: 16 }}>
         <FileUpload
@@ -39,7 +42,7 @@ export default function UploadStep({
       {uploading && (
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 6 }}>
-            Uploading... {progress}%
+            {t("uploadStep.uploading", { progress })}
           </div>
           <div className="upload-progress">
             <div className="upload-progress-bar" style={{ width: `${progress}%` }} />
@@ -49,10 +52,10 @@ export default function UploadStep({
 
       <FormActions>
         <Button variant="secondary" onClick={onCancel} disabled={uploading}>
-          Cancel
+          {t("uploadStep.cancel")}
         </Button>
         <Button variant="primary" onClick={onUpload} disabled={!canUpload || uploading}>
-          Upload
+          {t("uploadStep.upload")}
         </Button>
       </FormActions>
     </>

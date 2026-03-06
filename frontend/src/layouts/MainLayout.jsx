@@ -5,25 +5,17 @@ import AdminSidebar from "./components/AdminSidebar";
 import { Menu } from "lucide-react";
 import "./MainLayout.css";
 import { useTranslation } from "react-i18next";
-
 import NotificationBell from "./components/NotificationBell";
+import LangToggle from "../shared/components/LangToggle";
 
 const MainLayout = ({ userRole = "Admin" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { t, i18n } = useTranslation();
-
-  const currentLang = i18n.language?.startsWith("ar") ? "ar" : "en";
-
-  const handleLangChange = (e) => {
-    i18n.changeLanguage(e.target.value);
-  };
+  const { t } = useTranslation();
 
   return (
     <div className="main-layout">
       <AdminSidebar isOpen={sidebarOpen} />
-
       <div className={`main-content ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
-        {/* Header */}
         <header className="app-header">
           <button
             type="button"
@@ -33,29 +25,14 @@ const MainLayout = ({ userRole = "Admin" }) => {
           >
             <Menu size={24} />
           </button>
-
           <h1 className="page-title">
             {t("layout.welcomeTitle", { defaultValue: "Welcome to AIMOPS" })}
           </h1>
-
           <div className="header-actions">
-            {/* Language Switcher */}
-            <div className="lang-switcher">
-              <label htmlFor="lang" className="sr-only">
-                Language
-              </label>
-              <select id="lang" value={currentLang} onChange={handleLangChange}>
-                <option value="en">English</option>
-                <option value="ar">العربية</option>
-              </select>
-            </div>
-
-            {/* Notifications */}
+            <LangToggle />
             <NotificationBell />
           </div>
         </header>
-
-        {/* Main Content */}
         <main className="content-area">
           <Outlet />
         </main>

@@ -1,5 +1,6 @@
 // frontend/src/features/data-upload/components/Skeletons.jsx
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 function S({ className = "", style = {} }) {
   return <div className={`skeleton ${className}`} style={style} />;
@@ -7,9 +8,11 @@ function S({ className = "", style = {} }) {
 
 export function AnalyzeProgress({
   percent = 0,
-  label = "Analyzing & preparing mapping...",
+  label,
 }) {
+  const { t } = useTranslation("upload");
   const p = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+  const resolvedLabel = label ?? t("analyzeProgress.defaultLabel");
 
   return (
     <div className="analyze-progress-wrap" role="status" aria-live="polite">
@@ -17,14 +20,12 @@ export function AnalyzeProgress({
         <div className="analyze-circle" style={{ ["--p"]: p }}>
           <div className="analyze-circle-inner">
             <div className="analyze-percent">{p}%</div>
-            <div className="analyze-sub">Loading</div>
+            <div className="analyze-sub">{t("analyzeProgress.loading")}</div>
           </div>
         </div>
 
-        <div className="analyze-label">{label}</div>
-        <div className="analyze-hint">
-          This may take a few seconds depending on the file size.
-        </div>
+        <div className="analyze-label">{resolvedLabel}</div>
+        <div className="analyze-hint">{t("analyzeProgress.hint")}</div>
       </div>
     </div>
   );

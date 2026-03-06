@@ -1,20 +1,29 @@
 // frontend/src/features/events/components/CalendarMonth.jsx
+import { useTranslation } from "react-i18next";
 import "./CalendarMonth.css";
 import {
   daysGridForMonth,
   isoToDate,
-  sameDay,
   pickEventTitle,
   inRangeInclusive,
   toIsoDate,
 } from "../utils/eventUtils";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export default function CalendarMonth({ monthDate, events = [], onOpenEvent }) {
+  const { t } = useTranslation("events");
+
+  const WEEKDAYS = [
+    t("calendar.weekdays.sun"),
+    t("calendar.weekdays.mon"),
+    t("calendar.weekdays.tue"),
+    t("calendar.weekdays.wed"),
+    t("calendar.weekdays.thu"),
+    t("calendar.weekdays.fri"),
+    t("calendar.weekdays.sat"),
+  ];
+
   const days = daysGridForMonth(monthDate);
 
-  // Pre-parse events for faster checks
   const parsed = events
     .map((e) => {
       const s = isoToDate(e?.start_date);
@@ -41,14 +50,11 @@ export default function CalendarMonth({ monthDate, events = [], onOpenEvent }) {
           const iso = toIsoDate(day.date);
           const isToday = iso === todayIso;
 
-          const dayEvents = parsed
-            .filter((ev) => inRangeInclusive(day.date, ev.__start, ev.__end))
-            .slice(0, 4);
-
-          const more = Math.max(
-            0,
-            parsed.filter((ev) => inRangeInclusive(day.date, ev.__start, ev.__end)).length - dayEvents.length
+          const allDayEvents = parsed.filter((ev) =>
+            inRangeInclusive(day.date, ev.__start, ev.__end)
           );
+          const dayEvents = allDayEvents.slice(0, 4);
+          const more = Math.max(0, allDayEvents.length - dayEvents.length);
 
           return (
             <div
@@ -71,7 +77,11 @@ export default function CalendarMonth({ monthDate, events = [], onOpenEvent }) {
                   </button>
                 ))}
 
-                {more > 0 && <div className="cal-more">+{more} more</div>}
+                {more > 0 && (
+                  <div className="cal-more">
+                    {t("calendar.moreEvents", { count: more })}
+                  </div>
+                )}
               </div>
             </div>
           );

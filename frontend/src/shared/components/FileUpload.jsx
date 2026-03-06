@@ -1,8 +1,11 @@
+// frontend/src/shared/components/FileUpload.jsx
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload } from 'lucide-react';
 import './FileUpload.css';
 
 const FileUpload = ({ onFileSelect, accept = '.csv,.xlsx,.xls', maxSize = 10 }) => {
+  const { t } = useTranslation("common");
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
@@ -28,9 +31,8 @@ const FileUpload = ({ onFileSelect, accept = '.csv,.xlsx,.xls', maxSize = 10 }) 
   };
 
   const handleFileSelection = (file) => {
-    // Check file size (maxSize in MB)
     if (file.size > maxSize * 1024 * 1024) {
-      alert(`File size exceeds ${maxSize}MB limit`);
+      alert(t("shared.fileUpload.fileSizeExceeds", { maxSize }));
       return;
     }
 
@@ -72,11 +74,11 @@ const FileUpload = ({ onFileSelect, accept = '.csv,.xlsx,.xls', maxSize = 10 }) 
             <div className="upload-icon">
               <Upload size={48} />
             </div>
-            <h3 className="upload-title">Drag & drop your sales file here</h3>
-            <p className="upload-subtitle">CSV or Excel · Arabic & English supported</p>
-            
+            <h3 className="upload-title">{t("shared.fileUpload.dragDropTitle")}</h3>
+            <p className="upload-subtitle">{t("shared.fileUpload.dragDropSubtitle")}</p>
+
             <div className="upload-divider">
-              <span>OR</span>
+              <span>{t("shared.fileUpload.or")}</span>
             </div>
 
             <button
@@ -84,7 +86,7 @@ const FileUpload = ({ onFileSelect, accept = '.csv,.xlsx,.xls', maxSize = 10 }) 
               className="btn-browse"
               onClick={handleBrowseClick}
             >
-              Browse Files
+              {t("shared.fileUpload.browseFiles")}
             </button>
           </>
         ) : (
@@ -112,9 +114,7 @@ const FileUpload = ({ onFileSelect, accept = '.csv,.xlsx,.xls', maxSize = 10 }) 
 
       <div className="upload-info-box">
         <div className="info-icon">ℹ️</div>
-        <p className="info-text">
-          Your file can have any column names or language. AIMOPS will help you map them automatically in the next step.
-        </p>
+        <p className="info-text">{t("shared.fileUpload.infoText")}</p>
       </div>
     </div>
   );

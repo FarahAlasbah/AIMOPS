@@ -1,5 +1,6 @@
-import { Button } from './index'; // if your shared/components exports Button from index
-// If not, import directly from where Button is.
+// frontend/src/shared/components/ConfirmDialog.jsx
+import { useTranslation } from "react-i18next";
+import { Button } from './index';
 
 const ConfirmDialog = ({
   open,
@@ -13,6 +14,8 @@ const ConfirmDialog = ({
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation("common");
+
   if (!open) return null;
 
   const stop = (e) => e.stopPropagation();
@@ -43,7 +46,7 @@ const ConfirmDialog = ({
               onClick={onConfirm}
               disabled={disabled || loading}
             >
-              {loading ? 'Deleting...' : confirmText}
+              {loading ? t("shared.confirmDialog.deleting") : confirmText}
             </Button>
           </div>
         </div>

@@ -1,0 +1,51 @@
+{
+  "stub": {
+    "title": "صفحة لوحة التحكم",
+    "body": "هنا ستجد ملخصات الحملات والتوقعات والتغذية الراجعة.",
+    "totalCampaigns": "إجمالي الحملات",
+    "activeForecasts": "التوقعات النشطة",
+    "feedbackItems": "عناصر التغذية الراجعة"
+  },
+  "roles": {
+    "admin": {
+      "title": "لوحة تحكم المدير",
+      "subtitle": "نظرة عامة على النظام وإدارته"
+    },
+    "marketing": {
+      "title": "لوحة تحكم التسويق",
+      "subtitle": "أداء الحملات والتغذية الراجعة"
+    },
+    "owner": {
+      "title": "لوحة تحكم صاحب العمل",
+      "subtitle": "نظرة شاملة على العمليات والنتائج"
+    },
+    "default": {
+      "title": "لوحة التحكم",
+      "subtitle": "نظرة عامة"
+    }
+  },
+  "stats": {
+    "usersCount": "إجمالي المستخدمين",
+    "uploadsCount": "رفعات البيانات",
+    "uploadsCountPeriod": "رفعات البيانات (الفترة)",
+    "productsCount": "المنتجات",
+    "feedbackCount": "عناصر التغذية الراجعة",
+    "campaignsCount": "الحملات",
+    "revenue": "الإيراد (الفترة)",
+    "dataQuality": "جودة البيانات",
+    "status": "الحالة"
+  },
+  "charts": {
+    "uploadsByStatus": "الرفعات حسب الحالة",
+    "uploadsOverTime": "الرفعات عبر الزمن (آخر 14 يوماً)",
+    "topProductsRevenue": "أعلى المنتجات إيراداً",
+    "recentActivity": "النشاط الأخير (من الرفعات)",
+    "loading": "جارٍ التحميل…",
+    "noUploads": "لا توجد بيانات رفع بعد.",
+    "noProducts": "لا توجد بيانات منتجات بعد.",
+    "noRecentUploads": "لا توجد رفعات حديثة بعد.",
+    "uploadsDatasetLabel": "الرفعات",
+    "revenueDatasetLabel": "الإيراد"
+  },
+  "errorLoadFailed": "فشل تحميل بيانات لوحة التحكم."
+}
