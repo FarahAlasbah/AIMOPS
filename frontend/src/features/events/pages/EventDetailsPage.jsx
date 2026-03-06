@@ -1,6 +1,7 @@
 // frontend/src/features/events/pages/EventDetailsPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button, Card, PageHeader, InfoMessage } from "../../../shared/components";
 import { analyzeEvent, getEventById } from "../../../api/events";
 import { useAuth } from "../../../shared/contexts/AuthContext";
@@ -19,10 +20,11 @@ function extractApiDetail(err) {
 function extractApiMessage(err) {
   const detail = extractApiDetail(err);
   if (detail?.message) return String(detail.message);
-  return err?.message || "Request failed.";
+  return err?.message || null;
 }
 
 export default function EventDetailsPage() {
+  const { t } = useTranslation("events");
   const navigate = useNavigate();
   const { eventId } = useParams();
   const { hasPermission } = useAuth();
@@ -30,21 +32,14 @@ export default function EventDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-
   const [editing, setEditing] = useState(false);
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const [event, setEvent] = useState(null);
-
-  // summary from GET /api/events/:id
   const [impact, setImpact] = useState(null);
-
-  // detailed analysis from POST /api/events/:id/analyze
   const [analysis, setAnalysis] = useState(null);
-
-  // analysis-specific backend detail error (like insufficient_event_data)
   const [analysisBlock, setAnalysisBlock] = useState(null);
 
   async function load() {
@@ -57,11 +52,9 @@ export default function EventDetailsPage() {
       const data = await getEventById(eventId);
       setEvent(data?.event || null);
       setImpact(data?.impact_analysis || null);
-
-      // If backend ever starts returning detailed analysis on GET later
       if (data?.impact_analysis?.analysis) setAnalysis(data.impact_analysis.analysis);
     } catch (e) {
-      setError(extractApiMessage(e) || "Failed to load event.");
+      setError(extractApiMessage(e) || t("eventDetailsPage.errorLoadFailed"));
       setEvent(null);
       setImpact(null);
       setAnalysis(null);
@@ -76,9 +69,7 @@ export default function EventDetailsPage() {
       if (!alive) return;
       await load();
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
@@ -103,9 +94,9 @@ export default function EventDetailsPage() {
 
     try {
       const res = await analyzeEvent(eventId, payload);
-      if (!res?.success) throw new Error(res?.message || "Analysis failed.");
+      if (!res?.success) throw new Error(res?.message || t("eventDetailsPage.errorRequestFailed"));
 
-      setNotice(res?.message || "Impact analysis completed.");
+      setNotice(res?.message || t("eventDetailsPage.errorRequestFailed"));
       setAnalysis(res?.analysis || null);
 
       if (res?.analysis) {
@@ -123,7 +114,7 @@ export default function EventDetailsPage() {
       if (detail?.error === "insufficient_event_data") {
         setAnalysisBlock(detail);
       } else {
-        setError(extractApiMessage(e) || "Failed to analyze impact.");
+        setError(extractApiMessage(e) || t("eventDetailsPage.errorAnalyzeFailed"));
       }
     } finally {
       setAnalyzing(false);
@@ -132,28 +123,32 @@ export default function EventDetailsPage() {
 
   const canEdit = hasPermission?.("events.edit");
 
+  // Build status summary string
+  const statusParts = [];
+  if (impact) {
+    statusParts.push(impact.is_analyzed ? t("eventDetailsPage.statusAnalyzed") : t("eventDetailsPage.statusNotAnalyzed"));
+    if (impact.overall_impact) statusParts.push(t("eventDetailsPage.statusOverall", { value: impact.overall_impact }));
+    if (impact.affected_products_count !== undefined) statusParts.push(t("eventDetailsPage.statusAffected", { count: impact.affected_products_count }));
+  }
+
   return (
     <div className="events-page">
       <PageHeader
-        title="Event Details"
-        subtitle="View event information, edit it, and run impact analysis."
+        title={t("eventDetailsPage.title")}
+        subtitle={t("eventDetailsPage.subtitle")}
         actions={
           <div className="events-actions">
             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-              Back
+              {t("eventDetailsPage.btnBack")}
             </Button>
 
             <Button type="button" variant="secondary" onClick={() => navigate("/app/calendar")}>
-              View Calendar
+              {t("eventDetailsPage.btnViewCalendar")}
             </Button>
 
             {canEdit && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setEditing((v) => !v)}
-              >
-                {editing ? "Close Edit" : "Edit Event"}
+              <Button type="button" variant="secondary" onClick={() => setEditing((v) => !v)}>
+                {editing ? t("eventDetailsPage.btnCloseEdit") : t("eventDetailsPage.btnEditEvent")}
               </Button>
             )}
           </div>
@@ -168,16 +163,17 @@ export default function EventDetailsPage() {
       ) : !event ? (
         <Card>
           <div className="events-empty">
-            <div className="events-empty-title">Event not found</div>
-            <div className="events-empty-subtitle">
-              The event may have been deleted or is unavailable.
-            </div>
+            <div className="events-empty-title">{t("eventDetailsPage.notFoundTitle")}</div>
+            <div className="events-empty-subtitle">{t("eventDetailsPage.notFoundSubtitle")}</div>
           </div>
         </Card>
       ) : (
         <>
           {editing && canEdit && (
-            <Card title="Edit Event" subtitle="Update any event field and save.">
+            <Card
+              title={t("eventDetailsPage.editCardTitle")}
+              subtitle={t("eventDetailsPage.editCardSubtitle")}
+            >
               <EventEditForm
                 eventId={eventId}
                 initialEvent={event}
@@ -185,17 +181,13 @@ export default function EventDetailsPage() {
                 onSavingChange={setSavingEdit}
                 onCancel={() => setEditing(false)}
                 onSuccess={(res) => {
-                  setNotice(res?.message || "Event updated successfully.");
+                  setNotice(res?.message || t("eventDetailsPage.noticeUpdated"));
                   setEditing(false);
-
-                  // Clear old analysis (event dates/details changed)
                   setAnalysis(null);
                   setAnalysisBlock(null);
-
-                  // Reload fresh data from backend
                   load();
                 }}
-                onError={(msg) => setError(msg || "Failed to update event.")}
+                onError={(msg) => setError(msg || t("eventDetailsPage.errorUpdateFailed"))}
               />
             </Card>
           )}
@@ -206,39 +198,46 @@ export default function EventDetailsPage() {
           >
             <div className="event-details-grid">
               <div className="detail-item">
-                <div className="detail-label">Type</div>
+                <div className="detail-label">{t("eventDetailsPage.detailType")}</div>
                 <div className="detail-value">{event?.event_type || "-"}</div>
               </div>
 
               <div className="detail-item">
-                <div className="detail-label">Status</div>
+                <div className="detail-label">{t("eventDetailsPage.detailStatus")}</div>
                 <div className="detail-value">{event?.status || "-"}</div>
               </div>
 
               <div className="detail-item">
-                <div className="detail-label">Duration</div>
+                <div className="detail-label">{t("eventDetailsPage.detailDuration")}</div>
                 <div className="detail-value">
-                  {Number(event?.duration_days) ? `${event.duration_days} days` : "-"}
+                  {Number(event?.duration_days)
+                    ? t("eventDetailsPage.detailDurationValue", { days: event.duration_days })
+                    : "-"}
                 </div>
               </div>
 
               <div className="detail-item">
-                <div className="detail-label">Recurring</div>
+                <div className="detail-label">{t("eventDetailsPage.detailRecurring")}</div>
                 <div className="detail-value">
-                  {event?.is_recurring ? `Yes (${event?.recurrence_type || "-"})` : "No"}
+                  {event?.is_recurring
+                    ? t("eventDetailsPage.detailRecurringYes", { type: event?.recurrence_type || "-" })
+                    : t("eventDetailsPage.detailRecurringNo")}
                 </div>
               </div>
             </div>
 
             {event?.description && (
               <div className="event-desc">
-                <div className="detail-label">Description</div>
+                <div className="detail-label">{t("eventDetailsPage.detailDescription")}</div>
                 <div className="detail-text">{event.description}</div>
               </div>
             )}
           </Card>
 
-          <Card title="Impact Analysis" subtitle="Run analysis to calculate impact and see affected products.">
+          <Card
+            title={t("eventDetailsPage.impactCardTitle")}
+            subtitle={t("eventDetailsPage.impactCardSubtitle")}
+          >
             <div
               style={{
                 display: "flex",
@@ -249,44 +248,44 @@ export default function EventDetailsPage() {
               }}
             >
               <Button type="button" onClick={runAnalysis} disabled={analyzing}>
-                {analyzing ? "Analyzing..." : "Analyze Impact"}
+                {analyzing ? t("eventDetailsPage.btnAnalyzing") : t("eventDetailsPage.btnAnalyzeImpact")}
               </Button>
 
               <Button type="button" variant="secondary" onClick={() => navigate("/app/data-upload")}>
-                Upload Sales Data
+                {t("eventDetailsPage.btnUploadSalesData")}
               </Button>
 
-              <div style={{ color: "#6b7280", fontSize: 13, fontWeight: 600 }}>
-                {impact?.is_analyzed ? "Analyzed" : "Not analyzed"}
-                {impact?.overall_impact ? ` • Overall: ${impact.overall_impact}` : ""}
-                {impact?.affected_products_count !== undefined ? ` • Affected: ${impact.affected_products_count}` : ""}
-              </div>
+              {impact && (
+                <div style={{ color: "#6b7280", fontSize: 13, fontWeight: 600 }}>
+                  {statusParts.join(" • ")}
+                </div>
+              )}
             </div>
 
             {analysisBlock ? (
               <div style={{ marginBottom: 14 }}>
                 <InfoMessage type="warning">
-                  {analysisBlock.message || "Cannot analyze yet. Missing required sales data for this event period."}
+                  {analysisBlock.message || t("eventDetailsPage.analysisBlockFallback")}
                 </InfoMessage>
 
                 <div className="impact-grid" style={{ marginTop: 12 }}>
                   <div className="detail-item">
-                    <div className="detail-label">Required event period</div>
+                    <div className="detail-label">{t("eventDetailsPage.analysisBlockRequiredPeriod")}</div>
                     <div className="detail-value">{analysisBlock.required_event_period || "-"}</div>
                   </div>
 
                   <div className="detail-item">
-                    <div className="detail-label">Available data ends</div>
+                    <div className="detail-label">{t("eventDetailsPage.analysisBlockAvailableEnds")}</div>
                     <div className="detail-value">{analysisBlock.available_data_ends || "-"}</div>
                   </div>
 
                   <div className="detail-item">
-                    <div className="detail-label">Missing period</div>
+                    <div className="detail-label">{t("eventDetailsPage.analysisBlockMissingPeriod")}</div>
                     <div className="detail-value">{analysisBlock.missing_period || "-"}</div>
                   </div>
 
                   <div className="detail-item">
-                    <div className="detail-label">Hint</div>
+                    <div className="detail-label">{t("eventDetailsPage.analysisBlockHint")}</div>
                     <div className="detail-value">{analysisBlock.hint || "-"}</div>
                   </div>
                 </div>
@@ -295,7 +294,7 @@ export default function EventDetailsPage() {
               <ImpactAnalysisDetails analysis={analysis} />
             ) : (
               <InfoMessage type="info">
-                No detailed analysis yet. Click “Analyze Impact” to calculate and show affected products.
+                {t("eventDetailsPage.noAnalysisYet")}
               </InfoMessage>
             )}
           </Card>

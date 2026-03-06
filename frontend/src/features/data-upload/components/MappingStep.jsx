@@ -1,5 +1,6 @@
 // frontend/src/features/data-upload/components/MappingStep.jsx
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, FormActions, FormSelect } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import ColumnMeta from "./ColumnMeta";
@@ -7,6 +8,7 @@ import { ROLE_DEFS, normalizeRole, roleLabel } from "../utils/analysisUtils";
 import { MappingStepSkeleton } from "./Skeletons";
 
 function RolePills({ value, onChange, disabled }) {
+  const { t } = useTranslation("upload");
   const current = normalizeRole(value);
 
   return (
@@ -23,7 +25,7 @@ function RolePills({ value, onChange, disabled }) {
               onClick={() => !disabled && onChange(r.value)}
               aria-pressed={active}
               disabled={!!disabled}
-              title={disabled ? "Mappings are locked for this batch." : ""}
+              title={disabled ? t("mapping.lockedBatch") : ""}
             >
               {r.label}
             </button>
@@ -43,6 +45,7 @@ function RolePickerWithConfirm({
   onCommitRole,
   disabled,
 }) {
+  const { t } = useTranslation("upload");
   const committed = normalizeRole(value);
   const sug = normalizeRole(suggested);
 
@@ -83,16 +86,21 @@ function RolePickerWithConfirm({
 
       {!disabled && !hasPending && sug && committed !== sug && (
         <div className="role-warn">
-          Not the suggested role. Suggested: <strong>{roleLabel(sug)}</strong>
+          {t("mapping.notSuggestedRole")} <strong>{roleLabel(sug)}</strong>
         </div>
       )}
 
       {!disabled && hasPending && (
         <div className="role-change-confirm">
-          <div className="role-change-text">
-            You selected <strong>{roleLabel(pendingRole)}</strong>, which is not the suggested role{" "}
-            (<strong>{roleLabel(sug || "skip")}</strong>). Confirm this change?
-          </div>
+          <div
+            className="role-change-text"
+            dangerouslySetInnerHTML={{
+              __html: t("mapping.roleChangePrompt", {
+                selected: roleLabel(pendingRole),
+                suggested: roleLabel(sug || "skip"),
+              }),
+            }}
+          />
 
           <div className="role-change-actions">
             <button
@@ -106,7 +114,7 @@ function RolePickerWithConfirm({
                 })
               }
             >
-              Cancel
+              {t("mapping.cancel")}
             </button>
 
             <button
@@ -114,7 +122,7 @@ function RolePickerWithConfirm({
               className="mini-btn primary"
               onClick={() => commitNow(pendingRole)}
             >
-              Confirm change
+              {t("mapping.confirmChange")}
             </button>
           </div>
         </div>
@@ -124,6 +132,7 @@ function RolePickerWithConfirm({
 }
 
 function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) {
+  const { t } = useTranslation("upload");
   const [expanded, setExpanded] = useState({});
   const [pendingMap, setPendingMap] = useState({});
 
@@ -131,8 +140,8 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">Auto-mapped (high confidence)</div>
-      <div className="mapping-sub">Review these mappings.</div>
+      <div className="mapping-title">{t("mapping.highConfidence.title")}</div>
+      <div className="mapping-sub">{t("mapping.highConfidence.sub")}</div>
 
       {highConfidence.map((c) => {
         const current = columnMap?.[c.index] || {};
@@ -148,13 +157,13 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
                 className="link-button"
                 onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
               >
-                {isOpen ? "Hide details" : "Show details"}
+                {isOpen ? t("mapping.hideDetails") : t("mapping.showDetails")}
               </button>
             </div>
 
             <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
               <div className="role-label" style={{ marginTop: 8 }}>
-                Role
+                {t("mapping.role")}
               </div>
 
               <RolePickerWithConfirm
@@ -177,17 +186,19 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
 }
 
 function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissingMap, onPick, disabled }) {
+  const { t } = useTranslation("upload");
+
   if (!Array.isArray(requiredMissing) || requiredMissing.length === 0) return null;
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">Required fields missing</div>
-      <div className="mapping-sub">You must map these required fields before you can confirm.</div>
+      <div className="mapping-title">{t("mapping.requiredMissing.title")}</div>
+      <div className="mapping-sub">{t("mapping.requiredMissing.sub")}</div>
 
       {requiredMissing.map((r) => (
         <div key={r.role} style={{ marginTop: 10 }}>
           <div style={{ fontWeight: 600, color: "var(--c-text)", marginBottom: 6 }}>
-            {r.name} (required)
+            {r.name} {t("mapping.requiredMissing.required")}
           </div>
 
           {r.user_prompt && (
@@ -197,8 +208,8 @@ function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissi
           )}
 
           <FormSelect
-            label="Choose column"
-            placeholder="Select a column..."
+            label={t("mapping.requiredMissing.chooseColumn")}
+            placeholder={t("mapping.requiredMissing.selectColumn")}
             options={allColumnsOptions}
             value={requiredMissingMap?.[r.role] || ""}
             onChange={(e) => onPick(r.role, e.target.value)}
@@ -211,14 +222,15 @@ function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissi
 }
 
 function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
+  const { t } = useTranslation("upload");
   const [pendingMap, setPendingMap] = useState({});
 
   if (!Array.isArray(needsMapping) || needsMapping.length === 0) return null;
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">Needs mapping</div>
-      <div className="mapping-sub">These columns need a role before you can continue.</div>
+      <div className="mapping-title">{t("mapping.needsMapping.title")}</div>
+      <div className="mapping-sub">{t("mapping.needsMapping.sub")}</div>
 
       {needsMapping.map((c) => {
         const current = columnMap?.[c.index] || {};
@@ -235,7 +247,7 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
 
             <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
               <div className="role-label" style={{ marginTop: 8 }}>
-                Role
+                {t("mapping.role")}
               </div>
 
               <RolePickerWithConfirm
@@ -258,6 +270,7 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
 }
 
 function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConfirmVerified, disabled }) {
+  const { t } = useTranslation("upload");
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState({});
   const [pendingMap, setPendingMap] = useState({});
@@ -277,19 +290,19 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
   return (
     <div className="mapping-card">
       <div className="mapping-title">
-        Needs verification ({confirmed}/{total} confirmed)
+        {t("mapping.needsVerification.title", { confirmed, total })}
       </div>
-      <div className="mapping-sub">Confirm the AI guess or choose a different role.</div>
+      <div className="mapping-sub">{t("mapping.needsVerification.sub")}</div>
 
       <div className="mapping-pager">
         <button className="pager-btn" onClick={() => safeSetPage(page - 1)} disabled={page === 1}>
-          Prev
+          {t("mapping.needsVerification.prev")}
         </button>
         <div className="pager-page">
-          Page {page} / {totalPages}
+          {t("mapping.needsVerification.page", { page, totalPages })}
         </div>
         <button className="pager-btn" onClick={() => safeSetPage(page + 1)} disabled={page === totalPages}>
-          Next
+          {t("mapping.needsVerification.next")}
         </button>
       </div>
 
@@ -313,7 +326,7 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
 
               <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
                 <div className="role-label" style={{ marginTop: 8 }}>
-                  Role
+                  {t("mapping.role")}
                 </div>
 
                 <div style={{ flex: "1 1 auto", minWidth: 260 }}>
@@ -335,14 +348,16 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
                   disabled={disabled || !!current.verified || hasPending}
                   title={
                     disabled
-                      ? "Mappings are locked for this batch."
+                      ? t("mapping.lockedBatch")
                       : hasPending
-                      ? "Confirm or cancel the role change first."
+                      ? t("mapping.confirmRoleChangeFirst")
                       : ""
                   }
                   style={{ alignSelf: "flex-start" }}
                 >
-                  {current.verified ? "Confirmed" : "Confirm"}
+                  {current.verified
+                    ? t("mapping.needsVerification.confirmed")
+                    : t("mapping.needsVerification.confirm")}
                 </Button>
 
                 <button
@@ -351,7 +366,7 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
                   onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
                   style={{ alignSelf: "flex-start", marginTop: 8 }}
                 >
-                  {isOpen ? "Hide details" : "Show details"}
+                  {isOpen ? t("mapping.hideDetails") : t("mapping.showDetails")}
                 </button>
               </div>
 
@@ -365,12 +380,14 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
 }
 
 function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled }) {
+  const { t } = useTranslation("upload");
+
   if (!Array.isArray(suggestedSkip) || suggestedSkip.length === 0) return null;
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">Suggested to skip</div>
-      <div className="mapping-sub">These columns are probably not useful.</div>
+      <div className="mapping-title">{t("mapping.suggestedSkip.title")}</div>
+      <div className="mapping-sub">{t("mapping.suggestedSkip.sub")}</div>
 
       {suggestedSkip.map((c) => {
         const current = columnMap?.[c.index] || {};
@@ -380,7 +397,7 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
 
             {c.reason && (
               <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 4 }}>
-                Why skip: {c.reason}
+                {t("mapping.suggestedSkip.whySkip")} {c.reason}
               </div>
             )}
 
@@ -390,13 +407,15 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
                 variant="secondary"
                 onClick={() => onToggleInclude(c.index)}
                 disabled={!!disabled}
-                title={disabled ? "Mappings are locked for this batch." : ""}
+                title={disabled ? t("mapping.lockedBatch") : ""}
               >
-                {current.include ? "Included" : "Skipped"}
+                {current.include
+                  ? t("mapping.suggestedSkip.included")
+                  : t("mapping.suggestedSkip.skipped")}
               </Button>
 
               <div style={{ fontSize: 13, color: "var(--c-text-muted)" }}>
-                Current role: {roleLabel(current.role || "skip")}
+                {t("mapping.suggestedSkip.currentRole")} {roleLabel(current.role || "skip")}
               </div>
             </div>
 
@@ -424,8 +443,10 @@ export default function MappingStep({
   onConfirm,
   confirming,
 }) {
+  const { t } = useTranslation("upload");
+
   if (analysisLoading) return <MappingStepSkeleton />;
-  if (!analysis) return <InfoMessage type="info">No analysis data yet.</InfoMessage>;
+  if (!analysis) return <InfoMessage type="info">{t("mapping.noAnalysis")}</InfoMessage>;
 
   const highConfidence = analysis?.classified?.high_confidence || [];
   const requiredMissing = analysis?.classified?.required_missing || [];
@@ -442,7 +463,7 @@ export default function MappingStep({
 
   return (
     <>
-      {!hasAnything && <InfoMessage type="info">No columns to map.</InfoMessage>}
+      {!hasAnything && <InfoMessage type="info">{t("mapping.noColumns")}</InfoMessage>}
 
       <div className="mapping-section">
         <HighConfidenceCard
@@ -485,7 +506,7 @@ export default function MappingStep({
 
       <FormActions>
         <Button variant="secondary" onClick={onBack} disabled={!!confirming}>
-          Back
+          {t("mapping.back")}
         </Button>
 
         <Button
@@ -493,15 +514,17 @@ export default function MappingStep({
           onClick={onConfirm}
           disabled={(!canConfirm && !alreadyConfirmed) || !!confirming}
         >
-          {alreadyConfirmed ? "Continue" : confirming ? "Confirming..." : "Confirm mappings"}
+          {alreadyConfirmed
+            ? t("mapping.continue")
+            : confirming
+            ? t("mapping.confirming")
+            : t("mapping.confirmMappings")}
         </Button>
       </FormActions>
 
       {!alreadyConfirmed && !canConfirm && (
         <div style={{ marginTop: 12 }}>
-          <InfoMessage type="info">
-            Please resolve required missing fields and confirm all “Needs verification” columns.
-          </InfoMessage>
+          <InfoMessage type="info">{t("mapping.resolveRequired")}</InfoMessage>
         </div>
       )}
     </>

@@ -1,16 +1,23 @@
 // frontend/src/features/data-upload/components/ConfirmDialog.jsx
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ConfirmDialog({
   open,
-  title = "Confirm",
+  title,
   message = "",
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
   busy,
 }) {
+  const { t } = useTranslation("upload");
+
+  const finalTitle = title || t("confirmDialog.title");
+  const finalConfirmText = confirmText || t("confirmDialog.confirm");
+  const finalCancelText = cancelText || t("confirmDialog.cancel");
+
   useEffect(() => {
     if (!open) return;
 
@@ -20,7 +27,6 @@ export default function ConfirmDialog({
 
     document.addEventListener("keydown", onKeyDown);
 
-    // lock scroll while open
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -37,20 +43,24 @@ export default function ConfirmDialog({
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-label={finalTitle}
       onMouseDown={(e) => {
-        // click outside closes
         if (e.target === e.currentTarget) onCancel?.();
       }}
     >
       <div className="modal-card">
-        <div className="modal-title">{title}</div>
+        <div className="modal-title">{finalTitle}</div>
 
         {message ? <div className="modal-body">{message}</div> : null}
 
         <div className="modal-actions">
-          <button type="button" className="modal-btn" onClick={onCancel} disabled={busy}>
-            {cancelText}
+          <button
+            type="button"
+            className="modal-btn"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            {finalCancelText}
           </button>
 
           <button
@@ -59,7 +69,9 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy}
           >
-            {busy ? "Deleting..." : confirmText}
+            {busy
+              ? t("confirmDialog.deleting")
+              : finalConfirmText}
           </button>
         </div>
       </div>

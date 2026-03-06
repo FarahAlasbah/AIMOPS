@@ -1,5 +1,6 @@
 // frontend/src/features/dashboard/pages/Overview.jsx
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, PageHeader } from "../../../shared/components";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import {
@@ -9,7 +10,6 @@ import {
 } from "../../../api/dashboard";
 import "./Overview.css";
 
-// Charts
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -34,7 +34,6 @@ ChartJS.register(
   Legend
 );
 
-// Blue theme palette
 const BLUE = {
   900: "#0B1F44",
   800: "#0B2E5E",
@@ -49,13 +48,8 @@ const BLUE = {
 };
 
 const PIE_BLUES = [
-  BLUE[700],
-  BLUE[600],
-  BLUE[500],
-  BLUE[400],
-  BLUE[300],
-  BLUE[200],
-  BLUE[150],
+  BLUE[700], BLUE[600], BLUE[500], BLUE[400],
+  BLUE[300], BLUE[200], BLUE[150],
 ];
 
 function withAlpha(hex, a = 0.25) {
@@ -77,58 +71,20 @@ const STATUS_COLOR = {
 
 const pickDashboard = ({ user, hasPermission }) => {
   const roleName = user?.role?.display_name || user?.role_name || "";
-
   if (user?.is_admin === true || roleName === "Administrator") return "admin";
   if (roleName === "Business Owner") return "owner";
   if (roleName === "Marketing User") return "marketing";
-
   if (hasPermission("users.view") || hasPermission("system.settings")) return "admin";
   if (hasPermission("campaigns.view") || hasPermission("feedback.view")) return "marketing";
-
   return "default";
 };
 
-const DASH = {
-  admin: {
-    title: "Admin Dashboard",
-    subtitle: "System overview and management",
-    stats: [
-      { key: "usersCount", label: "Total Users" },
-      { key: "uploadsCount", label: "Data Uploads" },
-      { key: "productsCount", label: "Products" },
-      { key: "feedbackCount", label: "Feedback Items" }, // not wired yet
-    ],
-  },
-  marketing: {
-    title: "Marketing Dashboard",
-    subtitle: "Campaigns and feedback performance",
-    stats: [
-      { key: "uploadsCount", label: "Data Uploads" },
-      { key: "productsCount", label: "Products" },
-      { key: "campaignsCount", label: "Campaigns" }, // not wired yet
-      { key: "feedbackCount", label: "Feedback Items" }, // not wired yet
-    ],
-  },
-  owner: {
-    title: "Business Owner Dashboard",
-    subtitle: "High-level view of operations and results",
-    stats: [
-      { key: "uploadsCount", label: "Data Uploads (Period)" },
-      { key: "productsCount", label: "Products" },
-      { key: "revenue", label: "Revenue (Period)" }, // not wired yet
-      { key: "dataQuality", label: "Data Quality" }, // not wired yet
-    ],
-  },
-  default: {
-    title: "Dashboard",
-    subtitle: "Overview",
-    stats: [
-      { key: "uploadsCount", label: "Data Uploads" },
-      { key: "productsCount", label: "Products" },
-      { key: "usersCount", label: "Users" },
-      { key: "status", label: "Status" }, // not wired
-    ],
-  },
+// Stat keys per role — labels come from i18n at render time
+const DASH_STATS = {
+  admin:     ["usersCount", "uploadsCount", "productsCount", "feedbackCount"],
+  marketing: ["uploadsCount", "productsCount", "campaignsCount", "feedbackCount"],
+  owner:     ["uploadsCountPeriod", "productsCount", "revenue", "dataQuality"],
+  default:   ["uploadsCount", "productsCount", "usersCount", "status"],
 };
 
 function safeNumberText(v) {
@@ -158,38 +114,24 @@ function dayKey(dt) {
 }
 
 const lineOptions = {
-  plugins: {
-    legend: { display: false },
-    tooltip: { enabled: true },
-  },
-  scales: {
-    x: { grid: { display: false } },
-    y: { beginAtZero: true },
-  },
+  plugins: { legend: { display: false }, tooltip: { enabled: true } },
+  scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
 };
 
 const barOptions = {
-  plugins: {
-    legend: { display: false },
-    tooltip: { enabled: true },
-  },
-  scales: {
-    x: { grid: { display: false } },
-    y: { beginAtZero: true },
-  },
+  plugins: { legend: { display: false }, tooltip: { enabled: true } },
+  scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
 };
 
 const doughnutOptions = {
-  plugins: {
-    legend: { position: "bottom" },
-    tooltip: { enabled: true },
-  },
+  plugins: { legend: { position: "bottom" }, tooltip: { enabled: true } },
 };
 
 export default function Overview() {
+  const { t } = useTranslation("dashboard");
   const { user, hasPermission } = useAuth();
   const key = pickDashboard({ user, hasPermission });
-  const cfg = DASH[key];
+  const statKeys = DASH_STATS[key];
 
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
@@ -214,14 +156,13 @@ export default function Overview() {
           getUploadsForCharts({ limit: 500 }),
           getProductsForCharts({ limit: 200 }),
         ]);
-
         if (!alive) return;
         setSummary(sum);
         setUploads(Array.isArray(ups) ? ups : []);
         setProducts(Array.isArray(prods) ? prods : []);
       } catch (e) {
         if (!alive) return;
-        setError(e?.message || "Failed to load dashboard data.");
+        setError(e?.message || t("errorLoadFailed"));
       } finally {
         if (!alive) return;
         setLoading(false);
@@ -229,15 +170,14 @@ export default function Overview() {
     }
 
     run();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [key]);
 
   const stats = useMemo(() => {
     const map = {
       usersCount: summary.usersCount,
       uploadsCount: summary.uploadsCount,
+      uploadsCountPeriod: summary.uploadsCount,
       productsCount: summary.productsCount,
       feedbackCount: null,
       campaignsCount: null,
@@ -245,9 +185,8 @@ export default function Overview() {
       dataQuality: null,
       status: null,
     };
-
-    return cfg.stats.map((s) => ({ ...s, value: map[s.key] }));
-  }, [cfg.stats, summary]);
+    return statKeys.map((k) => ({ key: k, label: t(`stats.${k}`), value: map[k] }));
+  }, [statKeys, summary, t]);
 
   const activity = useMemo(() => {
     const items = [];
@@ -258,43 +197,34 @@ export default function Overview() {
         items.push(when ? `${file} (${when})` : file);
       }
     }
-    if (items.length === 0) items.push("No recent uploads yet.");
+    if (items.length === 0) items.push(t("charts.noRecentUploads"));
     return items.slice(0, 5);
-  }, [summary.recentUploads]);
+  }, [summary.recentUploads, t]);
 
-  // Chart 1: Uploads by status (blue, consistent per status)
+  // Chart 1: Uploads by status
   const uploadsByStatus = useMemo(() => {
     const counts = {};
     for (const u of uploads) {
       const s = String(u.status || "unknown").toLowerCase();
       counts[s] = (counts[s] || 0) + 1;
     }
-
-    // Put common statuses first
     const preferred = ["completed", "processing", "mapping", "pending", "unknown"];
-    const rest = Object.keys(counts)
-      .filter((k) => !preferred.includes(k))
-      .sort();
-
+    const rest = Object.keys(counts).filter((k) => !preferred.includes(k)).sort();
     const labels = preferred.filter((k) => counts[k]).concat(rest);
     const data = labels.map((l) => counts[l]);
-
     const bg = labels.map((l, i) => STATUS_COLOR[l] || PIE_BLUES[i % PIE_BLUES.length]);
-
     return {
       labels,
-      datasets: [
-        {
-          label: "Uploads",
-          data,
-          backgroundColor: bg,
-          borderColor: "#ffffff",
-          borderWidth: 2,
-          hoverOffset: 6,
-        },
-      ],
+      datasets: [{
+        label: t("charts.uploadsDatasetLabel"),
+        data,
+        backgroundColor: bg,
+        borderColor: "#ffffff",
+        borderWidth: 2,
+        hoverOffset: 6,
+      }],
     };
-  }, [uploads]);
+  }, [uploads, t]);
 
   // Chart 2: Uploads per day (last 14 days)
   const uploadsPerDay = useMemo(() => {
@@ -304,68 +234,63 @@ export default function Overview() {
       if (!k) continue;
       counts.set(k, (counts.get(k) || 0) + 1);
     }
-
     const days = Array.from(counts.keys()).sort();
     const last = days.slice(-14);
-    const data = last.map((d) => counts.get(d) || 0);
-
     return {
       labels: last,
-      datasets: [
-        {
-          label: "Uploads",
-          data,
-          borderColor: BLUE[500],
-          backgroundColor: withAlpha(BLUE[400], 0.22),
-          fill: true,
-          tension: 0.35,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: BLUE[600],
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 2,
-        },
-      ],
+      datasets: [{
+        label: t("charts.uploadsDatasetLabel"),
+        data: last.map((d) => counts.get(d) || 0),
+        borderColor: BLUE[500],
+        backgroundColor: withAlpha(BLUE[400], 0.22),
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: BLUE[600],
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+      }],
     };
-  }, [uploads]);
+  }, [uploads, t]);
 
-  // Chart 3: Top products by revenue (blue bars)
+  // Chart 3: Top products by revenue
   const topProductsRevenue = useMemo(() => {
     const list = products
-      .map((p) => {
-        const name = p.product_name || p.name || "Product";
-        const revenue = Number(p?.stats?.total_revenue ?? 0);
-        return { name, revenue: Number.isFinite(revenue) ? revenue : 0 };
-      })
+      .map((p) => ({
+        name: p.product_name || p.name || "Product",
+        revenue: Number.isFinite(Number(p?.stats?.total_revenue ?? 0))
+          ? Number(p.stats.total_revenue)
+          : 0,
+      }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 8);
-
     return {
       labels: list.map((x) => x.name),
-      datasets: [
-        {
-          label: "Revenue",
-          data: list.map((x) => x.revenue),
-          backgroundColor: list.map((_, i) =>
-            withAlpha(PIE_BLUES[i % PIE_BLUES.length], 0.85)
-          ),
-          hoverBackgroundColor: list.map((_, i) => PIE_BLUES[i % PIE_BLUES.length]),
-          borderColor: withAlpha(BLUE[900], 0.18),
-          borderWidth: 1,
-          borderRadius: 8,
-        },
-      ],
+      datasets: [{
+        label: t("charts.revenueDatasetLabel"),
+        data: list.map((x) => x.revenue),
+        backgroundColor: list.map((_, i) => withAlpha(PIE_BLUES[i % PIE_BLUES.length], 0.85)),
+        hoverBackgroundColor: list.map((_, i) => PIE_BLUES[i % PIE_BLUES.length]),
+        borderColor: withAlpha(BLUE[900], 0.18),
+        borderWidth: 1,
+        borderRadius: 8,
+      }],
     };
-  }, [products]);
+  }, [products, t]);
 
   return (
     <div className="overview-page">
-      <PageHeader title={cfg.title} subtitle={cfg.subtitle} />
+      <PageHeader
+        title={t(`roles.${key}.title`)}
+        subtitle={t(`roles.${key}.subtitle`)}
+      />
+
       {error ? <div className="overview-error">{error}</div> : null}
 
       <div className="stats-grid">
         {stats.map((s) => (
-          <div className={`stat-card ${loading ? "is-loading" : ""}`} key={s.label}>
+          <div className={`stat-card ${loading ? "is-loading" : ""}`} key={s.key}>
             <h3>{s.label}</h3>
             <p className="stat-number">{loading ? "—" : safeNumberText(s.value)}</p>
             <span className="stat-change"> </span>
@@ -374,38 +299,44 @@ export default function Overview() {
       </div>
 
       <div className="overview-charts-grid">
-        <Card title="Uploads by status">
+        <Card title={t("charts.uploadsByStatus")}>
           {uploads.length === 0 ? (
-            <div className="chart-empty">{loading ? "Loading…" : "No uploads data yet."}</div>
+            <div className="chart-empty">
+              {loading ? t("charts.loading") : t("charts.noUploads")}
+            </div>
           ) : (
             <Doughnut data={uploadsByStatus} options={doughnutOptions} />
           )}
         </Card>
 
-        <Card title="Uploads over time (last 14 days)">
+        <Card title={t("charts.uploadsOverTime")}>
           {uploads.length === 0 ? (
-            <div className="chart-empty">{loading ? "Loading…" : "No uploads data yet."}</div>
+            <div className="chart-empty">
+              {loading ? t("charts.loading") : t("charts.noUploads")}
+            </div>
           ) : (
             <Line data={uploadsPerDay} options={lineOptions} />
           )}
         </Card>
 
-        <Card title="Top products by revenue">
+        <Card title={t("charts.topProductsRevenue")}>
           {products.length === 0 ? (
-            <div className="chart-empty">{loading ? "Loading…" : "No products data yet."}</div>
+            <div className="chart-empty">
+              {loading ? t("charts.loading") : t("charts.noProducts")}
+            </div>
           ) : (
             <Bar data={topProductsRevenue} options={barOptions} />
           )}
         </Card>
       </div>
 
-      <Card title="Recent activity (from uploads)">
+      <Card title={t("charts.recentActivity")}>
         <div className="activity-list">
-          {activity.map((t, i) => (
+          {activity.map((text, i) => (
             <div className="activity-item" key={i}>
               <div className="activity-icon">•</div>
               <div className="activity-content">
-                <p className="activity-title">{t}</p>
+                <p className="activity-title">{text}</p>
               </div>
             </div>
           ))}

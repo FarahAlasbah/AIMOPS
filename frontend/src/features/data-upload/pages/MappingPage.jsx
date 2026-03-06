@@ -1,13 +1,14 @@
 // frontend/src/features/data-upload/pages/MappingPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
 import { analyzeSalesBatch, confirmSalesMappings } from "../../../api/data";
 import MappingStep from "../components/MappingStep";
-import { AnalyzeProgress } from "../components/Skeletons"; // NEW
+import { AnalyzeProgress } from "../components/Skeletons";
 
 import { getCachedAnalysis, setCachedAnalysis } from "../utils/analysisCache";
 import { buildConfirmMappingsPayload } from "../utils/confirmPayload";
@@ -44,7 +45,6 @@ const extractApiError = (err, fallback) => {
   return fallback;
 };
 
-// confirmed result can vary by backend shape; normalize it into [{ original_name, role }]
 const extractConfirmedMappingsList = (confirmResult) => {
   const raw =
     confirmResult?.confirmed_mappings ||
@@ -69,7 +69,7 @@ const buildBaseColumnMapFromAnalysis = (analysis) => {
     initial[c.index] = {
       role,
       include: role !== "skip" && !!c.auto_include,
-      verified: !c.verification_needed, // only AI verification flag
+      verified: !c.verification_needed,
     };
   });
   return initial;
@@ -83,7 +83,6 @@ const buildRequiredMissingInit = (analysis) => {
   return rm;
 };
 
-// If we have confirmed mappings saved locally, rebuild columnMap from them
 const buildColumnMapFromConfirmed = (analysis, confirmResult) => {
   const confirmedList = extractConfirmedMappingsList(confirmResult);
   const byName = new Map(
@@ -98,14 +97,13 @@ const buildColumnMapFromConfirmed = (analysis, confirmResult) => {
     next[c.index] = {
       role,
       include: role !== "skip",
-      verified: true, // important: don't ask user to re-confirm on revisit
+      verified: true,
     };
   });
 
   return next;
 };
 
-// Use current columnMap to satisfy requiredMissingMap (role -> index string)
 const buildRequiredMissingFromColumnMap = (analysis, columnMap) => {
   const rm = buildRequiredMissingInit(analysis);
   const requiredMissing = analysis?.classified?.required_missing || [];
@@ -113,19 +111,17 @@ const buildRequiredMissingFromColumnMap = (analysis, columnMap) => {
   requiredMissing.forEach((r) => {
     const requiredRole = normalizeRole(r.role);
 
-    // find a column that currently has that role
     const found = Object.entries(columnMap || {}).find(
       ([, st]) => normalizeRole(st?.role) === requiredRole,
     );
     if (found) {
-      rm[r.role] = String(found[0]); // store index as string
+      rm[r.role] = String(found[0]);
     }
   });
 
   return rm;
 };
 
-// Merge a saved draft into a base map (by index)
 const mergeDraftIntoBase = (analysis, baseMap, draft) => {
   const next = { ...(baseMap || {}) };
   const cols = analysis?.columns || [];
@@ -142,14 +138,13 @@ const mergeDraftIntoBase = (analysis, baseMap, draft) => {
     next[c.index] = {
       role,
       include: role === "skip" ? false : saved.include !== false,
-      verified: saved.verified === true, // only true if user had confirmed
+      verified: saved.verified === true,
     };
   });
 
   return next;
 };
 
-// NEW: fake progress hook (0..95 while loading, then 100 on finish)
 const useFakeProgress = (active) => {
   const [pct, setPct] = useState(0);
 
@@ -168,12 +163,10 @@ const useFakeProgress = (active) => {
       if (!mounted) return;
 
       setPct((prev) => {
-        // ease out as we approach 95
         const cap = 95;
         if (prev >= cap) return cap;
 
         const remaining = cap - prev;
-        // step gets smaller near the cap
         const step = Math.max(1, Math.round(remaining * 0.12));
         return Math.min(cap, prev + step);
       });
@@ -193,6 +186,7 @@ const useFakeProgress = (active) => {
 };
 
 export default function MappingPage() {
+  const { t } = useTranslation("upload");
   const navigate = useNavigate();
   const { batchId } = useParams();
   const [searchParams] = useSearchParams();
@@ -208,13 +202,10 @@ export default function MappingPage() {
   const [requiredMissingMap, setRequiredMissingMap] = useState({});
 
   const [confirming, setConfirming] = useState(false);
-
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
 
-  // NEW: progress for Analyze/Map load
   const { pct: analyzePct, finish: finishAnalyzePct } = useFakeProgress(analysisLoading);
 
-  // Load analysis + hydrate UI state (base -> confirmed OR draft)
   useEffect(() => {
     const run = async () => {
       if (!batchId) return;
@@ -223,7 +214,6 @@ export default function MappingPage() {
       setAnalysisLoading(true);
 
       try {
-        // 1) get analysis (cache unless refresh)
         let res = null;
 
         if (!refresh) {
@@ -238,7 +228,6 @@ export default function MappingPage() {
 
         setAnalysis(res);
 
-        // 2) hydrate from local confirmed or local draft
         let confirmed = null;
         if (!refresh) {
           confirmed = safeParse(localStorage.getItem(LS_CONFIRMED_KEY(batchId)));
@@ -254,7 +243,6 @@ export default function MappingPage() {
           return;
         }
 
-        // else: try draft
         let draft = null;
         if (!refresh) {
           draft = safeParse(localStorage.getItem(LS_MAPPING_DRAFT_KEY(batchId)));
@@ -269,7 +257,6 @@ export default function MappingPage() {
               ? draft.requiredMissingMap
               : null;
 
-          // merge requiredMissingMap but keep only keys that exist in current analysis
           const rmInit = buildRequiredMissingInit(res);
           Object.keys(rmInit).forEach((k) => {
             const v = rmDraft?.[k];
@@ -281,15 +268,13 @@ export default function MappingPage() {
           return;
         }
 
-        // 3) fallback: pure base state
         setColumnMap(base);
         setRequiredMissingMap(buildRequiredMissingInit(res));
         setAlreadyConfirmed(false);
       } catch (err) {
-        const fallback = err?.message || "Analyze failed.";
+        const fallback = t("mappingPage.errorAnalyzeFailed");
         setError(extractApiError(err, fallback));
       } finally {
-        // NEW: show 100% briefly then reveal UI
         finishAnalyzePct();
         window.setTimeout(() => setAnalysisLoading(false), 220);
       }
@@ -299,11 +284,10 @@ export default function MappingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchId, refresh]);
 
-  // Persist a local draft so reopening Map shows the same state without re-confirm
   useEffect(() => {
     if (!batchId) return;
     if (!analysis) return;
-    if (alreadyConfirmed) return; // keep confirmed state stable (avoid draft overwriting it)
+    if (alreadyConfirmed) return;
 
     try {
       const payload = {
@@ -323,7 +307,6 @@ export default function MappingPage() {
     return cols.map((c) => ({ value: String(c.index), label: c.name }));
   }, [analysis]);
 
-  // set of indices that require verification (only matters if not alreadyConfirmed)
   const needsVerificationSet = useMemo(() => {
     const set = new Set();
     (analysis?.classified?.needs_verification || []).forEach((c) => set.add(String(c.index)));
@@ -331,7 +314,7 @@ export default function MappingPage() {
   }, [analysis]);
 
   const setRole = (colIndex, roleRaw) => {
-    if (alreadyConfirmed) return; // locked: cannot reprocess
+    if (alreadyConfirmed) return;
 
     const nextRole = normalizeRole(roleRaw);
 
@@ -418,7 +401,6 @@ export default function MappingPage() {
     setError("");
     if (!analysis || !batchId) return;
 
-    // IMPORTANT: do not re-confirm/reprocess a batch twice
     if (alreadyConfirmed) {
       navigate(`/app/data-upload/review/${batchId}`);
       return;
@@ -434,14 +416,13 @@ export default function MappingPage() {
       localStorage.setItem(LS_CONFIRMED_KEY(batchId), JSON.stringify(res));
       setAlreadyConfirmed(!!res?.success);
 
-      // once confirmed, draft is no longer needed
       try {
         localStorage.removeItem(LS_MAPPING_DRAFT_KEY(batchId));
       } catch {}
 
       navigate(`/app/data-upload/review/${batchId}`);
     } catch (err) {
-      const fallback = err?.message || "Confirm mappings failed.";
+      const fallback = t("mappingPage.errorConfirmFailed");
       setError(extractApiError(err, fallback));
     } finally {
       setConfirming(false);
@@ -451,14 +432,14 @@ export default function MappingPage() {
   return (
     <div className="data-upload-page">
       <PageHeader
-        title="Map Columns"
+        title={t("mappingPage.title")}
         breadcrumbs={[
           {
-            label: "Upload Sales Data",
+            label: t("mappingPage.breadcrumbRoot"),
             link: true,
             onClick: () => navigate("/app/data-upload/uploads"),
           },
-          { label: `Batch ${batchId}`, link: false },
+          { label: t("mappingPage.breadcrumbBatch", { batchId }), link: false },
         ]}
       />
 
@@ -472,12 +453,11 @@ export default function MappingPage() {
         {alreadyConfirmed && (
           <div style={{ marginBottom: 16 }}>
             <InfoMessage type="success">
-              Mappings are already confirmed for this batch on this device. Editing is locked to avoid reprocessing.
+              {t("mappingPage.alreadyConfirmedInfo")}
             </InfoMessage>
           </div>
         )}
 
-        {/* NEW: circle progress while analysisLoading */}
         {analysisLoading ? (
           <AnalyzeProgress percent={analyzePct} />
         ) : (

@@ -1,0 +1,192 @@
+{
+  "columnMeta": {
+    "confidence": "Confidence",
+    "classification": "Classification",
+    "verificationNeeded": "Verification needed",
+    "autoInclude": "Auto include",
+    "canSkip": "Can skip",
+    "totalValues": "Total values",
+    "nonNullValues": "Non-null values",
+    "completeness": "Completeness",
+    "benefitWhyReason": "Benefit / Why / Reason",
+    "benefit": "Benefit",
+    "why": "Why",
+    "reason": "Reason",
+    "samples": "Samples"
+  },
+  "confirmDialog": {
+    "title": "Confirm",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
+  },
+  "mapping": {
+    "noAnalysis": "No analysis data yet.",
+    "noColumns": "No columns to map.",
+    "back": "Back",
+    "confirmMappings": "Confirm mappings",
+    "continue": "Continue",
+    "confirming": "Confirming...",
+    "resolveRequired": "Please resolve required missing fields and confirm all \"Needs verification\" columns.",
+    "role": "Role",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "lockedBatch": "Mappings are locked for this batch.",
+    "confirmRoleChangeFirst": "Confirm or cancel the role change first.",
+    "notSuggestedRole": "Not the suggested role. Suggested:",
+    "roleChangePrompt": "You selected <strong>{{selected}}</strong>, which is not the suggested role (<strong>{{suggested}}</strong>). Confirm this change?",
+    "cancel": "Cancel",
+    "confirmChange": "Confirm change",
+    "highConfidence": {
+      "title": "Auto-mapped (high confidence)",
+      "sub": "Review these mappings."
+    },
+    "requiredMissing": {
+      "title": "Required fields missing",
+      "sub": "You must map these required fields before you can confirm.",
+      "required": "(required)",
+      "chooseColumn": "Choose column",
+      "selectColumn": "Select a column..."
+    },
+    "needsMapping": {
+      "title": "Needs mapping",
+      "sub": "These columns need a role before you can continue."
+    },
+    "needsVerification": {
+      "title": "Needs verification ({{confirmed}}/{{total}} confirmed)",
+      "sub": "Confirm the AI guess or choose a different role.",
+      "prev": "Prev",
+      "next": "Next",
+      "page": "Page {{page}} / {{totalPages}}",
+      "confirm": "Confirm",
+      "confirmed": "Confirmed"
+    },
+    "suggestedSkip": {
+      "title": "Suggested to skip",
+      "sub": "These columns are probably not useful.",
+      "whySkip": "Why skip:",
+      "included": "Included",
+      "skipped": "Skipped",
+      "currentRole": "Current role:"
+    }
+  },
+  "review": {
+    "title": "Merge duplicates, then confirm products",
+    "subExtracted": "{{count}} products extracted • {{merges}} merges selected",
+    "subNotExtracted": "Extract products from this batch first",
+    "mappingsConfirmed": "Mappings confirmed ({{count}})",
+    "mappingsNotFound": "Mappings not found",
+    "badgeExtracted": "Extracted",
+    "badgeNotExtracted": "Not extracted",
+    "productsConfirmedSuccess": "Products confirmed successfully. You can finish now.",
+    "noProductsExtracted": "No products were extracted from this batch.",
+    "back": "Back",
+    "extracting": "Extracting...",
+    "extractProducts": "Extract products",
+    "confirmed": "Confirmed",
+    "confirmingProducts": "Confirming...",
+    "confirmProducts": "Confirm products",
+    "finish": "Finish",
+    "category": "Category:",
+    "normalized": "Normalized:",
+    "noMergesSelected": "No merges selected",
+    "manageMerges": "Manage merges",
+    "alreadyConfirmed": "Already confirmed",
+    "moreChip": "+{{count}} more",
+    "modal": {
+      "title": "Manage merges",
+      "close": "Close",
+      "normalizedLabel": "Normalized:",
+      "selectedMerges": "Selected merges",
+      "candidates": "Candidates",
+      "noMergesSelected": "No merges selected.",
+      "noCandidates": "No other product names found in this batch.",
+      "noMatches": "No matches.",
+      "searchPlaceholder": "Search candidates...",
+      "shown": "{{count}} shown",
+      "remove": "Remove",
+      "add": "Add",
+      "done": "Done"
+    }
+  },
+  "uploadCard": {
+    "untitledFile": "Untitled file",
+    "type": "Type",
+    "size": "Size",
+    "validRows": "Valid rows",
+    "rejectedRows": "Rejected rows",
+    "mappingsSaved": "Mappings: Saved",
+    "mappingsNotSaved": "Mappings: Not saved",
+    "analysisCached": "Analysis: Cached",
+    "analysisNotCached": "Analysis: Not cached",
+    "deleting": "Deleting...",
+    "analyzeMap": "Analyze / Map",
+    "products": "Products",
+    "refreshAnalysis": "Refresh analysis",
+    "clearLocal": "Clear local",
+    "delete": "Delete",
+    "deleteTitle": "Deletes this batch sales records from the server"
+  },
+  "analyzeProgress": {
+    "defaultLabel": "Analyzing & preparing mapping...",
+    "loading": "Loading",
+    "hint": "This may take a few seconds depending on the file size."
+  },
+  "uploadStep": {
+    "campaignLabel": "Related Campaign (optional)",
+    "campaignPlaceholder": "Select a campaign...",
+    "uploading": "Uploading... {{progress}}%",
+    "cancel": "Cancel",
+    "upload": "Upload"
+  },
+  "uploadsList": {
+    "loading": "Loading uploads...",
+    "empty": "No uploads yet.",
+    "pageInfo": "Page {{page}} • Showing {{count}} item(s)",
+    "offsetInfo": "Offset {{offset}} • Limit {{limit}}",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "mappingPage": {
+    "title": "Map Columns",
+    "breadcrumbRoot": "Upload Sales Data",
+    "breadcrumbBatch": "Batch {{batchId}}",
+    "alreadyConfirmedInfo": "Mappings are already confirmed for this batch on this device. Editing is locked to avoid reprocessing.",
+    "errorAnalyzeFailed": "Analyze failed.",
+    "errorConfirmFailed": "Confirm mappings failed."
+  },
+  "reviewPage": {
+    "title": "Extract & Confirm Products",
+    "breadcrumbRoot": "Upload Sales Data",
+    "breadcrumbBatch": "Batch {{batchId}}",
+    "noMappingsWarn": "No confirmed mappings found for this batch on this device. Go back and confirm mappings again.",
+    "noProductNameInfo": "Product extraction needs at least: product_name (and usually date/quantity/unit_price/total_amount). Go back and fix the column mappings if needed.",
+    "errorExtractNeedsProductName": "Extract products needs at least: product_name (and usually date/quantity/unit_price/total_amount).",
+    "errorCannotConfirmYet": "Cannot confirm products yet. Make sure extraction succeeded.",
+    "errorExtractFailed": "Extract products failed.",
+    "errorConfirmFailed": "Confirm products failed.",
+    "errorGeneric": "Something went wrong."
+  },
+  "uploadsPage": {
+    "title": "Upload Campaign Sales Data",
+    "breadcrumbRoot": "Campaigns",
+    "breadcrumbCurrent": "Upload Sales Data",
+    "uploadsHeader": "Uploads",
+    "refreshing": "Refreshing...",
+    "refresh": "Refresh",
+    "dismiss": "Dismiss",
+    "deleteDialogTitle": "Delete upload",
+    "deleteDialogMessage": "Delete ({{fileName}})?\n\nThis will delete sales records for this batch on the server. Products are kept.",
+    "deleteDialogCancel": "Cancel",
+    "deleteDialogConfirm": "Delete",
+    "errorDuplicateFile": "This file was already uploaded before. Please choose a different file.",
+    "errorNoFile": "Please select a file first.",
+    "errorLoadFailed": "Failed to load uploads list.",
+    "errorUploadFailed": "Upload failed.",
+    "errorUploadDuplicate": "This file was already uploaded.",
+    "errorDeleteFailed": "Delete failed.",
+    "errorGeneric": "Something went wrong.",
+    "overlapWarning": "Overlapping date range detected ({{from}} → {{to}}). Existing records in that range were replaced to avoid duplicates.",
+    "overlapWarningWithRows": "Overlapping date range detected ({{from}} → {{to}}). Existing records in that range were replaced to avoid duplicates. ({{deleted}} row(s) replaced)"
+  }
+}

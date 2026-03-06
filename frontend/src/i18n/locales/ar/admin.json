@@ -45,23 +45,23 @@
       "password": "أدخل كلمة المرور (على الأقل 6 أحرف)"
     },
     "roles": {
-      "marketing": "مستخدم تسويق",
-      "owner": "صاحب عمل"
+      "marketing": "تسويق",
+      "owner": "مالك"
     },
     "errors": {
-      "usernameRequired": "اسم المستخدم مطلوب",
-      "usernameMin": "اسم المستخدم يجب أن يكون 3 أحرف على الأقل",
-      "emailRequired": "البريد الإلكتروني مطلوب",
-      "emailInvalid": "البريد الإلكتروني غير صحيح",
-      "fullNameRequired": "الاسم الكامل مطلوب",
-      "passwordRequired": "كلمة المرور مطلوبة",
-      "passwordMin": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
-      "roleInvalid": "الدور غير صحيح"
+      "usernameRequired": "اسم المستخدم مطلوب.",
+      "usernameMin": "يجب أن يكون اسم المستخدم 3 أحرف على الأقل.",
+      "emailRequired": "البريد الإلكتروني مطلوب.",
+      "emailInvalid": "يرجى إدخال بريد إلكتروني صالح.",
+      "fullNameRequired": "الاسم الكامل مطلوب.",
+      "passwordRequired": "كلمة المرور مطلوبة.",
+      "passwordMin": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+      "roleInvalid": "الدور المحدد غير صالح."
     },
     "buttons": {
       "cancel": "إلغاء",
       "create": "إنشاء مستخدم",
-      "creating": "جارٍ إنشاء المستخدم..."
+      "creating": "جارٍ الإنشاء..."
     }
   },
   "editUser": {
@@ -82,8 +82,8 @@
     "password": {
       "title": "كلمة المرور",
       "desc": "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل.",
-      "toggleShow": "إخفاء",
-      "toggleHide": "تغيير",
+      "toggleShow": "إظهار",
+      "toggleHide": "إخفاء",
       "current": "كلمة المرور الحالية",
       "new": "كلمة المرور الجديدة",
       "update": "تحديث كلمة المرور",
