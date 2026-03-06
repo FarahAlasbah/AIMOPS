@@ -1,0 +1,192 @@
+{
+  "columnMeta": {
+    "confidence": "مستوى الثقة",
+    "classification": "التصنيف",
+    "verificationNeeded": "يتطلب تحقق",
+    "autoInclude": "تضمين تلقائي",
+    "canSkip": "يمكن التجاوز",
+    "totalValues": "إجمالي القيم",
+    "nonNullValues": "القيم غير الفارغة",
+    "completeness": "مستوى الاكتمال",
+    "benefitWhyReason": "الفائدة / السبب / التوضيح",
+    "benefit": "الفائدة",
+    "why": "لماذا",
+    "reason": "السبب",
+    "samples": "أمثلة"
+  },
+  "confirmDialog": {
+    "title": "تأكيد",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "deleting": "جارٍ الحذف..."
+  },
+  "mapping": {
+    "noAnalysis": "لا توجد بيانات تحليل بعد.",
+    "noColumns": "لا توجد أعمدة للتعيين.",
+    "back": "رجوع",
+    "confirmMappings": "تأكيد التعيينات",
+    "continue": "متابعة",
+    "confirming": "جارٍ التأكيد...",
+    "resolveRequired": "يرجى حل الحقول المطلوبة المفقودة وتأكيد جميع أعمدة \"تحتاج إلى تحقق\".",
+    "role": "الدور",
+    "showDetails": "عرض التفاصيل",
+    "hideDetails": "إخفاء التفاصيل",
+    "lockedBatch": "التعيينات مقفلة لهذه الدفعة.",
+    "confirmRoleChangeFirst": "قم بتأكيد تغيير الدور أو إلغائه أولاً.",
+    "notSuggestedRole": "ليس الدور المقترح. المقترح:",
+    "roleChangePrompt": "لقد اخترت <strong>{{selected}}</strong>، وهو ليس الدور المقترح (<strong>{{suggested}}</strong>). هل تريد تأكيد هذا التغيير؟",
+    "cancel": "إلغاء",
+    "confirmChange": "تأكيد التغيير",
+    "highConfidence": {
+      "title": "مُعيَّن تلقائياً (ثقة عالية)",
+      "sub": "راجع هذه التعيينات."
+    },
+    "requiredMissing": {
+      "title": "حقول مطلوبة مفقودة",
+      "sub": "يجب تعيين هذه الحقول المطلوبة قبل التأكيد.",
+      "required": "(مطلوب)",
+      "chooseColumn": "اختر عموداً",
+      "selectColumn": "اختر عموداً..."
+    },
+    "needsMapping": {
+      "title": "يحتاج إلى تعيين",
+      "sub": "هذه الأعمدة تحتاج إلى دور قبل المتابعة."
+    },
+    "needsVerification": {
+      "title": "يحتاج إلى تحقق ({{confirmed}}/{{total}} مؤكد)",
+      "sub": "أكّد تخمين الذكاء الاصطناعي أو اختر دوراً مختلفاً.",
+      "prev": "السابق",
+      "next": "التالي",
+      "page": "صفحة {{page}} / {{totalPages}}",
+      "confirm": "تأكيد",
+      "confirmed": "مؤكد"
+    },
+    "suggestedSkip": {
+      "title": "مقترح تجاوزه",
+      "sub": "هذه الأعمدة على الأرجح غير مفيدة.",
+      "whySkip": "سبب التجاوز:",
+      "included": "مضمّن",
+      "skipped": "متجاوَز",
+      "currentRole": "الدور الحالي:"
+    }
+  },
+  "review": {
+    "title": "دمج المكررات، ثم تأكيد المنتجات",
+    "subExtracted": "{{count}} منتج مستخرج • {{merges}} دمج محدد",
+    "subNotExtracted": "استخرج المنتجات من هذه الدفعة أولاً",
+    "mappingsConfirmed": "التعيينات مؤكدة ({{count}})",
+    "mappingsNotFound": "التعيينات غير موجودة",
+    "badgeExtracted": "مستخرج",
+    "badgeNotExtracted": "غير مستخرج",
+    "productsConfirmedSuccess": "تم تأكيد المنتجات بنجاح. يمكنك الإنهاء الآن.",
+    "noProductsExtracted": "لم يتم استخراج أي منتجات من هذه الدفعة.",
+    "back": "رجوع",
+    "extracting": "جارٍ الاستخراج...",
+    "extractProducts": "استخراج المنتجات",
+    "confirmed": "مؤكد",
+    "confirmingProducts": "جارٍ التأكيد...",
+    "confirmProducts": "تأكيد المنتجات",
+    "finish": "إنهاء",
+    "category": "الفئة:",
+    "normalized": "الاسم الموحّد:",
+    "noMergesSelected": "لا توجد عمليات دمج محددة",
+    "manageMerges": "إدارة الدمج",
+    "alreadyConfirmed": "مؤكد بالفعل",
+    "moreChip": "+{{count}} المزيد",
+    "modal": {
+      "title": "إدارة الدمج",
+      "close": "إغلاق",
+      "normalizedLabel": "الاسم الموحّد:",
+      "selectedMerges": "الدمج المحدد",
+      "candidates": "المرشحون",
+      "noMergesSelected": "لا توجد عمليات دمج محددة.",
+      "noCandidates": "لا توجد أسماء منتجات أخرى في هذه الدفعة.",
+      "noMatches": "لا توجد نتائج.",
+      "searchPlaceholder": "البحث في المرشحين...",
+      "shown": "{{count}} معروض",
+      "remove": "إزالة",
+      "add": "إضافة",
+      "done": "تم"
+    }
+  },
+  "uploadCard": {
+    "untitledFile": "ملف بدون عنوان",
+    "type": "النوع",
+    "size": "الحجم",
+    "validRows": "الصفوف الصالحة",
+    "rejectedRows": "الصفوف المرفوضة",
+    "mappingsSaved": "التعيينات: محفوظة",
+    "mappingsNotSaved": "التعيينات: غير محفوظة",
+    "analysisCached": "التحليل: مخزّن مؤقتاً",
+    "analysisNotCached": "التحليل: غير مخزّن",
+    "deleting": "جارٍ الحذف...",
+    "analyzeMap": "تحليل / تعيين",
+    "products": "المنتجات",
+    "refreshAnalysis": "تحديث التحليل",
+    "clearLocal": "مسح المحلي",
+    "delete": "حذف",
+    "deleteTitle": "يحذف سجلات مبيعات هذه الدفعة من الخادم"
+  },
+  "analyzeProgress": {
+    "defaultLabel": "جارٍ التحليل وإعداد التعيين...",
+    "loading": "جارٍ التحميل",
+    "hint": "قد يستغرق هذا بضع ثوانٍ حسب حجم الملف."
+  },
+  "uploadStep": {
+    "campaignLabel": "الحملة المرتبطة (اختياري)",
+    "campaignPlaceholder": "اختر حملة...",
+    "uploading": "جارٍ الرفع... {{progress}}%",
+    "cancel": "إلغاء",
+    "upload": "رفع"
+  },
+  "uploadsList": {
+    "loading": "جارٍ تحميل الملفات المرفوعة...",
+    "empty": "لا توجد ملفات مرفوعة بعد.",
+    "pageInfo": "صفحة {{page}} • يعرض {{count}} عنصر(عناصر)",
+    "offsetInfo": "الإزاحة {{offset}} • الحد {{limit}}",
+    "prev": "السابق",
+    "next": "التالي"
+  },
+  "mappingPage": {
+    "title": "تعيين الأعمدة",
+    "breadcrumbRoot": "رفع بيانات المبيعات",
+    "breadcrumbBatch": "دفعة {{batchId}}",
+    "alreadyConfirmedInfo": "تم تأكيد التعيينات لهذه الدفعة على هذا الجهاز. التعديل مقفل لتجنب إعادة المعالجة.",
+    "errorAnalyzeFailed": "فشل التحليل.",
+    "errorConfirmFailed": "فشل تأكيد التعيينات."
+  },
+  "reviewPage": {
+    "title": "استخراج المنتجات وتأكيدها",
+    "breadcrumbRoot": "رفع بيانات المبيعات",
+    "breadcrumbBatch": "دفعة {{batchId}}",
+    "noMappingsWarn": "لم يتم العثور على تعيينات مؤكدة لهذه الدفعة على هذا الجهاز. ارجع وأكّد التعيينات مجدداً.",
+    "noProductNameInfo": "يتطلب استخراج المنتجات على الأقل: product_name (وعادةً date/quantity/unit_price/total_amount). ارجع وأصلح تعيينات الأعمدة إذا لزم الأمر.",
+    "errorExtractNeedsProductName": "يتطلب استخراج المنتجات على الأقل: product_name (وعادةً date/quantity/unit_price/total_amount).",
+    "errorCannotConfirmYet": "لا يمكن تأكيد المنتجات بعد. تأكد من نجاح الاستخراج.",
+    "errorExtractFailed": "فشل استخراج المنتجات.",
+    "errorConfirmFailed": "فشل تأكيد المنتجات.",
+    "errorGeneric": "حدث خطأ ما."
+  },
+  "uploadsPage": {
+    "title": "رفع بيانات مبيعات الحملة",
+    "breadcrumbRoot": "الحملات",
+    "breadcrumbCurrent": "رفع بيانات المبيعات",
+    "uploadsHeader": "الملفات المرفوعة",
+    "refreshing": "جارٍ التحديث...",
+    "refresh": "تحديث",
+    "dismiss": "إغلاق",
+    "deleteDialogTitle": "حذف الملف المرفوع",
+    "deleteDialogMessage": "حذف ({{fileName}})؟\n\nسيؤدي هذا إلى حذف سجلات المبيعات لهذه الدفعة من الخادم. تبقى المنتجات محفوظة.",
+    "deleteDialogCancel": "إلغاء",
+    "deleteDialogConfirm": "حذف",
+    "errorDuplicateFile": "هذا الملف تم رفعه مسبقاً. يرجى اختيار ملف مختلف.",
+    "errorNoFile": "يرجى اختيار ملف أولاً.",
+    "errorLoadFailed": "فشل تحميل قائمة الملفات المرفوعة.",
+    "errorUploadFailed": "فشل الرفع.",
+    "errorUploadDuplicate": "هذا الملف تم رفعه مسبقاً.",
+    "errorDeleteFailed": "فشل الحذف.",
+    "errorGeneric": "حدث خطأ ما.",
+    "overlapWarning": "تم اكتشاف تداخل في النطاق الزمني ({{from}} → {{to}}). تم استبدال السجلات الموجودة في ذلك النطاق لتجنب التكرار.",
+    "overlapWarningWithRows": "تم اكتشاف تداخل في النطاق الزمني ({{from}} → {{to}}). تم استبدال السجلات الموجودة في ذلك النطاق لتجنب التكرار. (تم استبدال {{deleted}} صف/صفوف)"
+  }
+}

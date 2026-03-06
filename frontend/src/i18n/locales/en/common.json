@@ -62,5 +62,29 @@
       "userRequired": "Select a user.",
       "roleRequired": "Select a role."
     }
+  },
+  "shared": {
+    "confirmDialog": {
+      "deleting": "Deleting..."
+    },
+    "fileUpload": {
+      "dragDropTitle": "Drag & drop your sales file here",
+      "dragDropSubtitle": "CSV or Excel · Arabic & English supported",
+      "or": "OR",
+      "browseFiles": "Browse Files",
+      "fileSizeExceeds": "File size exceeds {{maxSize}}MB limit",
+      "infoText": "Your file can have any column names or language. AIMOPS will help you map them automatically in the next step."
+    },
+    "formCalendar": {
+      "openCalendar": "Open calendar",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "yearAriaLabel": "Year",
+      "clear": "Clear",
+      "today": "Today"
+    },
+    "formSection": {
+      "optional": "Optional"
+    }
   }
 }

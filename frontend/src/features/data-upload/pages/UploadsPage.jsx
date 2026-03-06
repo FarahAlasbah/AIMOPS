@@ -1,6 +1,7 @@
 // frontend/src/features/data-upload/pages/UploadsPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Card, PageHeader, Button } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
@@ -32,14 +33,12 @@ const normalizeUpload = (u) => ({
 });
 
 const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
-
-// local keys used by MappingPage + ReviewPage (cleanup on delete)
 const LS_MAPPING_DRAFT_KEY = (batchId) => `sales_mapping_draft_v1_${batchId}`;
 const LS_EXTRACTED_PRODUCTS_KEY = (batchId) => `sales_extracted_products_v1_${batchId}`;
 const LS_PRODUCTS_DRAFT_KEY = (batchId) => `sales_products_draft_v1_${batchId}`;
 const LS_CONFIRMED_PRODUCTS_KEY = (batchId) => `sales_confirmed_products_v1_${batchId}`;
 
-const extractApiError = (err, fallback = "Something went wrong.") => {
+const extractApiError = (err, fallback) => {
   const data = err?.response?.data;
 
   if (Array.isArray(data?.detail)) {
@@ -76,84 +75,27 @@ const getExistingBatchIdFrom409 = (err) => {
 
 const cleanStr = (v) => String(v ?? "").trim();
 
-const extractOverlapWarning = (res) => {
-  // Try multiple possible backend shapes (best-effort)
-  const warning =
-    res?.overlap_warning ||
-    res?.overlapWarning ||
-    res?.warning ||
-    res?.warnings ||
-    "";
-
-  if (typeof warning === "string" && warning.trim()) return warning.trim();
-
-  const overlap =
-    res?.overlap ||
-    res?.overlapping_range ||
-    res?.overlappingRange ||
-    res?.dedupe ||
-    res?.deduplication;
-
-  const from = cleanStr(overlap?.from ?? overlap?.start ?? overlap?.from_date ?? overlap?.start_date);
-  const to = cleanStr(overlap?.to ?? overlap?.end ?? overlap?.to_date ?? overlap?.end_date);
-  const deleted =
-    overlap?.deleted_rows ??
-    overlap?.deletedRows ??
-    overlap?.replaced_rows ??
-    overlap?.replacedRows;
-
-  if (from && to) {
-    const rowsPart =
-      deleted != null && deleted !== ""
-        ? ` (${deleted} row(s) replaced)`
-        : "";
-    return `Overlapping date range detected (${from} → ${to}). Existing records in that range were replaced to avoid duplicates.${rowsPart}`;
-  }
-
-  const msg = cleanStr(res?.message);
-  if (msg) {
-    const m = msg.toLowerCase();
-    if (
-      m.includes("overlap") ||
-      m.includes("overlapping") ||
-      m.includes("duplicate") ||
-      m.includes("dedup") ||
-      m.includes("replaced")
-    ) {
-      return msg;
-    }
-  }
-
-  return "";
-};
-
 export default function UploadsPage() {
+  const { t } = useTranslation("upload");
   const navigate = useNavigate();
 
   const [error, setError] = useState("");
-  const [warning, setWarning] = useState(""); // NEW
+  const [warning, setWarning] = useState("");
 
-  // upload form
   const [uploadedFile, setUploadedFile] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState("");
 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-
-  // force reset FileUpload by key after successful upload
   const [fileInputKey, setFileInputKey] = useState(1);
 
-  // uploads pagination
   const [uploadsLoading, setUploadsLoading] = useState(false);
   const [uploads, setUploads] = useState([]);
   const [limit] = useState(20);
   const [offset, setOffset] = useState(0);
   const [hasNext, setHasNext] = useState(false);
 
-  // deleting state
   const [deletingId, setDeletingId] = useState(null);
-
-  // confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
 
@@ -165,6 +107,55 @@ export default function UploadsPage() {
     ],
     []
   );
+
+  // Build the overlap warning string from an API response
+  const extractOverlapWarning = (res) => {
+    const warning =
+      res?.overlap_warning ||
+      res?.overlapWarning ||
+      res?.warning ||
+      res?.warnings ||
+      "";
+
+    if (typeof warning === "string" && warning.trim()) return warning.trim();
+
+    const overlap =
+      res?.overlap ||
+      res?.overlapping_range ||
+      res?.overlappingRange ||
+      res?.dedupe ||
+      res?.deduplication;
+
+    const from = cleanStr(overlap?.from ?? overlap?.start ?? overlap?.from_date ?? overlap?.start_date);
+    const to = cleanStr(overlap?.to ?? overlap?.end ?? overlap?.to_date ?? overlap?.end_date);
+    const deleted =
+      overlap?.deleted_rows ??
+      overlap?.deletedRows ??
+      overlap?.replaced_rows ??
+      overlap?.replacedRows;
+
+    if (from && to) {
+      return deleted != null && deleted !== ""
+        ? t("uploadsPage.overlapWarningWithRows", { from, to, deleted })
+        : t("uploadsPage.overlapWarning", { from, to });
+    }
+
+    const msg = cleanStr(res?.message);
+    if (msg) {
+      const m = msg.toLowerCase();
+      if (
+        m.includes("overlap") ||
+        m.includes("overlapping") ||
+        m.includes("duplicate") ||
+        m.includes("dedup") ||
+        m.includes("replaced")
+      ) {
+        return msg;
+      }
+    }
+
+    return "";
+  };
 
   const fetchUploads = async ({ nextOffset } = {}) => {
     const off = typeof nextOffset === "number" ? nextOffset : offset;
@@ -179,10 +170,9 @@ export default function UploadsPage() {
         String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || ""))
       );
       setUploads(list);
-
       setHasNext(list.length === limit);
     } catch (e) {
-      setError(extractApiError(e, "Failed to load uploads list."));
+      setError(extractApiError(e, t("uploadsPage.errorLoadFailed")));
       setUploads([]);
       setHasNext(false);
     } finally {
@@ -197,8 +187,6 @@ export default function UploadsPage() {
 
   const handleFileSelect = (file) => {
     setError("");
-    // don’t wipe warning automatically (user might want to read it)
-    // setWarning("");
 
     if (!file) {
       setUploadedFile(null);
@@ -216,7 +204,7 @@ export default function UploadsPage() {
     const dedupe = readDedupeSet();
     if (dedupe.has(fileKey)) {
       setUploadedFile(null);
-      setError("This file was already uploaded before. Please choose a different file.");
+      setError(t("uploadsPage.errorDuplicateFile"));
       return;
     }
 
@@ -225,10 +213,10 @@ export default function UploadsPage() {
 
   const handleUpload = async () => {
     setError("");
-    setWarning(""); // NEW: clear previous warning on new upload attempt
+    setWarning("");
 
     if (!uploadedFile) {
-      setError("Please select a file first.");
+      setError(t("uploadsPage.errorNoFile"));
       return;
     }
 
@@ -258,7 +246,7 @@ export default function UploadsPage() {
     } catch (err) {
       if (err?.response?.status === 409) {
         const existingId = getExistingBatchIdFrom409(err);
-        const msg = extractApiError(err, "This file was already uploaded.");
+        const msg = extractApiError(err, t("uploadsPage.errorUploadDuplicate"));
 
         try {
           const dedupe = readDedupeSet();
@@ -282,7 +270,7 @@ export default function UploadsPage() {
         return;
       }
 
-      setError(extractApiError(err, "Upload failed."));
+      setError(extractApiError(err, t("uploadsPage.errorUploadFailed")));
     } finally {
       setUploading(false);
     }
@@ -300,7 +288,6 @@ export default function UploadsPage() {
 
   const clearLocalForBatch = (batchId) => {
     clearCachedAnalysis(batchId);
-
     try {
       localStorage.removeItem(LS_CONFIRMED_KEY(batchId));
       localStorage.removeItem(LS_MAPPING_DRAFT_KEY(batchId));
@@ -342,23 +329,29 @@ export default function UploadsPage() {
       await fetchUploads({ nextOffset: 0 });
       setOffset(0);
     } catch (err) {
-      setError(extractApiError(err, "Delete failed."));
+      setError(extractApiError(err, t("uploadsPage.errorDeleteFailed")));
     } finally {
       setDeletingId(null);
     }
   };
 
   const confirmMsg = confirmTarget
-    ? `Delete  (${confirmTarget.fileName || "file"})?\n\nThis will delete sales records for this batch on the server. Products are kept.`
+    ? t("uploadsPage.deleteDialogMessage", {
+        fileName: confirmTarget.fileName || "file",
+      })
     : "";
 
   return (
     <div className="data-upload-page">
       <PageHeader
-        title="Upload Campaign Sales Data"
+        title={t("uploadsPage.title")}
         breadcrumbs={[
-          { label: "Campaigns", link: true, onClick: () => navigate("/app/campaigns") },
-          { label: "Upload Sales Data", link: false },
+          {
+            label: t("uploadsPage.breadcrumbRoot"),
+            link: true,
+            onClick: () => navigate("/app/campaigns"),
+          },
+          { label: t("uploadsPage.breadcrumbCurrent"), link: false },
         ]}
       />
 
@@ -381,7 +374,7 @@ export default function UploadsPage() {
                 onClick={() => setWarning("")}
                 style={{ whiteSpace: "nowrap" }}
               >
-                Dismiss
+                {t("uploadsPage.dismiss")}
               </button>
             </div>
           </div>
@@ -409,13 +402,15 @@ export default function UploadsPage() {
 
         <div style={{ marginTop: 18 }}>
           <div className="uploads-header">
-            <div style={{ fontWeight: 800, color: "#111827" }}>Uploads</div>
+            <div style={{ fontWeight: 800, color: "#111827" }}>
+              {t("uploadsPage.uploadsHeader")}
+            </div>
             <Button
               variant="secondary"
               onClick={() => fetchUploads({ nextOffset: offset })}
               disabled={uploadsLoading || deletingId != null}
             >
-              {uploadsLoading ? "Refreshing..." : "Refresh"}
+              {uploadsLoading ? t("uploadsPage.refreshing") : t("uploadsPage.refresh")}
             </Button>
           </div>
 
@@ -449,10 +444,10 @@ export default function UploadsPage() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete upload"
+        title={t("uploadsPage.deleteDialogTitle")}
         message={confirmMsg}
-        cancelText="Cancel"
-        confirmText="Delete"
+        cancelText={t("uploadsPage.deleteDialogCancel")}
+        confirmText={t("uploadsPage.deleteDialogConfirm")}
         busy={deletingId != null}
         onCancel={() => {
           if (deletingId != null) return;

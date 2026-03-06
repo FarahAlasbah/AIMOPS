@@ -1,6 +1,7 @@
 // frontend/src/features/events/pages/CalendarPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button, Card, PageHeader, InfoMessage } from "../../../shared/components";
 import { getEvents } from "../../../api/events";
 import CalendarMonth from "../components/CalendarMonth";
@@ -26,6 +27,7 @@ const parseYm = (s) => {
 };
 
 export default function CalendarPage() {
+  const { t } = useTranslation("events");
   const navigate = useNavigate();
   const [anchor, setAnchor] = useState(() => startOfMonth(new Date()));
   const [jumpYm, setJumpYm] = useState(() => toYm(startOfMonth(new Date())));
@@ -41,26 +43,22 @@ export default function CalendarPage() {
       setLoading(true);
       setError("");
       try {
-        // Use upcoming=false so the calendar can show all (past + future)
         const data = await getEvents({ upcoming: false });
         if (!alive) return;
         setEvents(Array.isArray(data?.events) ? data.events : []);
       } catch (e) {
         if (!alive) return;
         setEvents([]);
-        setError(e?.message || "Failed to load events.");
+        setError(e?.message || t("calendarPage.errorLoadFailed"));
       } finally {
         if (alive) setLoading(false);
       }
     }
 
     load();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
-  // keep input synced when anchor changes (prev/next/today)
   useEffect(() => {
     setJumpYm(toYm(anchor));
   }, [anchor]);
@@ -76,41 +74,38 @@ export default function CalendarPage() {
   return (
     <div className="calendar-page">
       <PageHeader
-        title="Calendar"
-        subtitle="Events displayed on a monthly calendar."
+        title={t("calendarPage.title")}
+        subtitle={t("calendarPage.subtitle")}
         actions={
           <div className="calendar-actions">
             <Button type="button" variant="secondary" onClick={() => navigate("/app/events")}>
-              Events List
+              {t("calendarPage.btnEventsList")}
             </Button>
 
             <Button type="button" variant="secondary" onClick={() => setAnchor(startOfMonth(new Date()))}>
-              Today
+              {t("calendarPage.btnToday")}
             </Button>
 
             <Button type="button" variant="secondary" onClick={() => setAnchor((d) => addMonths(d, -1))}>
-              Prev
+              {t("calendarPage.btnPrev")}
             </Button>
 
             <Button type="button" variant="secondary" onClick={() => setAnchor((d) => addMonths(d, 1))}>
-              Next
+              {t("calendarPage.btnNext")}
             </Button>
 
-            {/* NEW: jump by typing month/year */}
             <div className="calendar-jump">
-              <span className="calendar-jump-label">Go to</span>
+              <span className="calendar-jump-label">{t("calendarPage.jumpLabel")}</span>
               <input
                 className="calendar-jump-input"
                 type="month"
                 value={jumpYm}
                 onChange={(e) => setJumpYm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") applyJump();
-                }}
-                aria-label="Go to month"
+                onKeyDown={(e) => { if (e.key === "Enter") applyJump(); }}
+                aria-label={t("calendarPage.jumpAriaLabel")}
               />
               <Button type="button" variant="secondary" onClick={applyJump}>
-                Go
+                {t("calendarPage.btnGo")}
               </Button>
             </div>
           </div>
@@ -119,7 +114,7 @@ export default function CalendarPage() {
 
       {error && <InfoMessage type="error">{error}</InfoMessage>}
 
-      <Card title={title} subtitle="Click an event to open details.">
+      <Card title={title} subtitle={t("calendarPage.cardSubtitle")}>
         {loading ? (
           <CalendarSkeleton />
         ) : (

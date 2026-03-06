@@ -1,0 +1,51 @@
+{
+  "stub": {
+    "title": "Dashboard Page",
+    "body": "This is the dashboard where you'll see campaign summaries, forecasts, and feedback.",
+    "totalCampaigns": "Total Campaigns",
+    "activeForecasts": "Active Forecasts",
+    "feedbackItems": "Feedback Items"
+  },
+  "roles": {
+    "admin": {
+      "title": "Admin Dashboard",
+      "subtitle": "System overview and management"
+    },
+    "marketing": {
+      "title": "Marketing Dashboard",
+      "subtitle": "Campaigns and feedback performance"
+    },
+    "owner": {
+      "title": "Business Owner Dashboard",
+      "subtitle": "High-level view of operations and results"
+    },
+    "default": {
+      "title": "Dashboard",
+      "subtitle": "Overview"
+    }
+  },
+  "stats": {
+    "usersCount": "Total Users",
+    "uploadsCount": "Data Uploads",
+    "uploadsCountPeriod": "Data Uploads (Period)",
+    "productsCount": "Products",
+    "feedbackCount": "Feedback Items",
+    "campaignsCount": "Campaigns",
+    "revenue": "Revenue (Period)",
+    "dataQuality": "Data Quality",
+    "status": "Status"
+  },
+  "charts": {
+    "uploadsByStatus": "Uploads by status",
+    "uploadsOverTime": "Uploads over time (last 14 days)",
+    "topProductsRevenue": "Top products by revenue",
+    "recentActivity": "Recent activity (from uploads)",
+    "loading": "Loading…",
+    "noUploads": "No uploads data yet.",
+    "noProducts": "No products data yet.",
+    "noRecentUploads": "No recent uploads yet.",
+    "uploadsDatasetLabel": "Uploads",
+    "revenueDatasetLabel": "Revenue"
+  },
+  "errorLoadFailed": "Failed to load dashboard data."
+}

@@ -1,18 +1,21 @@
 // frontend/src/features/events/components/EventsTable.jsx
+import { useTranslation } from "react-i18next";
 import "./EventsTable.css";
 import { fmtDateRange, pickEventTitle } from "../utils/eventUtils";
 
 export default function EventsTable({ events, onOpen }) {
+  const { t } = useTranslation("events");
+
   return (
     <div className="events-table-wrap">
       <table className="events-table">
         <thead>
           <tr>
-            <th style={{ width: "34%" }}>Event</th>
-            <th style={{ width: "22%" }}>Dates</th>
-            <th style={{ width: "14%" }}>Type</th>
-            <th style={{ width: "12%" }}>Status</th>
-            <th style={{ width: "18%" }}>Recurring</th>
+            <th style={{ width: "34%" }}>{t("table.colEvent")}</th>
+            <th style={{ width: "22%" }}>{t("table.colDates")}</th>
+            <th style={{ width: "14%" }}>{t("table.colType")}</th>
+            <th style={{ width: "12%" }}>{t("table.colStatus")}</th>
+            <th style={{ width: "18%" }}>{t("table.colRecurring")}</th>
           </tr>
         </thead>
         <tbody>
@@ -33,7 +36,7 @@ export default function EventsTable({ events, onOpen }) {
                 {ev?.is_recurring ? (
                   <span className="pill pill-recurring">{ev?.recurrence_type || "recurring"}</span>
                 ) : (
-                  <span className="pill pill-muted">No</span>
+                  <span className="pill pill-muted">{t("table.recurringNo")}</span>
                 )}
               </td>
             </tr>
