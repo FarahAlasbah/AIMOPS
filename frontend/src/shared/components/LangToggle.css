@@ -1,0 +1,43 @@
+/* frontend/src/shared/components/LangToggle.css */
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  height: 36px;
+}
+
+.lang-toggle:hover {
+  border-color: #03045e;
+  box-shadow: 0 0 0 3px rgba(3, 4, 94, 0.08);
+}
+
+.lang-opt {
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+  line-height: 36px;
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.lang-opt.active {
+  background: #03045e;
+  color: white;
+}
+
+.lang-divider {
+  width: 1px;
+  height: 20px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}

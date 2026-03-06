@@ -1,5 +1,5 @@
 // frontend/src/features/products/components/ProductsTable.jsx
-
+import { useTranslation } from "react-i18next";
 import { Button } from "../../../shared/components";
 import SkeletonRow from "./SkeletonRow";
 import DangerButton from "./DangerButton";
@@ -9,15 +9,14 @@ export default function ProductsTable({
   loading,
   pageItems,
   selected,
-
   onTogglePageAll,
   onToggleOne,
-
   onToggleSort,
-
   onMergeRow,
   onDeleteRow,
 }) {
+  const { t } = useTranslation("products");
+
   return (
     <div className="table-wrap">
       <table className="products-table">
@@ -32,31 +31,15 @@ export default function ProductsTable({
               />
             </th>
 
-            <th className="click" onClick={() => onToggleSort("product_id")}>
-              ID
-            </th>
-            <th className="click" onClick={() => onToggleSort("name")}>
-              Name
-            </th>
-            <th className="click" onClick={() => onToggleSort("category")}>
-              Category
-            </th>
-            <th className="click" onClick={() => onToggleSort("active")}>
-              Active
-            </th>
-            <th className="click" onClick={() => onToggleSort("suspicious")}>
-              Suspicious
-            </th>
-            <th className="click" onClick={() => onToggleSort("sales")}>
-              Sales
-            </th>
-            <th className="click" onClick={() => onToggleSort("revenue")}>
-              Revenue
-            </th>
-            <th className="click" onClick={() => onToggleSort("last_sale")}>
-              Last sale
-            </th>
-            <th style={{ width: 180 }}>Actions</th>
+            <th className="click" onClick={() => onToggleSort("product_id")}>{t("table.colId")}</th>
+            <th className="click" onClick={() => onToggleSort("name")}>{t("table.colName")}</th>
+            <th className="click" onClick={() => onToggleSort("category")}>{t("table.colCategory")}</th>
+            <th className="click" onClick={() => onToggleSort("active")}>{t("table.colActive")}</th>
+            <th className="click" onClick={() => onToggleSort("suspicious")}>{t("table.colSuspicious")}</th>
+            <th className="click" onClick={() => onToggleSort("sales")}>{t("table.colSales")}</th>
+            <th className="click" onClick={() => onToggleSort("revenue")}>{t("table.colRevenue")}</th>
+            <th className="click" onClick={() => onToggleSort("last_sale")}>{t("table.colLastSale")}</th>
+            <th style={{ width: 180 }}>{t("table.colActions")}</th>
           </tr>
         </thead>
 
@@ -73,7 +56,7 @@ export default function ProductsTable({
           ) : pageItems.length === 0 ? (
             <tr>
               <td colSpan={10} className="empty">
-                No products found.
+                {t("table.empty")}
               </td>
             </tr>
           ) : (
@@ -101,18 +84,18 @@ export default function ProductsTable({
                     </div>
                   </td>
                   <td dir="auto">{p.category ?? "-"}</td>
-                  <td>{p.is_active ? "Yes" : "No"}</td>
+                  <td>{p.is_active ? t("table.activeYes") : t("table.activeNo")}</td>
 
                   <td>
                     {isSuspicious ? (
                       <div className="flag">
-                        <span className="chip chip-warn">Needs merge</span>
+                        <span className="chip chip-warn">{t("table.chipNeedsMerge")}</span>
                         <div className="sub muted" title={reason || ""}>
                           {reason || "—"}
                         </div>
                       </div>
                     ) : (
-                      <span className="chip chip-ok">Normal</span>
+                      <span className="chip chip-ok">{t("table.chipNormal")}</span>
                     )}
                   </td>
 
@@ -122,11 +105,10 @@ export default function ProductsTable({
 
                   <td className="actions">
                     <Button size="sm" variant="secondary" onClick={() => onMergeRow(id)}>
-                      Merge
+                      {t("table.btnMerge")}
                     </Button>
-
                     <DangerButton size="sm" onClick={() => onDeleteRow(id)}>
-                      Delete
+                      {t("table.btnDelete")}
                     </DangerButton>
                   </td>
                 </tr>

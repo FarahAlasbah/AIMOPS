@@ -1,0 +1,197 @@
+{
+  "calendar": {
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "moreEvents": "+{{count}} more"
+  },
+  "form": {
+    "eventNameEn": "Event Name (English)",
+    "eventNameEnPlaceholder": "Ramadan 2025",
+    "eventNameAr": "Event Name (Arabic)",
+    "eventNameArPlaceholder": "رمضان 2025",
+    "eventType": "Event Type",
+    "recurring": "Recurring",
+    "recurrenceType": "Recurrence Type",
+    "recurrencePlaceholder": "Select recurrence",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "description": "Description",
+    "types": {
+      "religious": "Religious",
+      "national": "National",
+      "seasonal": "Seasonal",
+      "local": "Local",
+      "business": "Business",
+      "promotional": "Promotional",
+      "custom": "Custom"
+    },
+    "recurrenceOptions": {
+      "yearly": "Yearly",
+      "monthly": "Monthly",
+      "weekly": "Weekly"
+    }
+  },
+  "eventForm": {
+    "descriptionPlaceholder": "Major religious event, expect high demand...",
+    "creating": "Creating...",
+    "createEvent": "Create Event",
+    "errorCreateFailed": "Request failed.",
+    "errorCreateApiFailed": "Failed to create event."
+  },
+  "eventEditForm": {
+    "eventNameEnPlaceholder": "Ramadan 2024",
+    "eventNameArPlaceholder": "رمضان 2024",
+    "descriptionPlaceholder": "Updated dates - Ramadan starts one day earlier",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "errorUpdateFailed": "Update failed.",
+    "errorUpdateApiFailed": "Failed to update event."
+  },
+  "table": {
+    "colEvent": "Event",
+    "colDates": "Dates",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colRecurring": "Recurring",
+    "recurringNo": "No"
+  },
+  "impact": {
+    "buckets": {
+      "high_confidence": "High confidence",
+      "low_confidence": "Low confidence",
+      "event_only": "Event only",
+      "below_threshold": "Below threshold"
+    },
+    "kpi": {
+      "overallImpact": "Overall impact",
+      "affectedProducts": "Affected products",
+      "batchesAnalyzed": "Batches analyzed",
+      "coverageComplete": "Coverage complete",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "eventPeriod": {
+      "title": "Event period",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "durationValue": "{{days}} days"
+    },
+    "baselinePeriod": {
+      "title": "Baseline period",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "durationValue": "{{days}} days"
+    },
+    "dataCoverage": {
+      "title": "Data coverage",
+      "earliestData": "Earliest data",
+      "latestData": "Latest data",
+      "batchesAnalyzed": "Batches analyzed"
+    },
+    "dataQuality": {
+      "title": "Data quality breakdown",
+      "highConfidence": "High confidence",
+      "lowConfidence": "Low confidence",
+      "eventOnly": "Event only",
+      "belowThreshold": "Below threshold"
+    },
+    "table": {
+      "colProduct": "Product",
+      "colBaselineAvg": "Baseline avg/day",
+      "colDuringAvg": "During avg/day",
+      "colChange": "Change",
+      "colImpact": "Impact",
+      "colCoverage": "Coverage",
+      "colNotes": "Notes",
+      "productId": "ID: {{id}}",
+      "coveragePct": "{{pct}}%",
+      "improvesAfter": "Improves after: {{date}}",
+      "noProducts": "No products in this section."
+    },
+    "search": {
+      "placeholder": "Search products..."
+    }
+  },
+  "calendarPage": {
+    "title": "Calendar",
+    "subtitle": "Events displayed on a monthly calendar.",
+    "cardSubtitle": "Click an event to open details.",
+    "btnEventsList": "Events List",
+    "btnToday": "Today",
+    "btnPrev": "Prev",
+    "btnNext": "Next",
+    "jumpLabel": "Go to",
+    "jumpAriaLabel": "Go to month",
+    "btnGo": "Go",
+    "errorLoadFailed": "Failed to load events."
+  },
+  "eventsPage": {
+    "title": "Events",
+    "subtitle": "Create and manage events, then view them on your calendar.",
+    "btnAll": "All",
+    "btnUpcoming": "Upcoming",
+    "btnViewCalendar": "View Calendar",
+    "btnCreateEvent": "Create Event",
+    "btnClose": "Close",
+    "createCardTitle": "Create Event",
+    "createCardSubtitle": "Fill in event details. It will appear on the Calendar page immediately.",
+    "cardTitleAll": "All Events",
+    "cardTitleUpcoming": "Upcoming Events",
+    "cardSubtitle": "Click any event to view details.",
+    "emptyTitle": "No events found",
+    "emptySubtitle": "Create your first event to see it here and on the calendar.",
+    "errorLoadFailed": "Failed to load events.",
+    "errorCreateFailed": "Failed to create event.",
+    "noticeCreated": "Event created successfully."
+  },
+  "eventDetailsPage": {
+    "title": "Event Details",
+    "subtitle": "View event information, edit it, and run impact analysis.",
+    "btnBack": "Back",
+    "btnViewCalendar": "View Calendar",
+    "btnCloseEdit": "Close Edit",
+    "btnEditEvent": "Edit Event",
+    "editCardTitle": "Edit Event",
+    "editCardSubtitle": "Update any event field and save.",
+    "detailType": "Type",
+    "detailStatus": "Status",
+    "detailDuration": "Duration",
+    "detailDurationValue": "{{days}} days",
+    "detailRecurring": "Recurring",
+    "detailRecurringYes": "Yes ({{type}})",
+    "detailRecurringNo": "No",
+    "detailDescription": "Description",
+    "impactCardTitle": "Impact Analysis",
+    "impactCardSubtitle": "Run analysis to calculate impact and see affected products.",
+    "btnAnalyzing": "Analyzing...",
+    "btnAnalyzeImpact": "Analyze Impact",
+    "btnUploadSalesData": "Upload Sales Data",
+    "statusAnalyzed": "Analyzed",
+    "statusNotAnalyzed": "Not analyzed",
+    "statusOverall": "Overall: {{value}}",
+    "statusAffected": "Affected: {{count}}",
+    "analysisBlockFallback": "Cannot analyze yet. Missing required sales data for this event period.",
+    "analysisBlockRequiredPeriod": "Required event period",
+    "analysisBlockAvailableEnds": "Available data ends",
+    "analysisBlockMissingPeriod": "Missing period",
+    "analysisBlockHint": "Hint",
+    "noAnalysisYet": "No detailed analysis yet. Click \"Analyze Impact\" to calculate and show affected products.",
+    "notFoundTitle": "Event not found",
+    "notFoundSubtitle": "The event may have been deleted or is unavailable.",
+    "noticeUpdated": "Event updated successfully.",
+    "errorLoadFailed": "Failed to load event.",
+    "errorAnalyzeFailed": "Failed to analyze impact.",
+    "errorUpdateFailed": "Failed to update event.",
+    "errorRequestFailed": "Request failed."
+  }
+}

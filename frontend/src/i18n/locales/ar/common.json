@@ -62,5 +62,29 @@
       "userRequired": "اختر مستخدماً.",
       "roleRequired": "اختر دوراً."
     }
+  },
+  "shared": {
+    "confirmDialog": {
+      "deleting": "جارٍ الحذف..."
+    },
+    "fileUpload": {
+      "dragDropTitle": "اسحب وأفلت ملف المبيعات هنا",
+      "dragDropSubtitle": "CSV أو Excel · يدعم العربية والإنجليزية",
+      "or": "أو",
+      "browseFiles": "تصفح الملفات",
+      "fileSizeExceeds": "حجم الملف يتجاوز الحد المسموح به ({{maxSize}} ميغابايت)",
+      "infoText": "يمكن أن يحتوي ملفك على أي أسماء أعمدة أو لغة. سيساعدك AIMOPS على تعيينها تلقائياً في الخطوة التالية."
+    },
+    "formCalendar": {
+      "openCalendar": "فتح التقويم",
+      "prevMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي",
+      "yearAriaLabel": "السنة",
+      "clear": "مسح",
+      "today": "اليوم"
+    },
+    "formSection": {
+      "optional": "اختياري"
+    }
   }
 }

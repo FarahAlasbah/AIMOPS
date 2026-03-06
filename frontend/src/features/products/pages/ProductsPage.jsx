@@ -1,6 +1,6 @@
 // frontend/src/features/products/pages/ProductsPage.jsx
-
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
@@ -15,35 +15,33 @@ import DeleteProductsModal from "../components/DeleteProductsModal";
 import "./ProductsPage.css";
 
 export default function ProductsPage() {
+  const { t } = useTranslation("products");
+
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [info, setInfo] = useState(null);
 
   const [products, setProducts] = useState([]);
 
-  // table controls
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("all");
-  const [active, setActive] = useState("all"); // all | active | inactive
-  const [suspicious, setSuspicious] = useState("all"); // all | suspicious | normal
-  const [hasSales, setHasSales] = useState("all"); // all | has | none
+  const [active, setActive] = useState("all");
+  const [suspicious, setSuspicious] = useState("all");
+  const [hasSales, setHasSales] = useState("all");
 
   const [sortKey, setSortKey] = useState("product_id");
-  const [sortDir, setSortDir] = useState("desc"); // asc|desc
+  const [sortDir, setSortDir] = useState("desc");
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  // selection
   const [selected, setSelected] = useState(() => new Set());
 
-  // merge modal
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergePrimary, setMergePrimary] = useState(null);
   const [mergeIds, setMergeIds] = useState([]);
   const [mergeBusy, setMergeBusy] = useState(false);
 
-  // delete modal
   const [delOpen, setDelOpen] = useState(false);
   const [delBusy, setDelBusy] = useState(false);
 
@@ -64,7 +62,7 @@ export default function ProductsPage() {
       setSelected(new Set());
       setPage(1);
     } catch (e) {
-      setErr(e?.message || "Failed to load products");
+      setErr(e?.message || t("page.errorLoadFailed"));
     } finally {
       if (seq === loadRef.current) setLoading(false);
     }
@@ -98,13 +96,10 @@ export default function ProductsPage() {
       }
 
       if (category !== "all" && String(p?.category || "") !== category) return false;
-
       if (active === "active" && !isActive) return false;
       if (active === "inactive" && isActive) return false;
-
       if (suspicious === "suspicious" && !isSuspicious) return false;
       if (suspicious === "normal" && isSuspicious) return false;
-
       if (hasSales === "has" && sales <= 0) return false;
       if (hasSales === "none" && sales > 0) return false;
 
@@ -117,36 +112,24 @@ export default function ProductsPage() {
 
     const getVal = (p) => {
       switch (sortKey) {
-        case "name":
-          return String(p?.product_name || "");
-        case "category":
-          return String(p?.category || "");
-        case "active":
-          return p?.is_active ? 1 : 0;
-        case "suspicious":
-          return p?.flags?.is_suspicious ? 1 : 0;
-        case "sales":
-          return Number(p?.stats?.total_sales || 0);
-        case "revenue":
-          return Number(p?.stats?.total_revenue || 0);
-        case "last_sale":
-          return String(p?.stats?.last_sale || "");
+        case "name":       return String(p?.product_name || "");
+        case "category":   return String(p?.category || "");
+        case "active":     return p?.is_active ? 1 : 0;
+        case "suspicious": return p?.flags?.is_suspicious ? 1 : 0;
+        case "sales":      return Number(p?.stats?.total_sales || 0);
+        case "revenue":    return Number(p?.stats?.total_revenue || 0);
+        case "last_sale":  return String(p?.stats?.last_sale || "");
         case "product_id":
-        default:
-          return Number(p?.product_id || 0);
+        default:           return Number(p?.product_id || 0);
       }
     };
 
-    const arr = [...filtered];
-    arr.sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const va = getVal(a);
       const vb = getVal(b);
-
       if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
       return String(va).localeCompare(String(vb)) * dir;
     });
-
-    return arr;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(sorted.length / pageSize)), [sorted.length, pageSize]);
@@ -159,10 +142,7 @@ export default function ProductsPage() {
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    else { setSortKey(key); setSortDir("asc"); }
   };
 
   const toggleOne = (id) => {
@@ -177,7 +157,6 @@ export default function ProductsPage() {
   const togglePageAll = () => {
     const ids = pageItems.map((p) => p.product_id);
     const allOnPageSelected = ids.length > 0 && ids.every((id) => selected.has(id));
-
     setSelected((prev) => {
       const next = new Set(prev);
       if (allOnPageSelected) ids.forEach((id) => next.delete(id));
@@ -189,7 +168,7 @@ export default function ProductsPage() {
   const openMergeForSelection = () => {
     const ids = Array.from(selected);
     if (ids.length < 2) {
-      setInfo({ type: "warning", text: "Select at least 2 products to merge." });
+      setInfo({ type: "warning", text: t("page.warnMergeMinTwo") });
       return;
     }
     setMergePrimary(ids[0]);
@@ -208,7 +187,7 @@ export default function ProductsPage() {
     const merges = Array.from(new Set(mergeIds.map(Number))).filter((x) => x && x !== primary);
 
     if (!primary || merges.length === 0) {
-      setInfo({ type: "warning", text: "Choose a primary product and at least 1 product to merge into it." });
+      setInfo({ type: "warning", text: t("page.warnMergeChoose") });
       return;
     }
 
@@ -218,11 +197,11 @@ export default function ProductsPage() {
 
     try {
       const res = await mergeProducts({ primary_product_id: primary, merge_product_ids: merges });
-      setInfo({ type: "success", text: res?.message || "Merge completed." });
+      setInfo({ type: "success", text: res?.message || t("page.successMerge") });
       setMergeOpen(false);
       await loadProducts();
     } catch (e) {
-      setErr(e?.message || "Merge failed");
+      setErr(e?.message || t("page.errorMergeFailed"));
     } finally {
       setMergeBusy(false);
     }
@@ -230,7 +209,7 @@ export default function ProductsPage() {
 
   const openDelete = () => {
     if (selected.size === 0) {
-      setInfo({ type: "warning", text: "Select products to delete first." });
+      setInfo({ type: "warning", text: t("page.warnDeleteSelect") });
       return;
     }
     setDelOpen(true);
@@ -255,7 +234,6 @@ export default function ProductsPage() {
     const ids = Array.from(selected).map(Number).filter(Boolean);
     if (ids.length === 0) return;
 
-    // Auto-force only when there are sales (no checkbox shown to user)
     const force = anySelectedHasSales;
 
     setDelBusy(true);
@@ -264,11 +242,11 @@ export default function ProductsPage() {
 
     try {
       const res = await bulkDeleteProducts({ product_ids: ids, force });
-      setInfo({ type: "success", text: res?.message || "Delete completed." });
+      setInfo({ type: "success", text: res?.message || t("page.successDelete") });
       setDelOpen(false);
       await loadProducts();
     } catch (e) {
-      setErr(e?.message || "Delete failed");
+      setErr(e?.message || t("page.errorDeleteFailed"));
     } finally {
       setDelBusy(false);
     }
@@ -276,10 +254,13 @@ export default function ProductsPage() {
 
   return (
     <div className="products-page">
-      <PageHeader title="Products" subtitle="Search, filter, merge, and delete products." />
+      <PageHeader
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
+      />
 
-      {err ? <InfoMessage type="error" message={err} /> : null}
-      {info ? <InfoMessage type={info.type} message={info.text} /> : null}
+      {err ? <InfoMessage type="error">{err}</InfoMessage> : null}
+      {info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
 
       <Card>
         <ProductsToolbar
@@ -287,31 +268,16 @@ export default function ProductsPage() {
           resultsCount={sorted.length}
           selectedCount={selected.size}
           q={q}
-          onQChange={(val) => {
-            setQ(val);
-            setPage(1);
-          }}
+          onQChange={(val) => { setQ(val); setPage(1); }}
           category={category}
           categories={categories}
-          onCategoryChange={(val) => {
-            setCategory(val);
-            setPage(1);
-          }}
+          onCategoryChange={(val) => { setCategory(val); setPage(1); }}
           active={active}
-          onActiveChange={(val) => {
-            setActive(val);
-            setPage(1);
-          }}
+          onActiveChange={(val) => { setActive(val); setPage(1); }}
           suspicious={suspicious}
-          onSuspiciousChange={(val) => {
-            setSuspicious(val);
-            setPage(1);
-          }}
+          onSuspiciousChange={(val) => { setSuspicious(val); setPage(1); }}
           hasSales={hasSales}
-          onHasSalesChange={(val) => {
-            setHasSales(val);
-            setPage(1);
-          }}
+          onHasSalesChange={(val) => { setHasSales(val); setPage(1); }}
           onRefresh={loadProducts}
           onMergeSelected={openMergeForSelection}
           onDeleteSelected={openDelete}
@@ -335,10 +301,7 @@ export default function ProductsPage() {
           page={pageSafe}
           totalPages={totalPages}
           pageSize={pageSize}
-          onPageSizeChange={(val) => {
-            setPageSize(val);
-            setPage(1);
-          }}
+          onPageSizeChange={(val) => { setPageSize(val); setPage(1); }}
           onPrev={() => setPage((p) => Math.max(1, p - 1))}
           onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
         />

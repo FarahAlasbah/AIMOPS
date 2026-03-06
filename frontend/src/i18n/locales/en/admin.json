@@ -118,5 +118,41 @@
       "confirm": "Delete",
       "cancel": "Cancel"
     }
+  ,
+  "createUser": {
+    "title": "Create New User",
+    "roles": {
+      "marketing": "Marketing",
+      "owner": "Owner"
+    },
+    "labels": {
+      "username": "Username",
+      "email": "Email",
+      "fullName": "Full Name",
+      "password": "Password",
+      "role": "Role"
+    },
+    "placeholders": {
+      "username": "Enter username",
+      "email": "Enter email address",
+      "fullName": "Enter full name",
+      "password": "Enter password"
+    },
+    "errors": {
+      "usernameRequired": "Username is required.",
+      "usernameMin": "Username must be at least 3 characters.",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Please enter a valid email address.",
+      "fullNameRequired": "Full name is required.",
+      "passwordRequired": "Password is required.",
+      "passwordMin": "Password must be at least 6 characters.",
+      "roleInvalid": "Invalid role selected."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create User",
+      "creating": "Creating..."
+    }
+  }
   }
 }

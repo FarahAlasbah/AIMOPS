@@ -1,4 +1,5 @@
 // frontend/src/features/data-upload/components/UploadCard.jsx
+import { useTranslation } from "react-i18next";
 import { Button } from "../../../shared/components";
 
 const kbToMb = (kb) => {
@@ -29,10 +30,10 @@ export default function UploadCard({
   onReview,
   onRefreshAnalysis,
   onClearLocal,
-
-  onDelete, // NEW
-  deleting, // NEW
+  onDelete,
+  deleting,
 }) {
+  const { t } = useTranslation("upload");
   const status = upload?.status || "unknown";
   const busy = !!deleting;
 
@@ -40,47 +41,49 @@ export default function UploadCard({
     <div className="upload-card">
       <div className="upload-card-head">
         <div className="upload-card-title-row">
-          <div className="upload-card-title">{upload?.fileName || "Untitled file"}</div>
+          <div className="upload-card-title">
+            {upload?.fileName || t("uploadCard.untitledFile")}
+          </div>
           <span className={`status-pill ${statusClass(status)}`}>{fmtStatus(status)}</span>
         </div>
       </div>
 
       <div className="upload-kv-grid">
         <div className="upload-kv">
-          <div className="upload-k">Type</div>
+          <div className="upload-k">{t("uploadCard.type")}</div>
           <div className="upload-v">{upload?.fileType || "-"}</div>
         </div>
 
         <div className="upload-kv">
-          <div className="upload-k">Size</div>
+          <div className="upload-k">{t("uploadCard.size")}</div>
           <div className="upload-v">{kbToMb(upload?.fileSizeKb)}</div>
         </div>
 
         <div className="upload-kv">
-          <div className="upload-k">Valid rows</div>
+          <div className="upload-k">{t("uploadCard.validRows")}</div>
           <div className="upload-v">{upload?.validRows ?? 0}</div>
         </div>
 
         <div className="upload-kv">
-          <div className="upload-k">Rejected rows</div>
+          <div className="upload-k">{t("uploadCard.rejectedRows")}</div>
           <div className="upload-v">{upload?.rejectedRows ?? 0}</div>
         </div>
       </div>
 
       <div className="upload-flags">
         <span className={`chip ${hasLocalMapping ? "good" : "warn"}`}>
-          Mappings: {hasLocalMapping ? "Saved" : "Not saved"}
+          {hasLocalMapping ? t("uploadCard.mappingsSaved") : t("uploadCard.mappingsNotSaved")}
         </span>
 
         <span className={`chip ${hasCachedAnalysis ? "good" : ""}`}>
-          Analysis: {hasCachedAnalysis ? "Cached" : "Not cached"}
+          {hasCachedAnalysis ? t("uploadCard.analysisCached") : t("uploadCard.analysisNotCached")}
         </span>
       </div>
 
       <div className="upload-actions-row">
         <div className="upload-actions-main">
           <Button variant="primary" onClick={() => onAnalyze(upload.batchId)} disabled={busy}>
-            {busy ? "Deleting..." : "Analyze / Map"}
+            {busy ? t("uploadCard.deleting") : t("uploadCard.analyzeMap")}
           </Button>
 
           <Button
@@ -88,7 +91,7 @@ export default function UploadCard({
             onClick={() => onReview(upload.batchId)}
             disabled={!hasLocalMapping || busy}
           >
-            Products
+            {t("uploadCard.products")}
           </Button>
         </div>
 
@@ -99,7 +102,7 @@ export default function UploadCard({
             onClick={() => onRefreshAnalysis(upload.batchId)}
             disabled={busy}
           >
-            Refresh analysis
+            {t("uploadCard.refreshAnalysis")}
           </button>
 
           <button
@@ -108,7 +111,7 @@ export default function UploadCard({
             onClick={() => onClearLocal(upload.batchId)}
             disabled={busy}
           >
-            Clear local
+            {t("uploadCard.clearLocal")}
           </button>
 
           <button
@@ -116,9 +119,9 @@ export default function UploadCard({
             className="ghost-btn danger"
             onClick={() => onDelete?.(upload)}
             disabled={busy}
-            title="Deletes this batch sales records from the server"
+            title={t("uploadCard.deleteTitle")}
           >
-            Delete
+            {t("uploadCard.delete")}
           </button>
         </div>
       </div>

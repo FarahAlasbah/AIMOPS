@@ -5,13 +5,38 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import enCommon from "./locales/en/common.json";
 import arCommon from "./locales/ar/common.json";
-
 import enAdmin from "./locales/en/admin.json";
 import arAdmin from "./locales/ar/admin.json";
+import enUpload from "./locales/en/upload.json";
+import arUpload from "./locales/ar/upload.json";
+import enEvents from "./locales/en/events.json";
+import arEvents from "./locales/ar/events.json";
+import enProducts from "./locales/en/products.json";
+import arProducts from "./locales/ar/products.json";
+import enAuth from "./locales/en/auth.json";
+import arAuth from "./locales/ar/auth.json";
+import enDashboard from "./locales/en/dashboard.json";
+import arDashboard from "./locales/ar/dashboard.json";
 
 const resources = {
-  en: { common: enCommon, admin: enAdmin },
-  ar: { common: arCommon, admin: arAdmin },
+  en: {
+    common: enCommon,
+    admin: enAdmin,
+    upload: enUpload,
+    events: enEvents,
+    products: enProducts,
+    auth: enAuth,
+    dashboard: enDashboard,
+  },
+  ar: {
+    common: arCommon,
+    admin: arAdmin,
+    upload: arUpload,
+    events: arEvents,
+    products: arProducts,
+    auth: arAuth,
+    dashboard: arDashboard,
+  },
 };
 
 i18n

@@ -1,6 +1,7 @@
 // frontend/src/features/data-upload/pages/ReviewPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
@@ -14,7 +15,7 @@ const LS_EXTRACTED_PRODUCTS_KEY = (batchId) => `sales_extracted_products_v1_${ba
 const LS_PRODUCTS_DRAFT_KEY = (batchId) => `sales_products_draft_v1_${batchId}`;
 const LS_CONFIRMED_PRODUCTS_KEY = (batchId) => `sales_confirmed_products_v1_${batchId}`;
 
-const extractApiError = (err, fallback = "Something went wrong.") => {
+const extractApiError = (err, fallback) => {
   const data = err?.response?.data;
 
   if (Array.isArray(data?.detail)) {
@@ -72,7 +73,6 @@ const normalizeConfirmedMappings = (confirmResult) => {
   return cleaned.filter((m) => allowed.has(String(m.role)));
 };
 
-// Draft is ONLY merges, nothing else
 const initDraftFromExtract = (extractResult) => {
   const list = Array.isArray(extractResult?.products) ? extractResult.products : [];
   return list
@@ -103,24 +103,19 @@ const buildDraftMap = (productsDraft) => {
 };
 
 export default function ReviewPage() {
+  const { t } = useTranslation("upload");
   const navigate = useNavigate();
   const { batchId } = useParams();
 
   const [localLoading, setLocalLoading] = useState(true);
-
   const [error, setError] = useState("");
-
   const [confirmResult, setConfirmResult] = useState(null);
-
   const [extracting, setExtracting] = useState(false);
   const [extractResult, setExtractResult] = useState(null);
-
   const [productsDraft, setProductsDraft] = useState([]);
-
   const [confirmingProducts, setConfirmingProducts] = useState(false);
   const [confirmProductsResult, setConfirmProductsResult] = useState(null);
 
-  // Load local state (and avoid flicker)
   useEffect(() => {
     if (!batchId) return;
 
@@ -151,7 +146,6 @@ export default function ReviewPage() {
       const raw = localStorage.getItem(LS_PRODUCTS_DRAFT_KEY(batchId));
       const parsed = raw ? JSON.parse(raw) : null;
 
-      // accept old drafts too, but keep only normalized_name + merge_with
       const cleaned = Array.isArray(parsed)
         ? parsed
             .map((p) => ({
@@ -169,7 +163,6 @@ export default function ReviewPage() {
     setLocalLoading(false);
   }, [batchId]);
 
-  // If we have extractResult but no draft, init draft
   useEffect(() => {
     if (!batchId) return;
     if (!extractResult?.success) return;
@@ -184,7 +177,6 @@ export default function ReviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extractResult, batchId]);
 
-  // Persist draft
   useEffect(() => {
     if (!batchId) return;
     try {
@@ -206,14 +198,11 @@ export default function ReviewPage() {
     setError("");
     if (!batchId) return;
 
-    // block extract twice
     if (extractResult?.success) return;
     if (confirmProductsResult?.success) return;
 
     if (!canExtract) {
-      setError(
-        "Extract products needs at least: product_name (and usually date/quantity/unit_price/total_amount).",
-      );
+      setError(t("reviewPage.errorExtractNeedsProductName"));
       return;
     }
 
@@ -234,13 +223,12 @@ export default function ReviewPage() {
         localStorage.setItem(LS_PRODUCTS_DRAFT_KEY(batchId), JSON.stringify(nextDraft));
       } catch {}
     } catch (err) {
-      setError(extractApiError(err, "Extract products failed."));
+      setError(extractApiError(err, t("reviewPage.errorExtractFailed")));
     } finally {
       setExtracting(false);
     }
   };
 
-  // Auto-extract once
   useEffect(() => {
     if (!batchId) return;
     if (!confirmResult?.success) return;
@@ -262,7 +250,6 @@ export default function ReviewPage() {
       const idx = list.findIndex((p) => String(p.normalized_name) === key);
 
       if (idx === -1) {
-        // if somehow missing, create it
         return [...list, { normalized_name: key, merge_with: [v] }];
       }
 
@@ -282,7 +269,6 @@ export default function ReviewPage() {
     const products = Array.isArray(extractResult?.products) ? extractResult.products : [];
     if (products.length === 0) return false;
 
-    // must have normalized + primary from extract (read-only)
     for (const p of products) {
       if (!String(p?.normalized_name || "").trim()) return false;
       if (!String(p?.primary_name || "").trim()) return false;
@@ -295,7 +281,7 @@ export default function ReviewPage() {
     if (!batchId) return;
 
     if (!canConfirmProducts) {
-      setError("Cannot confirm products yet. Make sure extraction succeeded.");
+      setError(t("reviewPage.errorCannotConfirmYet"));
       return;
     }
 
@@ -305,13 +291,10 @@ export default function ReviewPage() {
       const products = Array.isArray(extractResult?.products) ? extractResult.products : [];
       const mergesByNorm = buildDraftMap(productsDraft);
 
-      // Build from extractResult ONLY (read-only fields), add merges from draft
       const confirmed_products = products.map((p) => {
         const primary_name = String(p.primary_name || "").trim();
         const normalized_name = String(p.normalized_name || "").trim();
-
         const merge_with = mergesByNorm.get(normalized_name) || [];
-
         const categoryRaw = p?.category == null ? "" : String(p.category).trim();
 
         return {
@@ -329,7 +312,7 @@ export default function ReviewPage() {
         localStorage.setItem(LS_CONFIRMED_PRODUCTS_KEY(batchId), JSON.stringify(res));
       } catch {}
     } catch (err) {
-      setError(extractApiError(err, "Confirm products failed."));
+      setError(extractApiError(err, t("reviewPage.errorConfirmFailed")));
     } finally {
       setConfirmingProducts(false);
     }
@@ -338,14 +321,14 @@ export default function ReviewPage() {
   return (
     <div className="data-upload-page">
       <PageHeader
-        title="Extract & Confirm Products"
+        title={t("reviewPage.title")}
         breadcrumbs={[
           {
-            label: "Upload Sales Data",
+            label: t("reviewPage.breadcrumbRoot"),
             link: true,
             onClick: () => navigate("/app/data-upload/uploads"),
           },
-          { label: `Batch ${batchId}`, link: false },
+          { label: t("reviewPage.breadcrumbBatch", { batchId }), link: false },
         ]}
       />
 
@@ -363,7 +346,7 @@ export default function ReviewPage() {
             {!confirmResult?.success && (
               <div style={{ marginBottom: 12 }}>
                 <InfoMessage type="warn">
-                  No confirmed mappings found for this batch on this device. Go back and confirm mappings again.
+                  {t("reviewPage.noMappingsWarn")}
                 </InfoMessage>
               </div>
             )}
@@ -371,7 +354,7 @@ export default function ReviewPage() {
             {!canExtract && confirmResult?.success && (
               <div style={{ marginBottom: 12 }}>
                 <InfoMessage type="info">
-                  Product extraction needs at least: product_name (and usually date/quantity/unit_price/total_amount). Go back and fix the column mappings if needed.
+                  {t("reviewPage.noProductNameInfo")}
                 </InfoMessage>
               </div>
             )}

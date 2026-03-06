@@ -1,5 +1,6 @@
 // frontend/src/shared/components/FormCalendar.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./FormInput.css";
 import "./FormCalendar.css";
 
@@ -48,8 +49,7 @@ const buildGrid = (monthDate) => {
   const y = first.getFullYear();
   const m = first.getMonth();
 
-  // Sunday-based week
-  const startOffset = first.getDay(); // 0..6
+  const startOffset = first.getDay();
   const gridStart = new Date(y, m, 1 - startOffset);
 
   const days = [];
@@ -99,6 +99,7 @@ const FormCalendar = ({
   placeholder = "YYYY-MM-DD",
   ...props
 }) => {
+  const { t } = useTranslation("common");
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
 
@@ -111,7 +112,6 @@ const FormCalendar = ({
     return startOfMonth(new Date());
   });
 
-  // NEW: month/year controls (typed)
   const monthLabels = useMemo(() => getMonthLabels(), []);
   const [monthIdx, setMonthIdx] = useState(anchor.getMonth());
   const [yearText, setYearText] = useState(String(anchor.getFullYear()));
@@ -124,7 +124,6 @@ const FormCalendar = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // sync controls when anchor changes
   useEffect(() => {
     setMonthIdx(anchor.getMonth());
     setYearText(String(anchor.getFullYear()));
@@ -208,7 +207,7 @@ const FormCalendar = ({
           className="fc-btn"
           onClick={() => !disabled && setOpen((v) => !v)}
           disabled={disabled}
-          aria-label="Open calendar"
+          aria-label={t("shared.formCalendar.openCalendar")}
         >
           ▾
         </button>
@@ -221,12 +220,11 @@ const FormCalendar = ({
                 className="fc-nav"
                 onClick={() => setAnchorSafe(addMonths(anchor, -1))}
                 disabled={!canPrev()}
-                aria-label="Previous month"
+                aria-label={t("shared.formCalendar.prevMonth")}
               >
                 ‹
               </button>
 
-              {/* NEW: month + year typing */}
               <div className="fc-ctrls" aria-label="Month and year">
                 <select
                   className="fc-month"
@@ -252,7 +250,6 @@ const FormCalendar = ({
                   onChange={(e) => {
                     const v = e.target.value;
                     setYearText(v);
-
                     const y = Number(v);
                     if (!Number.isNaN(y)) applyMonthYear(monthIdx, y);
                   }}
@@ -262,7 +259,7 @@ const FormCalendar = ({
                       applyMonthYear(monthIdx, y);
                     }
                   }}
-                  aria-label="Year"
+                  aria-label={t("shared.formCalendar.yearAriaLabel")}
                 />
               </div>
 
@@ -271,7 +268,7 @@ const FormCalendar = ({
                 className="fc-nav"
                 onClick={() => setAnchorSafe(addMonths(anchor, 1))}
                 disabled={!canNext()}
-                aria-label="Next month"
+                aria-label={t("shared.formCalendar.nextMonth")}
               >
                 ›
               </button>
@@ -313,10 +310,10 @@ const FormCalendar = ({
 
             <div className="fc-foot">
               <button type="button" className="fc-link" onClick={clear}>
-                Clear
+                {t("shared.formCalendar.clear")}
               </button>
               <button type="button" className="fc-link" onClick={pickToday}>
-                Today
+                {t("shared.formCalendar.today")}
               </button>
             </div>
           </div>

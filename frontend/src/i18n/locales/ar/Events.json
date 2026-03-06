@@ -1,0 +1,197 @@
+{
+  "calendar": {
+    "weekdays": {
+      "sun": "أحد",
+      "mon": "اثن",
+      "tue": "ثلا",
+      "wed": "أرب",
+      "thu": "خمي",
+      "fri": "جمع",
+      "sat": "سبت"
+    },
+    "moreEvents": "+{{count}} المزيد"
+  },
+  "form": {
+    "eventNameEn": "اسم الفعالية (بالإنجليزية)",
+    "eventNameEnPlaceholder": "Ramadan 2025",
+    "eventNameAr": "اسم الفعالية (بالعربية)",
+    "eventNameArPlaceholder": "رمضان 2025",
+    "eventType": "نوع الفعالية",
+    "recurring": "متكررة",
+    "recurrenceType": "نوع التكرار",
+    "recurrencePlaceholder": "اختر نوع التكرار",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "description": "الوصف",
+    "types": {
+      "religious": "دينية",
+      "national": "وطنية",
+      "seasonal": "موسمية",
+      "local": "محلية",
+      "business": "تجارية",
+      "promotional": "ترويجية",
+      "custom": "مخصصة"
+    },
+    "recurrenceOptions": {
+      "yearly": "سنوياً",
+      "monthly": "شهرياً",
+      "weekly": "أسبوعياً"
+    }
+  },
+  "eventForm": {
+    "descriptionPlaceholder": "فعالية دينية كبرى، يُتوقع ارتفاع الطلب...",
+    "creating": "جارٍ الإنشاء...",
+    "createEvent": "إنشاء فعالية",
+    "errorCreateFailed": "فشل الطلب.",
+    "errorCreateApiFailed": "فشل إنشاء الفعالية."
+  },
+  "eventEditForm": {
+    "eventNameEnPlaceholder": "Ramadan 2024",
+    "eventNameArPlaceholder": "رمضان 2024",
+    "descriptionPlaceholder": "تحديث التواريخ - رمضان يبدأ يوماً أبكر",
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ...",
+    "saveChanges": "حفظ التغييرات",
+    "errorUpdateFailed": "فشل التحديث.",
+    "errorUpdateApiFailed": "فشل تحديث الفعالية."
+  },
+  "table": {
+    "colEvent": "الفعالية",
+    "colDates": "التواريخ",
+    "colType": "النوع",
+    "colStatus": "الحالة",
+    "colRecurring": "متكررة",
+    "recurringNo": "لا"
+  },
+  "impact": {
+    "buckets": {
+      "high_confidence": "ثقة عالية",
+      "low_confidence": "ثقة منخفضة",
+      "event_only": "الفعالية فقط",
+      "below_threshold": "دون الحد"
+    },
+    "kpi": {
+      "overallImpact": "التأثير الإجمالي",
+      "affectedProducts": "المنتجات المتأثرة",
+      "batchesAnalyzed": "الدفعات المحللة",
+      "coverageComplete": "التغطية مكتملة",
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "eventPeriod": {
+      "title": "فترة الفعالية",
+      "start": "البداية",
+      "end": "النهاية",
+      "duration": "المدة",
+      "durationValue": "{{days}} أيام"
+    },
+    "baselinePeriod": {
+      "title": "الفترة المرجعية",
+      "start": "البداية",
+      "end": "النهاية",
+      "duration": "المدة",
+      "durationValue": "{{days}} أيام"
+    },
+    "dataCoverage": {
+      "title": "تغطية البيانات",
+      "earliestData": "أقدم بيانات",
+      "latestData": "أحدث بيانات",
+      "batchesAnalyzed": "الدفعات المحللة"
+    },
+    "dataQuality": {
+      "title": "تفصيل جودة البيانات",
+      "highConfidence": "ثقة عالية",
+      "lowConfidence": "ثقة منخفضة",
+      "eventOnly": "الفعالية فقط",
+      "belowThreshold": "دون الحد"
+    },
+    "table": {
+      "colProduct": "المنتج",
+      "colBaselineAvg": "متوسط المرجعي/يوم",
+      "colDuringAvg": "متوسط الفعالية/يوم",
+      "colChange": "التغيير",
+      "colImpact": "التأثير",
+      "colCoverage": "التغطية",
+      "colNotes": "ملاحظات",
+      "productId": "المعرف: {{id}}",
+      "coveragePct": "{{pct}}%",
+      "improvesAfter": "يتحسن بعد: {{date}}",
+      "noProducts": "لا توجد منتجات في هذا القسم."
+    },
+    "search": {
+      "placeholder": "البحث عن منتجات..."
+    }
+  },
+  "calendarPage": {
+    "title": "التقويم",
+    "subtitle": "الفعاليات معروضة على تقويم شهري.",
+    "cardSubtitle": "انقر على فعالية لفتح تفاصيلها.",
+    "btnEventsList": "قائمة الفعاليات",
+    "btnToday": "اليوم",
+    "btnPrev": "السابق",
+    "btnNext": "التالي",
+    "jumpLabel": "الانتقال إلى",
+    "jumpAriaLabel": "الانتقال إلى شهر",
+    "btnGo": "انتقال",
+    "errorLoadFailed": "فشل تحميل الفعاليات."
+  },
+  "eventsPage": {
+    "title": "الفعاليات",
+    "subtitle": "أنشئ الفعاليات وأدرها، ثم اعرضها على التقويم.",
+    "btnAll": "الكل",
+    "btnUpcoming": "القادمة",
+    "btnViewCalendar": "عرض التقويم",
+    "btnCreateEvent": "إنشاء فعالية",
+    "btnClose": "إغلاق",
+    "createCardTitle": "إنشاء فعالية",
+    "createCardSubtitle": "أدخل تفاصيل الفعالية. ستظهر على صفحة التقويم فوراً.",
+    "cardTitleAll": "جميع الفعاليات",
+    "cardTitleUpcoming": "الفعاليات القادمة",
+    "cardSubtitle": "انقر على أي فعالية لعرض التفاصيل.",
+    "emptyTitle": "لا توجد فعاليات",
+    "emptySubtitle": "أنشئ فعاليتك الأولى لتظهر هنا وعلى التقويم.",
+    "errorLoadFailed": "فشل تحميل الفعاليات.",
+    "errorCreateFailed": "فشل إنشاء الفعالية.",
+    "noticeCreated": "تم إنشاء الفعالية بنجاح."
+  },
+  "eventDetailsPage": {
+    "title": "تفاصيل الفعالية",
+    "subtitle": "اعرض معلومات الفعالية وعدّلها وشغّل تحليل التأثير.",
+    "btnBack": "رجوع",
+    "btnViewCalendar": "عرض التقويم",
+    "btnCloseEdit": "إغلاق التعديل",
+    "btnEditEvent": "تعديل الفعالية",
+    "editCardTitle": "تعديل الفعالية",
+    "editCardSubtitle": "حدّث أي حقل في الفعالية ثم احفظ.",
+    "detailType": "النوع",
+    "detailStatus": "الحالة",
+    "detailDuration": "المدة",
+    "detailDurationValue": "{{days}} أيام",
+    "detailRecurring": "متكررة",
+    "detailRecurringYes": "نعم ({{type}})",
+    "detailRecurringNo": "لا",
+    "detailDescription": "الوصف",
+    "impactCardTitle": "تحليل التأثير",
+    "impactCardSubtitle": "شغّل التحليل لحساب التأثير وعرض المنتجات المتأثرة.",
+    "btnAnalyzing": "جارٍ التحليل...",
+    "btnAnalyzeImpact": "تحليل التأثير",
+    "btnUploadSalesData": "رفع بيانات المبيعات",
+    "statusAnalyzed": "محلَّل",
+    "statusNotAnalyzed": "غير محلَّل",
+    "statusOverall": "الإجمالي: {{value}}",
+    "statusAffected": "المتأثرة: {{count}}",
+    "analysisBlockFallback": "لا يمكن التحليل حالياً. بيانات المبيعات المطلوبة لفترة الفعالية غير متوفرة.",
+    "analysisBlockRequiredPeriod": "الفترة المطلوبة للفعالية",
+    "analysisBlockAvailableEnds": "تنتهي البيانات المتاحة في",
+    "analysisBlockMissingPeriod": "الفترة المفقودة",
+    "analysisBlockHint": "تلميح",
+    "noAnalysisYet": "لا يوجد تحليل تفصيلي بعد. انقر على \"تحليل التأثير\" للحساب وعرض المنتجات المتأثرة.",
+    "notFoundTitle": "الفعالية غير موجودة",
+    "notFoundSubtitle": "ربما تم حذف الفعالية أو أنها غير متاحة.",
+    "noticeUpdated": "تم تحديث الفعالية بنجاح.",
+    "errorLoadFailed": "فشل تحميل الفعالية.",
+    "errorAnalyzeFailed": "فشل تحليل التأثير.",
+    "errorUpdateFailed": "فشل تحديث الفعالية.",
+    "errorRequestFailed": "فشل الطلب."
+  }
+}
