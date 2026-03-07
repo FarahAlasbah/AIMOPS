@@ -35,6 +35,7 @@ class Notification(Base):
             'import_failed',     # File import failed
             'forecast_ready',    # Forecast calculation done
             'system',            # General system message
+            'event_detection',
             name='notification_type_enum'
         ),
         nullable=False
