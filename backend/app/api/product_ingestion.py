@@ -1,8 +1,17 @@
 """
 File: backend/app/api/product_ingestion.py
-Purpose: Product extraction and sales import endpoints
+Purpose: Product confirmation and sales import endpoints.
+
+WHAT CHANGED FROM OLD VERSION:
+- extract_products_from_batch endpoint REMOVED.
+  Product extraction now happens inside confirm-mappings automatically.
+
+- confirm_products_and_import now accepts BackgroundTasks and fires
+  campaign detection after import completes.
+
+- DELETE endpoint unchanged (still useful for testing).
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 import os
 from datetime import datetime
@@ -21,168 +30,42 @@ UPLOAD_DIR = "uploads/temp"
 
 
 # ============================================
-# ENDPOINT: Extract Products
-# ============================================
-
-@router.post("/extract-products/{batch_id}")
-async def extract_products_from_batch(
-    batch_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Extract unique products from uploaded file with smart grouping
-    
-    **What this does:**
-    1. Reads the uploaded file using confirmed column mappings
-    2. Extracts unique product names with minimal normalization
-    3. Groups exact matches automatically
-    4. Detects possible typos (1-2 character differences)
-    5. Calculates statistics per product (quantity, revenue, date range)
-    6. Returns structured data for user review
-    
-    
-    **Workflow:**
-    User uploaded → Confirmed mappings → **YOU ARE HERE** → User reviews products → Confirm & import
-
-    """
-    from app.models.column_mapping import ColumnMapping
-    from app.services.product_extraction_service import extract_unique_products
-    
-    # ============================================
-    # Permission Check
-    # ============================================
-    if current_user.role.role_name not in ['admin', 'marketing_user']:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Admin and Marketing Users can extract products"
-        )
-    
-    # ============================================
-    # Get Batch
-    # ============================================
-    batch = db.query(IngestionBatch).filter(
-        IngestionBatch.batch_id == batch_id,
-        IngestionBatch.deleted_at.is_(None)
-    ).first()
-    
-    if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Batch {batch_id} not found"
-        )
-    
-    # ============================================
-    # Verify Batch Status
-    # ============================================
-    # Should be in 'processing' status after confirm-mappings
-    if batch.status == 'completed':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Batch already processed. Products already extracted."
-        )
-    
-    if batch.status == 'failed':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Batch processing failed. Cannot extract products."
-        )
-    
-    # ============================================
-    # Get Column Mappings
-    # ============================================
-    mappings = db.query(ColumnMapping).filter(
-        ColumnMapping.batch_id == batch_id
-    ).all()
-    
-    if not mappings:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No column mappings found. Please confirm column mappings first using /confirm-mappings endpoint."
-        )
-    
-    # Build mapping dictionary
-    column_map = {}
-    for mapping in mappings:
-        column_map[mapping.target_field] = mapping.source_column_name
-    
-    # ============================================
-    # Validate Required Mappings
-    # ============================================
-    if 'product_name' not in column_map:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Product name column mapping required for extraction"
-        )
-    
-    # ============================================
-    # Get File Path
-    # ============================================
-    file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
-    
-    if not os.path.exists(file_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found on server. Please re-upload."
-        )
-    
-    # ============================================
-    # Extract Products
-    # ============================================
-    try:
-        extraction_result = extract_unique_products(
-            file_path=file_path,
-            product_column=column_map['product_name'],
-            date_column=column_map.get('date'),
-            quantity_column=column_map.get('quantity'),
-            total_amount_column=column_map.get('total_amount'),
-            category_column=column_map.get('category')
-        )
-        
-        # ============================================
-        # Return Response
-        # ============================================
-        return {
-            "success": True,
-            "message": f"Extracted {extraction_result['total_unique_products']} unique products",
-            "batch_id": batch_id,
-            "file_name": batch.file_name,
-            "total_unique_products": extraction_result['total_unique_products'],
-            "products": extraction_result['products'],
-            "file_info": extraction_result['file_info']
-        }
-        
-    except ValueError as e:
-        # Handle extraction errors (bad column names, file parsing issues)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    
-    except Exception as e:
-        # Handle unexpected errors
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to extract products: {str(e)}"
-        )
-
-
-
-# ============================================
 # ENDPOINT: Confirm Products & Import Sales
 # ============================================
+
 @router.post("/confirm-products/{batch_id}")
 async def confirm_products_and_import(
     batch_id: int,
     request: dict,
+    background_tasks: BackgroundTasks,          # NEW: for campaign detection
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Save confirmed products, bulk-import sales records, then detect campaigns.
+
+    WHAT CHANGED FROM OLD VERSION:
+    The import logic is identical. One addition at the end:
+    after db.commit(), we register detect_campaigns_for_batch as a
+    BackgroundTask. It runs after the response is returned so the user
+    isn't waiting for it.
+
+    BACKGROUND TASK BEHAVIOR:
+    FastAPI BackgroundTasks run in the same process after the response
+    is sent. The user gets their "Import successful" response immediately.
+    Campaign detection runs silently in the background and creates a
+    notification when it finishes.
+
+    WHY NOT asyncio / Celery:
+    For the competition demo, BackgroundTasks is sufficient and requires
+    no extra infrastructure. If AIMOPS scales to large files, Celery
+    with Redis would be the upgrade path.
+    """
     from app.models.sales_record import SalesRecord
     from app.models.campaign import Product
     from app.models.column_mapping import ColumnMapping
+    from app.services.campaign_detection_service import detect_campaigns_for_batch
     import pandas as pd
-    from datetime import datetime
 
     # ── Permission Check ──
     if current_user.role.role_name not in ['admin', 'marketing_user']:
@@ -265,7 +148,6 @@ async def confirm_products_and_import(
                 product_id = new_product.product_id
                 products_created += 1
 
-            # Map all variations to this product_id
             name_to_product_id[primary_name.lower().strip()] = product_id
             name_to_product_id[normalized_name] = product_id
             name_to_product_id[' '.join(primary_name.lower().split())] = product_id
@@ -291,59 +173,46 @@ async def confirm_products_and_import(
         customer_col = column_map.get('customer_id')
         product_code_col = column_map.get('product_code')
 
-        # Rename columns to standard names
         rename_map = {}
-        if product_col: rename_map[product_col] = '_product_name'
-        if date_col: rename_map[date_col] = '_sale_date'
-        if quantity_col: rename_map[quantity_col] = '_quantity'
-        if unit_price_col: rename_map[unit_price_col] = '_unit_price'
+        if product_col:      rename_map[product_col]      = '_product_name'
+        if date_col:         rename_map[date_col]          = '_sale_date'
+        if quantity_col:     rename_map[quantity_col]      = '_quantity'
+        if unit_price_col:   rename_map[unit_price_col]   = '_unit_price'
         if total_amount_col: rename_map[total_amount_col] = '_total_amount'
-        if category_col: rename_map[category_col] = '_category'
-        if channel_col: rename_map[channel_col] = '_channel'
-        if discount_col: rename_map[discount_col] = '_discount'
-        if customer_col: rename_map[customer_col] = '_customer_id'
+        if category_col:     rename_map[category_col]     = '_category'
+        if channel_col:      rename_map[channel_col]      = '_channel'
+        if discount_col:     rename_map[discount_col]     = '_discount'
+        if customer_col:     rename_map[customer_col]     = '_customer_id'
         if product_code_col: rename_map[product_code_col] = '_product_code'
 
         df = df.rename(columns=rename_map)
-        df['_row_num'] = df.index + 2  # Track original row numbers for error reporting
+        df['_row_num'] = df.index + 2
 
-        # Normalize product names (vectorized)
         df['_lookup_key'] = df['_product_name'].astype(str).str.lower().str.strip()
         df['_lookup_key'] = df['_lookup_key'].str.split().str.join(' ')
-
-        # Map to product IDs (vectorized)
         df['_product_id'] = df['_lookup_key'].map(name_to_product_id)
 
-        # Split known and unknown
         unknown_df = df[df['_product_id'].isna()].copy()
         valid_df = df[df['_product_id'].notna()].copy()
 
         if not unknown_df.empty:
-            # Get all unique unknown names at once
             unknown_names = unknown_df['_lookup_key'].dropna().unique().tolist()
-            # e.g. ["premiam dates 500g", "organic coffe 1kg", "تمور فاخره", ...]
 
-            # ONE query to check which ones already exist in DB
-            # Instead of 30 queries, this is 1 query
             existing_products = db.query(Product).filter(
                 Product.normalized_name.in_(unknown_names),
                 Product.deleted_at.is_(None)
             ).all()
 
-            # Map existing ones immediately
             for p in existing_products:
                 name_to_product_id[p.normalized_name] = p.product_id
 
-            # Find which ones truly don't exist yet
             already_exists = {p.normalized_name for p in existing_products}
             truly_new = [n for n in unknown_names if n not in already_exists]
 
-            # ONE batch insert for all new products
-            # Instead of 30 separate flushes, this is 1 insert
             if truly_new:
                 new_products_data = [
                     {
-                        "product_name": name.title(),  # "premiam dates 500g" → "Premiam Dates 500g"
+                        "product_name": name.title(),
                         "normalized_name": name,
                         "is_active": True,
                         "created_by": current_user.user_id
@@ -353,7 +222,6 @@ async def confirm_products_and_import(
                 db.execute(Product.__table__.insert(), new_products_data)
                 products_created += len(truly_new)
 
-                # Fetch the newly inserted products to get their IDs
                 new_products = db.query(Product).filter(
                     Product.normalized_name.in_(truly_new)
                 ).all()
@@ -361,35 +229,28 @@ async def confirm_products_and_import(
                 for p in new_products:
                     name_to_product_id[p.normalized_name] = p.product_id
 
-        # Re-map ALL rows now that name_to_product_id is complete
         df['_product_id'] = df['_lookup_key'].map(name_to_product_id)
         rejected_df = df[df['_product_id'].isna()].copy()
         valid_df = df[df['_product_id'].notna()].copy()
 
-        # Parse dates (vectorized)
         valid_df['_sale_date'] = pd.to_datetime(valid_df['_sale_date'], errors='coerce')
         invalid_date_df = valid_df[valid_df['_sale_date'].isna()].copy()
         valid_df = valid_df[valid_df['_sale_date'].notna()].copy()
         valid_df['_sale_date'] = valid_df['_sale_date'].dt.date
 
-        # Parse quantities (vectorized)
         valid_df['_quantity'] = pd.to_numeric(valid_df['_quantity'], errors='coerce')
         invalid_qty_df = valid_df[valid_df['_quantity'].isna()].copy()
         valid_df = valid_df[valid_df['_quantity'].notna()].copy()
 
-        # Calculate missing totals (vectorized)
         if '_total_amount' in valid_df.columns and '_unit_price' in valid_df.columns:
             mask = valid_df['_total_amount'].isna() & valid_df['_unit_price'].notna()
             valid_df.loc[mask, '_total_amount'] = (
                 valid_df.loc[mask, '_unit_price'] * valid_df.loc[mask, '_quantity']
             ).round(2)
 
-        # Build rejected details (max 10 shown)
         rejected_details = []
         for _, row in rejected_df.head(10).iterrows():
-            rejected_details.append(
-                f"Row {int(row['_row_num'])}: Product '{row['_product_name']}' not in confirmed products list"
-            )
+            rejected_details.append(f"Row {int(row['_row_num'])}: Product '{row['_product_name']}' not in confirmed list")
         for _, row in invalid_date_df.head(5).iterrows():
             rejected_details.append(f"Row {int(row['_row_num'])}: Invalid date value")
         for _, row in invalid_qty_df.head(5).iterrows():
@@ -399,7 +260,6 @@ async def confirm_products_and_import(
         rejected_rows = len(rejected_df) + len(invalid_date_df) + len(invalid_qty_df)
         dates = valid_df['_sale_date'].tolist() if valid_rows > 0 else []
 
-        # Build insert data
         def safe_float(val):
             try:
                 return float(val) if pd.notna(val) else None
@@ -429,11 +289,9 @@ async def confirm_products_and_import(
             for _, row in valid_df.iterrows()
         ]
 
-        # ── Bulk Insert ──
         if sales_records_data:
             db.execute(SalesRecord.__table__.insert(), sales_records_data)
 
-        # ── Update Batch ──
         batch.status = 'completed'
         batch.total_rows = len(df)
         batch.valid_rows = valid_rows
@@ -446,6 +304,16 @@ async def confirm_products_and_import(
             batch.date_range_end = max(dates)
 
         db.commit()
+
+        # ── Fire Campaign Detection in Background ──
+        # This runs AFTER the response is sent — user isn't waiting for it.
+        # detect_campaigns_for_batch will analyze the imported sales records
+        # and create a notification when it finds anything.
+        background_tasks.add_task(
+            detect_campaigns_for_batch,
+            batch_id=batch_id,
+            uploaded_by=current_user.user_id
+        )
 
     except Exception as e:
         db.rollback()
@@ -468,12 +336,13 @@ async def confirm_products_and_import(
             "date_range_end": max(dates).isoformat() if dates else None,
         },
         "rejected_details": rejected_details,
+        "campaign_detection": "Running in background. You'll be notified when complete.",
         "next_step": "Your data is ready for forecasting and campaign analysis"
     }
-    
+
 
 # ============================================
-# ENDPOINT: Delete Products & Import Sales
+# ENDPOINT: Delete Products & Sales (testing utility)
 # ============================================
 
 @router.delete("/confirm-products/{batch_id}")
@@ -483,19 +352,17 @@ async def delete_confirmed_products(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Delete all products and sales records for a batch
-    Resets batch status back to 'processing' so you can re-confirm
-    
-    USE CASE: Testing - undo a confirm-products call
+    Undo a confirm-products call. Deletes sales records and orphaned products,
+    resets batch to 'processing' so you can re-confirm.
+
+    USE CASE: Testing only.
     """
     from app.models.sales_record import SalesRecord
     from app.models.campaign import Product
 
-    # ── Permission Check ──
     if current_user.role.role_name not in ['admin', 'marketing_user']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # ── Get Batch ──
     batch = db.query(IngestionBatch).filter(
         IngestionBatch.batch_id == batch_id,
         IngestionBatch.deleted_at.is_(None)
@@ -504,34 +371,10 @@ async def delete_confirmed_products(
     if not batch:
         raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
 
-    # ── Delete Sales Records First ──
-    # WHY FIRST: sales_records has a foreign key to products
-    # If we delete products first → database error (RESTRICT constraint)
-    # Like removing a shelf before removing the items on it
     deleted_sales = db.query(SalesRecord).filter(
         SalesRecord.batch_id == batch_id
     ).delete()
 
-    # ── Get Product IDs from this batch ──
-    # We need to find which products were created BY this batch
-    # and delete only those - not products from other batches
-    from app.models.column_mapping import ColumnMapping
-    
-    # Get product IDs that have sales records ONLY from this batch
-    # (no other batch uses them)
-    product_ids_in_batch = db.execute(
-        sa.text("""
-            SELECT DISTINCT product_id 
-            FROM sales_records 
-            WHERE batch_id = :batch_id
-        """),
-        {"batch_id": batch_id}
-    ).fetchall()
-
-    # Since we already deleted sales records, query products created_by this user
-    # that have normalized_name matching what was imported
-    # Simplest approach: delete products where created_by = current user
-    # and no other sales records reference them
     deleted_products = db.query(Product).filter(
         Product.created_by == current_user.user_id,
         ~Product.product_id.in_(
@@ -539,8 +382,6 @@ async def delete_confirmed_products(
         )
     ).delete(synchronize_session='fetch')
 
-    # ── Reset Batch Status ──
-    # WHY: So user can call confirm-products again
     batch.status = 'processing'
     batch.valid_rows = 0
     batch.rejected_rows = 0

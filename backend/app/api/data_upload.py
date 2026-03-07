@@ -1,8 +1,6 @@
 """
 File: backend/app/api/data_upload.py
-
 Purpose: API endpoints for uploading and managing sales data files
-
 """
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
@@ -15,9 +13,9 @@ from app.core.database import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.ingestion_batch import IngestionBatch
+from app.models.column_mapping import ColumnMapping
 from app.schemas.data_upload import (
-    MappingConfirmationResponse,
-    UploadInitiateResponse,
+    UploadWithAnalysisResponse,
     BatchInfoResponse,
     BatchListResponse,
     ColumnMappingRequest,
@@ -26,22 +24,9 @@ from app.schemas.data_upload import (
     MappingConfirmationResponse
 )
 
+router = APIRouter(prefix="/api/data", tags=["Data Upload"])
 
-# Create router
-router = APIRouter(
-    prefix="/api/data",
-    tags=["Data Upload"]
-)
-
-
-# ============================================
-# Configuration
-# ============================================
-
-# Where to save uploaded files temporarily
 UPLOAD_DIR = "uploads/temp"
-
-# Maximum file size (50 MB in bytes)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
@@ -50,87 +35,222 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 # ============================================
 
 def ensure_upload_directory_exists():
-    """Create upload directory if it doesn't exist"""
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
 
-
 def get_file_type(filename: str) -> str:
-    """Extract file type from filename"""
     _, ext = os.path.splitext(filename)
     return ext.lstrip('.').lower()
 
-
 def calculate_file_checksum(file_content: bytes) -> str:
-    """Calculate MD5 checksum of file content"""
     return hashlib.md5(file_content).hexdigest()
+
+
+def _auto_save_high_confidence_mappings(
+    batch_id: int,
+    columns: list,
+    current_user_id: int,
+    db: Session
+) -> None:
+    """
+    Silently pre-save high-confidence column mappings to the DB.
+
+    WHY THIS EXISTS:
+    When the user sees the confirmation screen and clicks "Confirm" without
+    changing anything, confirm-mappings needs to know what was already detected.
+    Rather than re-running analysis at that point, we pre-save the high-confidence
+    results here so they're already in the DB.
+
+    WHY SILENT (not returned to frontend):
+    The user still sees ALL columns in the UI — this is just a DB optimization.
+    confirm-mappings will overwrite these with whatever the user actually submits,
+    so if the user changes something, the correction wins.
+
+    THRESHOLD: confidence >= 0.9
+    Only "VALUES CONFIRM NAME" detections qualify — both keyword match AND
+    value type match confirmed the role. Anything lower stays unconfirmed
+    until the user explicitly submits.
+    """
+    allowed_roles = {
+        'date', 'product_code', 'product_name', 'category', 'quantity',
+        'unit_price', 'total_amount', 'discount', 'customer_id',
+        'location', 'payment_method', 'other'
+    }
+
+    for col in columns:
+        role = col.get("role")
+        confidence = col.get("confidence", 0.0)
+        classification = col.get("classification")
+
+        # Only pre-save high-confidence, actionable roles
+        if confidence < 0.9:
+            continue
+        if role == "unknown" or role not in allowed_roles:
+            continue
+        if classification == "probably_not_useful":
+            continue
+
+        db_mapping = ColumnMapping(
+            batch_id=batch_id,
+            source_column_name=col["name"],
+            source_column_index=col["index"],
+            detected_language='english',
+            target_field=role,
+            confidence_score=confidence,
+            is_confirmed=False,         # NOT confirmed yet — user must confirm
+            confirmed_by=None,
+            confirmed_at=None,
+            detected_data_type=None,
+            sample_values=None,
+            transformation_applied=None
+        )
+        db.add(db_mapping)
+
+    db.flush()
+
+
+def _build_columns_for_frontend(columns: list) -> list:
+    """
+    Format all columns for the frontend confirmation screen.
+
+    WHAT THE FRONTEND RECEIVES:
+    Every column from the file, enriched with:
+    - confidence_level: "high" / "medium" / "low" — drives UI styling
+    - suggested_role: what AIMOPS thinks this column is
+    - alternative_roles: dropdown options if user wants to change
+    - samples: first 5 values so user can verify visually
+    - display_hint: human-readable explanation of our reasoning
+
+    UI BEHAVIOR BASED ON confidence_level:
+    - "high"   → pre-selected with green checkmark, user can still change
+    - "medium" → pre-selected but highlighted with warning icon
+    - "low"    → shown as unassigned, user must pick a role
+    - "skip"   → pre-checked as "skip" (probably_not_useful columns)
+
+    This way the user sees EVERYTHING the system did, not just the uncertain
+    parts — which builds trust in AIMOPS.
+    """
+    result = []
+
+    for col in columns:
+        classification = col.get("classification")
+        role = col.get("role", "unknown")
+        confidence = col.get("confidence", 0.0)
+
+        # Columns classified as not useful are pre-set to skip
+        if classification == "probably_not_useful":
+            result.append({
+                "name": col["name"],
+                "index": col["index"],
+                "suggested_role": "skip",
+                "confidence": confidence,
+                "confidence_level": "skip",
+                "alternative_roles": ["include_anyway"],
+                "samples": col.get("samples", []),
+                "display_hint": col.get("reason", "This column is likely not needed for analysis"),
+                "but_useful_if": col.get("but_useful_if"),
+                "completeness": col.get("completeness")
+            })
+            continue
+
+        # Map confidence to UI level
+        if confidence >= 0.9:
+            confidence_level = "high"
+            display_hint = f"We're confident this is '{role.replace('_', ' ').title()}'"
+        elif confidence >= 0.6:
+            confidence_level = "medium"
+            display_hint = col.get("user_prompt", f"We think this might be '{role.replace('_', ' ').title()}' — please verify")
+        else:
+            confidence_level = "low"
+            display_hint = f"We couldn't determine what this column is — please assign a role"
+
+        result.append({
+            "name": col["name"],
+            "index": col["index"],
+            "suggested_role": role if confidence >= 0.6 else "unknown",
+            "confidence": confidence,
+            "confidence_level": confidence_level,
+            "alternative_roles": col.get("alternative_roles", []),
+            "samples": col.get("samples", []),
+            "display_hint": display_hint,
+            "classification": classification,
+            "completeness": col.get("completeness"),
+            # Why we included this field (shown for required/beneficial)
+            "why": col.get("why") or col.get("benefit")
+        })
+
+    return result
 
 
 # ============================================
 # ENDPOINT 1: Upload File
 # ============================================
 
-@router.post("/upload-sales", response_model=UploadInitiateResponse)
+@router.post("/upload-sales", response_model=UploadWithAnalysisResponse)
 async def upload_sales_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Upload a sales data file (CSV or Excel)
-    
-    **Permissions:** Admin, Marketing User only (Business Owner cannot upload)
-    
-    **Accepted formats:**
-    - CSV (.csv)
-    - Excel (.xlsx, .xls)
-    
-    **Max file size:** 50 MB
+    Upload a sales data file. Returns column analysis immediately.
+
+    WHAT CHANGED FROM OLD VERSION:
+    Before: Returned only batch_id. Frontend called /analyze/{batch_id}
+            separately. User had to wait for a second round-trip before
+            seeing the column mapping screen.
+
+    After:  Analysis runs immediately during upload. Response includes
+            ALL detected columns with confidence levels, ready to display
+            on the mapping confirmation screen without any extra calls.
+
+    WHAT THE USER SEES AFTER THIS:
+    A column mapping screen showing every column in their file with:
+    - AIMOPS's best guess for each column's role
+    - Confidence level (high/medium/low) shown visually
+    - Sample values from their actual data
+    - Option to change any assignment before confirming
+
+    The goal: user feels informed, not surprised. They see exactly what
+    AIMOPS detected and why, before committing to the import.
+
+    NEXT STEP AFTER THIS:
+    Frontend displays the mapping screen → user reviews → submits to
+    POST /confirm-mappings/{batch_id}
     """
-    
-    # ============================================
-    # Permission Check
-    # ============================================
-    
-    # Only admin and marketing_user can upload files
-    # Business owners can only VIEW data, not upload
+
+    # ── Permission Check ──
     if current_user.role.role_name not in ['admin', 'marketing_user']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Admin and Marketing Users can upload files. Business Owners have view-only access."
+            detail="Only Admin and Marketing Users can upload files."
         )
-    
-    # Validate File Type
+
+    # ── Validate File Type ──
     file_type = get_file_type(file.filename)
-    
     if file_type not in ['csv', 'xlsx', 'xls']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type: .{file_type}. Allowed: .csv, .xlsx, .xls"
         )
-    
-    # Read File Content
+
+    # ── Read & Validate Size ──
     file_content = await file.read()
-    
-    # Check file size
     file_size_bytes = len(file_content)
     if file_size_bytes > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE / (1024*1024):.0f} MB"
+            detail=f"File too large. Maximum: {MAX_FILE_SIZE / (1024*1024):.0f} MB"
         )
-    
     file_size_kb = file_size_bytes // 1024
-    
-    # Calculate Checksum (Duplicate Detection)
+
+    # ── Duplicate Detection ──
     file_checksum = calculate_file_checksum(file_content)
-    
-    # Check if file already uploaded
     existing_batch = db.query(IngestionBatch).filter(
         IngestionBatch.file_checksum == file_checksum,
         IngestionBatch.deleted_at.is_(None)
     ).first()
-    
+
     if existing_batch:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -144,18 +264,16 @@ async def upload_sales_file(
                 }
             }
         )
-    
-    # Save File to Disk
+
+    # ── Save File to Disk ──
     ensure_upload_directory_exists()
-    
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    safe_filename = f"{timestamp}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, safe_filename)
-    
+    file_path = os.path.join(UPLOAD_DIR, f"{timestamp}_{file.filename}")
+
     with open(file_path, "wb") as f:
         f.write(file_content)
-    
-    # Create Database Record
+
+    # ── Create Batch Record ──
     new_batch = IngestionBatch(
         file_name=file.filename,
         file_type=file_type,
@@ -165,26 +283,82 @@ async def upload_sales_file(
         status='pending',
         uploaded_at=datetime.utcnow()
     )
-    
     db.add(new_batch)
     db.commit()
     db.refresh(new_batch)
-    
-    # Rename file with batch_id
-    better_filename = f"batch_{new_batch.batch_id}_{file.filename}"
-    better_file_path = os.path.join(UPLOAD_DIR, better_filename)
+
+    # ── Rename file to include batch_id ──
+    better_file_path = os.path.join(UPLOAD_DIR, f"batch_{new_batch.batch_id}_{file.filename}")
     os.rename(file_path, better_file_path)
-    
-    # Return Response
-    return UploadInitiateResponse(
-        batch_id=new_batch.batch_id,
-        file_name=new_batch.file_name,
-        file_type=new_batch.file_type,
-        file_size_kb=new_batch.file_size_kb,
-        status=new_batch.status,
-        message="File uploaded successfully. Analyzing...",
-        uploaded_at=new_batch.uploaded_at
-    )
+
+    # ── Analyze File ──
+    from app.services.ingestion_service import analyze_uploaded_file as analyze_file
+
+    try:
+        analysis_result = analyze_file(better_file_path, file_type)
+
+        if not analysis_result.get("success"):
+            # Analysis failed — batch created, user will need to retry analysis
+            new_batch.status = 'mapping'
+            db.commit()
+            return UploadWithAnalysisResponse(
+                batch_id=new_batch.batch_id,
+                file_name=new_batch.file_name,
+                file_type=new_batch.file_type,
+                file_size_kb=new_batch.file_size_kb,
+                status='mapping',
+                uploaded_at=new_batch.uploaded_at,
+                columns=[],
+                required_missing=[],
+                sample_data=[],
+                file_info={},
+                analysis_error=analysis_result.get("error")
+            )
+
+        # Pre-save high-confidence mappings silently
+        _auto_save_high_confidence_mappings(
+            batch_id=new_batch.batch_id,
+            columns=analysis_result["columns"],
+            current_user_id=current_user.user_id,
+            db=db
+        )
+
+        # Format ALL columns for the frontend confirmation screen
+        columns_for_ui = _build_columns_for_frontend(analysis_result["columns"])
+
+        new_batch.status = 'mapping'
+        db.commit()
+
+        return UploadWithAnalysisResponse(
+            batch_id=new_batch.batch_id,
+            file_name=new_batch.file_name,
+            file_type=new_batch.file_type,
+            file_size_kb=new_batch.file_size_kb,
+            status='mapping',
+            uploaded_at=new_batch.uploaded_at,
+            columns=columns_for_ui,
+            required_missing=analysis_result.get("classified", {}).get("required_missing", []),
+            sample_data=analysis_result.get("sample_data", []),
+            file_info=analysis_result.get("file_info", {}),
+            analysis_error=None
+        )
+
+    except Exception as e:
+        new_batch.status = 'mapping'
+        db.commit()
+        return UploadWithAnalysisResponse(
+            batch_id=new_batch.batch_id,
+            file_name=new_batch.file_name,
+            file_type=new_batch.file_type,
+            file_size_kb=new_batch.file_size_kb,
+            status='mapping',
+            uploaded_at=new_batch.uploaded_at,
+            columns=[],
+            required_missing=[],
+            sample_data=[],
+            file_info={},
+            analysis_error=str(e)
+        )
 
 
 # ============================================
@@ -199,66 +373,26 @@ async def list_uploaded_files(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get list of all uploaded files
-    
-    **What this returns:**
-    - All uploads by all users (visible to everyone)
-    - Shows file name, size, status, upload date
-    - Sorted by most recent first
-    
-    **Query Parameters:**
-    - `status`: Filter by status (pending, mapping, processing, completed, failed)
-    - `limit`: Max results to return (default: 50, max: 100)
-    - `offset`: Skip first N results (for pagination)
-    
-    **Example usage:**
-    - `/api/data/uploads` - Get last 50 uploads
-    - `/api/data/uploads?status=completed` - Only successful uploads
-    - `/api/data/uploads?limit=20&offset=20` - Get results 21-40
-    
-    **Permissions:** All authenticated users can view uploads
-    """
-    
-    # Build query - exclude soft-deleted batches
-    query = db.query(IngestionBatch).filter(
-        IngestionBatch.deleted_at.is_(None)
-    )
-    
-    # Filter by status if provided
+    query = db.query(IngestionBatch).filter(IngestionBatch.deleted_at.is_(None))
+
     if status:
-        # Validate status value
         valid_statuses = ['pending', 'mapping', 'processing', 'completed', 'failed']
         if status not in valid_statuses:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
         query = query.filter(IngestionBatch.status == status)
-    
-    # Apply pagination limits
+
     if limit > 100:
-        limit = 100  # Prevent excessive data transfer
-    
-    # Sort by most recent first
-    query = query.order_by(IngestionBatch.uploaded_at.desc())
-    
-    # Apply limit and offset
-    batches = query.limit(limit).offset(offset).all()
-    
-    # Convert to response schema
+        limit = 100
+
+    batches = query.order_by(IngestionBatch.uploaded_at.desc()).limit(limit).offset(offset).all()
+
     return [
         BatchListResponse(
-            batch_id=batch.batch_id,
-            file_name=batch.file_name,
-            file_type=batch.file_type,
-            file_size_kb=batch.file_size_kb,
-            status=batch.status,
-            uploaded_at=batch.uploaded_at,
-            valid_rows=batch.valid_rows or 0,
-            rejected_rows=batch.rejected_rows or 0
+            batch_id=b.batch_id, file_name=b.file_name, file_type=b.file_type,
+            file_size_kb=b.file_size_kb, status=b.status, uploaded_at=b.uploaded_at,
+            valid_rows=b.valid_rows or 0, rejected_rows=b.rejected_rows or 0
         )
-        for batch in batches
+        for b in batches
     ]
 
 
@@ -272,49 +406,21 @@ async def get_upload_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get detailed information about a specific upload
-    
-    **What this returns:**
-    - Complete details about one upload
-    - Includes processing stats, date range, errors
-    - More detailed than the list endpoint
-    
-    **Use cases:**
-    - User clicks on upload in list
-    - Check processing status
-    - View error details if failed
-    
-    **Permissions:** All authenticated users can view details
-    """
-    
-    # Get batch from database
     batch = db.query(IngestionBatch).filter(
         IngestionBatch.batch_id == batch_id,
         IngestionBatch.deleted_at.is_(None)
     ).first()
-    
+
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Upload batch {batch_id} not found"
-        )
-    
-    # Return detailed info
+        raise HTTPException(status_code=404, detail=f"Upload batch {batch_id} not found")
+
     return BatchInfoResponse(
-        batch_id=batch.batch_id,
-        file_name=batch.file_name,
-        file_type=batch.file_type,
-        file_size_kb=batch.file_size_kb,
-        uploaded_by=batch.uploaded_by,
-        uploaded_at=batch.uploaded_at,
-        status=batch.status,
-        total_rows=batch.total_rows or 0,
-        valid_rows=batch.valid_rows or 0,
-        rejected_rows=batch.rejected_rows or 0,
-        date_range_start=batch.date_range_start,
-        date_range_end=batch.date_range_end,
-        processing_started_at=batch.processing_started_at,
+        batch_id=batch.batch_id, file_name=batch.file_name, file_type=batch.file_type,
+        file_size_kb=batch.file_size_kb, uploaded_by=batch.uploaded_by,
+        uploaded_at=batch.uploaded_at, status=batch.status,
+        total_rows=batch.total_rows or 0, valid_rows=batch.valid_rows or 0,
+        rejected_rows=batch.rejected_rows or 0, date_range_start=batch.date_range_start,
+        date_range_end=batch.date_range_end, processing_started_at=batch.processing_started_at,
         processing_completed_at=batch.processing_completed_at,
         processing_duration_seconds=batch.processing_duration_seconds,
         error_message=batch.error_message
@@ -322,7 +428,7 @@ async def get_upload_details(
 
 
 # ============================================
-# ENDPOINT 4: Analyze File
+# ENDPOINT 4: Re-Analyze File (manual retry)
 # ============================================
 
 @router.get("/analyze/{batch_id}")
@@ -332,83 +438,62 @@ async def analyze_uploaded_file_endpoint(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Analyze uploaded file and return column detection results
-    
-    **What this does:**
-    - Reads the uploaded file
-    - Detects column roles (date, product, quantity, etc.)
-    - Auto-includes required & beneficial fields
-    - Suggests skipping irrelevant fields
-    - Returns sample data preview
+    Re-analyze a file and reset its column mappings.
 
+    WHY THIS STILL EXISTS:
+    Normally analysis runs automatically at upload time. This endpoint is
+    a fallback for when the upload response contained analysis_error, or
+    when the user wants to reset mappings and start the review over.
+
+    It deletes existing mappings, re-runs analysis, pre-saves high-confidence
+    ones again, and returns the same columns structure as the upload endpoint.
     """
-    
-    # Import the analysis function
     from app.services.ingestion_service import analyze_uploaded_file as analyze_file
-    
-    # Get Batch from Database
+
     batch = db.query(IngestionBatch).filter(
-        IngestionBatch.batch_id == batch_id
+        IngestionBatch.batch_id == batch_id,
+        IngestionBatch.deleted_at.is_(None)
     ).first()
-    
+
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Upload batch {batch_id} not found"
-        )
-    
-    # Check Permissions
-    # Admin: Can analyze any upload
-    # Marketing User: Can analyze any upload (needs data for campaign planning)
-    # Business Owner: Can analyze any upload (view access to all data)
-    # 
-    # Everyone can view analysis - it's operational data needed for their work
-    
-    # No additional permission check needed - all authenticated users can analyze
-    # (Already checked by get_current_user dependency)
-    
-    # Check if File Exists on Disk
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    if batch.status == 'completed':
+        raise HTTPException(status_code=400, detail="Batch already completed. Cannot re-analyze.")
+
     file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
-    
     if not os.path.exists(file_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Uploaded file not found on server. Please re-upload."
-        )
-    
-    # Analyze File
-    try:
-        analysis_result = analyze_file(file_path, batch.file_type)
-        
-        if not analysis_result.get("success"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=analysis_result.get("error", "Failed to analyze file")
-            )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error analyzing file: {str(e)}"
-        )
-    
-    # Update Batch Status to 'mapping'
+        raise HTTPException(status_code=404, detail="File not found on server. Please re-upload.")
+
+    # Reset mappings so we start fresh
+    db.query(ColumnMapping).filter(ColumnMapping.batch_id == batch_id).delete()
+
+    analysis_result = analyze_file(file_path, batch.file_type)
+    if not analysis_result.get("success"):
+        raise HTTPException(status_code=400, detail=analysis_result.get("error"))
+
+    _auto_save_high_confidence_mappings(
+        batch_id=batch_id,
+        columns=analysis_result["columns"],
+        current_user_id=current_user.user_id,
+        db=db
+    )
+
+    columns_for_ui = _build_columns_for_frontend(analysis_result["columns"])
+
     if batch.status == 'pending':
         batch.status = 'mapping'
-        db.commit()
-    
-    # Return Analysis Results
+    db.commit()
+
     return {
         "success": True,
         "batch_id": batch_id,
-        "file_name": batch.file_name,
-        "uploaded_at": batch.uploaded_at.isoformat() if batch.uploaded_at else None,
-        "status": batch.status,
-        "file_info": analysis_result["file_info"],
-        "columns": analysis_result["columns"],
-        "classified": analysis_result["classified"],
-        "sample_data": analysis_result["sample_data"]
+        "columns": columns_for_ui,
+        "required_missing": analysis_result.get("classified", {}).get("required_missing", []),
+        "sample_data": analysis_result.get("sample_data", []),
+        "file_info": analysis_result.get("file_info", {})
     }
+
 
 # ============================================
 # ENDPOINT 5: Delete Upload Batch
@@ -420,68 +505,34 @@ async def delete_upload_batch(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Delete an upload batch and its sales records.
-    Products are kept (they may be used by other batches).
-    """
     from app.models.sales_record import SalesRecord
 
-    # ── Permission Check ──
     if current_user.role.role_name not in ['admin', 'marketing_user']:
-        raise HTTPException(
-            status_code=403,
-            detail="Only Admin and Marketing Users can delete uploads"
-        )
+        raise HTTPException(status_code=403, detail="Only Admin and Marketing Users can delete uploads")
 
-    # ── Get Batch ──
     batch = db.query(IngestionBatch).filter(
         IngestionBatch.batch_id == batch_id,
         IngestionBatch.deleted_at.is_(None)
     ).first()
 
     if not batch:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Batch {batch_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
 
-    # ── Count sales records before deleting ──
-    # WHY: So we can tell user exactly what was deleted
-    # One query to get the count before we delete
-    sales_count = db.query(SalesRecord).filter(
-        SalesRecord.batch_id == batch_id
-    ).count()
+    sales_count = db.query(SalesRecord).filter(SalesRecord.batch_id == batch_id).count()
+    db.query(SalesRecord).filter(SalesRecord.batch_id == batch_id).delete(synchronize_session='fetch')
 
-    # ── Delete sales records first ──
-    # WHY FIRST: sales_records has foreign key pointing to ingestion_batches
-    # If we delete the batch first → database error
-    # Like removing a building before removing the people inside
-    db.query(SalesRecord).filter(
-        SalesRecord.batch_id == batch_id
-    ).delete(synchronize_session='fetch')
-
-    # ── Soft delete the batch ──
-    # WHY SOFT DELETE: Keep audit trail
-    # Admin can see "this batch was deleted on X date by Y user"
     batch.deleted_at = datetime.utcnow()
     batch.status = 'failed'
-
     db.commit()
 
-    # ── Delete file from disk ──
-    # WHY: No point keeping the file if batch is deleted
-    # Saves disk space
     file_path = os.path.join(UPLOAD_DIR, f"batch_{batch_id}_{batch.file_name}")
     file_deleted = False
-
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
             file_deleted = True
         except Exception:
-            # File deletion failed but DB is already committed
-            # Not critical enough to fail the whole request
-            file_deleted = False
+            pass
 
     return {
         "success": True,
@@ -493,4 +544,4 @@ async def delete_upload_batch(
             "file_removed_from_disk": file_deleted
         },
         "note": "Products are kept. Only sales records from this batch were deleted."
-    } 
+    }
