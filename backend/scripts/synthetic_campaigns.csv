@@ -1,0 +1,8 @@
+campaign_name,start_date,end_date,discount_pct,budget_spent,revenue_generated,roi,uplift_pct,products_count,duration_days
+Ramadan Mega Sale 2024,2024-03-11,2024-04-09,20,90000,153496.42,1.71,47.4,3,30
+Eid Special 2024,2024-04-10,2024-04-12,15,6750,11283.0,1.67,28.0,3,3
+Summer Clearance 2024,2024-07-01,2024-07-15,25,56250,73900.77,1.31,36.0,3,15
+Back to School Bundle 2024,2024-09-01,2024-09-10,10,15000,26015.88,1.73,21.9,3,10
+New Year Flash Sale 2025,2025-01-01,2025-01-05,30,225000,222023.8,0.99,22.8,30,5
+Ramadan Essentials 2025,2025-02-28,2025-03-29,18,81000,118900.59,1.47,34.6,3,30
+Mid-Year Promotion 2025,2025-06-15,2025-06-30,12,28800,42161.16,1.46,31.3,3,16
