@@ -12,53 +12,32 @@ const cleanStr = (v) => String(v ?? "").trim();
 const getSelectedMerges = (productsDraft, normalized_name) => {
   const key = cleanStr(normalized_name);
   if (!key) return [];
-
-  const found = safeArr(productsDraft).find(
-    (x) => cleanStr(x?.normalized_name) === key,
-  );
-
-  return uniq(
-    safeArr(found?.merge_with)
-      .map(cleanStr)
-      .filter(Boolean),
-  );
+  const found = safeArr(productsDraft).find((x) => cleanStr(x?.normalized_name) === key);
+  return uniq(safeArr(found?.merge_with).map(cleanStr).filter(Boolean));
 };
 
-function MergeModal({
-  open,
-  product,
-  candidates,
-  selected,
-  locked,
-  onToggle,
-  onClose,
-}) {
+function MergeModal({ open, product, candidates, selected, locked, onToggle, onClose }) {
   const { t } = useTranslation("upload");
   const [q, setQ] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setQ("");
-
-    const onKeyDown = (e) => {
+    const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
     };
-
-    document.addEventListener("keydown", onKeyDown);
-
-    const prevOverflow = document.body.style.overflow;
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
     };
   }, [open, onClose]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return candidates;
-    return candidates.filter((c) => c.toLowerCase().includes(s));
+    return s ? candidates.filter((c) => c.toLowerCase().includes(s)) : candidates;
   }, [q, candidates]);
 
   if (!open || !product) return null;
@@ -90,10 +69,8 @@ function MergeModal({
 
         <div className="merge-section">
           <div className="merge-section-title">
-            {t("review.modal.selectedMerges")}{" "}
-            <span className="muted">({selected.length})</span>
+            {t("review.modal.selectedMerges")} <span className="muted">({selected.length})</span>
           </div>
-
           {selected.length === 0 ? (
             <div className="merge-empty">{t("review.modal.noMergesSelected")}</div>
           ) : (
@@ -117,10 +94,8 @@ function MergeModal({
 
         <div className="merge-section">
           <div className="merge-section-title">
-            {t("review.modal.candidates")}{" "}
-            <span className="muted">({candidates.length})</span>
+            {t("review.modal.candidates")} <span className="muted">({candidates.length})</span>
           </div>
-
           <div className="merge-search-row">
             <input
               className="merge-search"
@@ -129,9 +104,7 @@ function MergeModal({
               placeholder={t("review.modal.searchPlaceholder")}
               disabled={locked}
             />
-            <div className="merge-count">
-              {t("review.modal.shown", { count: filtered.length })}
-            </div>
+            <div className="merge-count">{t("review.modal.shown", { count: filtered.length })}</div>
           </div>
 
           {candidates.length === 0 ? (
@@ -174,14 +147,12 @@ function MergeModal({
 }
 
 export default function ReviewStep({
-  confirmResult,
-  confirmedMappings,
-  extracting,
-  extractResult,
+  confirmMappingsResult,
+  products,
   productsDraft,
   confirmProductsResult,
   confirmingProducts,
-  onExtract,
+  alreadyProcessed = false,
   onToggleMerge,
   onConfirmProducts,
   onBack,
@@ -189,50 +160,37 @@ export default function ReviewStep({
 }) {
   const { t } = useTranslation("upload");
   const [activeNorm, setActiveNorm] = useState("");
-  const locked = !!confirmProductsResult?.success;
 
-  const extractedProducts = useMemo(() => {
-    const list = Array.isArray(extractResult?.products) ? extractResult.products : [];
-    return list
-      .map((p) => ({
-        primary_name: cleanStr(p?.primary_name),
-        normalized_name: cleanStr(p?.normalized_name),
-        category: p?.category == null ? "" : cleanStr(p?.category),
-      }))
-      .filter((p) => p.primary_name && p.normalized_name);
-  }, [extractResult]);
+  const locked = !!confirmProductsResult?.success || !!alreadyProcessed;
+
+  const allPrimaryNames = useMemo(
+    () => uniq(safeArr(products).map((p) => p.primary_name)).filter(Boolean),
+    [products]
+  );
 
   const byNorm = useMemo(() => {
     const m = new Map();
-    extractedProducts.forEach((p) => m.set(p.normalized_name, p));
+    safeArr(products).forEach((p) => m.set(p.normalized_name, p));
     return m;
-  }, [extractedProducts]);
+  }, [products]);
 
-  const allPrimaryNames = useMemo(() => {
-    return uniq(extractedProducts.map((p) => p.primary_name)).filter(Boolean);
-  }, [extractedProducts]);
-
-  const extractedCount = extractedProducts.length;
-
-  const mergedTotal = useMemo(() => {
-    return safeArr(productsDraft).reduce((acc, p) => {
-      const merges = safeArr(p?.merge_with).map(cleanStr).filter(Boolean);
-      return acc + merges.length;
-    }, 0);
-  }, [productsDraft]);
-
-  const canShowExtracted = !!extractResult?.success && extractedCount > 0;
+  const mergedTotal = useMemo(
+    () => safeArr(productsDraft).reduce((acc, p) => acc + safeArr(p?.merge_with).filter(Boolean).length, 0),
+    [productsDraft]
+  );
 
   const activeProduct = activeNorm ? byNorm.get(activeNorm) : null;
-  const activeSelected = useMemo(() => {
-    if (!activeProduct) return [];
-    return getSelectedMerges(productsDraft, activeProduct.normalized_name);
-  }, [productsDraft, activeProduct]);
+  const activeSelected = useMemo(
+    () => (activeProduct ? getSelectedMerges(productsDraft, activeProduct.normalized_name) : []),
+    [productsDraft, activeProduct]
+  );
+  const activeCandidates = useMemo(
+    () => (activeProduct ? allPrimaryNames.filter((n) => n !== activeProduct.primary_name) : []),
+    [allPrimaryNames, activeProduct]
+  );
 
-  const activeCandidates = useMemo(() => {
-    if (!activeProduct) return [];
-    return allPrimaryNames.filter((n) => n !== activeProduct.primary_name);
-  }, [allPrimaryNames, activeProduct]);
+  const productCount = safeArr(products).length;
+  const hasProducts = productCount > 0;
 
   return (
     <div className="review-step">
@@ -240,28 +198,26 @@ export default function ReviewStep({
         <div>
           <div className="review-title">{t("review.title")}</div>
           <div className="review-sub">
-            {extractResult?.success
-              ? t("review.subExtracted", { count: extractedCount, merges: mergedTotal })
+            {hasProducts
+              ? t("review.subExtracted", { count: productCount, merges: mergedTotal })
               : t("review.subNotExtracted")}
           </div>
         </div>
 
         <div className="review-header-right">
-          {confirmResult?.success ? (
+          {confirmMappingsResult?.success ? (
             <span className="badge ok">
               {t("review.mappingsConfirmed", {
-                count: Array.isArray(confirmedMappings) ? confirmedMappings.length : 0,
+                count: safeArr(confirmMappingsResult?.confirmed_mappings).length,
               })}
             </span>
           ) : (
             <span className="badge warn">{t("review.mappingsNotFound")}</span>
           )}
 
-          {extractResult?.success ? (
-            <span className="badge ok">{t("review.badgeExtracted")}</span>
-          ) : (
-            <span className="badge muted">{t("review.badgeNotExtracted")}</span>
-          )}
+          <span className={`badge ${hasProducts ? "ok" : "muted"}`}>
+            {hasProducts ? t("review.badgeExtracted") : t("review.badgeNotExtracted")}
+          </span>
         </div>
       </div>
 
@@ -269,32 +225,28 @@ export default function ReviewStep({
         <InfoMessage type="success">{t("review.productsConfirmedSuccess")}</InfoMessage>
       )}
 
-      {!extractResult?.success && (
-        <div className="top-actions">
+      {!hasProducts && (
+        <FormActions>
           <Button type="button" variant="secondary" onClick={onBack}>
             {t("review.back")}
           </Button>
-
-          <Button type="button" onClick={onExtract} disabled={extracting}>
-            {extracting ? t("review.extracting") : t("review.extractProducts")}
+          <Button type="button" variant="secondary" onClick={onFinish} disabled={!locked}>
+            {t("review.finish")}
           </Button>
-        </div>
+        </FormActions>
       )}
 
-      {extractResult?.success && !canShowExtracted && (
-        <InfoMessage type="info">{t("review.noProductsExtracted")}</InfoMessage>
-      )}
-
-      {canShowExtracted && (
+      {hasProducts && (
         <>
           <div className="products-list">
-            {extractedProducts.map((p) => {
+            {safeArr(products).map((p) => {
               const selected = getSelectedMerges(productsDraft, p.normalized_name);
 
               return (
                 <div className="product-row" key={p.normalized_name}>
                   <div className="product-main">
                     <div className="product-name">{p.primary_name}</div>
+
                     <div className="product-meta">
                       <span>{t("review.category")} {p.category || "—"}</span>
                       <span className="sep">•</span>
@@ -303,6 +255,16 @@ export default function ReviewStep({
                       </span>
                     </div>
 
+                    {safeArr(p.possible_typos).length > 0 && (
+                      <div className="product-typos">
+                        {p.possible_typos.map((typo) => (
+                          <span key={typo.product} className="typo-chip" title={typo.suggestion}>
+                            ⚠ {typo.product}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     {selected.length > 0 ? (
                       <div className="selected-wrap">
                         {selected.slice(0, 4).map((v) => (
@@ -310,9 +272,9 @@ export default function ReviewStep({
                             {v}
                           </span>
                         ))}
-                        {selected.length > 4 ? (
+                        {selected.length > 4 && (
                           <span className="more-chip">+{selected.length - 4} more</span>
-                        ) : null}
+                        )}
                       </div>
                     ) : (
                       <div className="selected-empty">{t("review.noMergesSelected")}</div>
@@ -341,24 +303,17 @@ export default function ReviewStep({
             </Button>
 
             <div className="right-actions">
-              <Button
-                type="button"
-                onClick={onConfirmProducts}
-                disabled={confirmingProducts || locked}
-              >
+              <Button type="button" onClick={onConfirmProducts} disabled={confirmingProducts || locked}>
                 {locked
-                  ? t("review.confirmed")
+                  ? alreadyProcessed && !confirmProductsResult?.success
+                    ? t("review.alreadyProcessed", { defaultValue: "Already processed" })
+                    : t("review.confirmed")
                   : confirmingProducts
                   ? t("review.confirmingProducts")
                   : t("review.confirmProducts")}
               </Button>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onFinish}
-                disabled={!locked}
-              >
+              <Button type="button" variant="secondary" onClick={onFinish} disabled={!locked}>
                 {t("review.finish")}
               </Button>
             </div>

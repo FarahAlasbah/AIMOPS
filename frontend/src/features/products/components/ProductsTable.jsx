@@ -15,11 +15,12 @@ export default function ProductsTable({
   onMergeRow,
   onDeleteRow,
 }) {
-  const { t } = useTranslation("products");
+  const { t, i18n } = useTranslation("products");
+  const pageDir = i18n.dir();
 
   return (
     <div className="table-wrap">
-      <table className="products-table">
+      <table className="products-table" dir={pageDir}>
         <thead>
           <tr>
             <th style={{ width: 42 }}>
@@ -31,14 +32,30 @@ export default function ProductsTable({
               />
             </th>
 
-            <th className="click" onClick={() => onToggleSort("product_id")}>{t("table.colId")}</th>
-            <th className="click" onClick={() => onToggleSort("name")}>{t("table.colName")}</th>
-            <th className="click" onClick={() => onToggleSort("category")}>{t("table.colCategory")}</th>
-            <th className="click" onClick={() => onToggleSort("active")}>{t("table.colActive")}</th>
-            <th className="click" onClick={() => onToggleSort("suspicious")}>{t("table.colSuspicious")}</th>
-            <th className="click" onClick={() => onToggleSort("sales")}>{t("table.colSales")}</th>
-            <th className="click" onClick={() => onToggleSort("revenue")}>{t("table.colRevenue")}</th>
-            <th className="click" onClick={() => onToggleSort("last_sale")}>{t("table.colLastSale")}</th>
+            <th className="click" onClick={() => onToggleSort("product_id")}>
+              {t("table.colId")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("name")}>
+              {t("table.colName")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("category")}>
+              {t("table.colCategory")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("active")}>
+              {t("table.colActive")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("suspicious")}>
+              {t("table.colSuspicious")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("sales")}>
+              {t("table.colSales")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("revenue")}>
+              {t("table.colRevenue")}
+            </th>
+            <th className="click" onClick={() => onToggleSort("last_sale")}>
+              {t("table.colLastSale")}
+            </th>
             <th style={{ width: 180 }}>{t("table.colActions")}</th>
           </tr>
         </thead>
@@ -77,13 +94,22 @@ export default function ProductsTable({
                   </td>
 
                   <td>{id}</td>
-                  <td dir="auto" title={p.normalized_name || ""}>
+
+                  <td title={p.normalized_name || ""}>
                     <div className="name-cell">
-                      <div className="name">{p.product_name || "-"}</div>
-                      <div className="sub muted">{p.normalized_name || "-"}</div>
+                      <div className="name">
+                        <bdi>{p.product_name || "-"}</bdi>
+                      </div>
+                      <div className="sub muted">
+                        <bdi>{p.normalized_name || "-"}</bdi>
+                      </div>
                     </div>
                   </td>
-                  <td dir="auto">{p.category ?? "-"}</td>
+
+                  <td>
+                    <bdi>{p.category ?? "-"}</bdi>
+                  </td>
+
                   <td>{p.is_active ? t("table.activeYes") : t("table.activeNo")}</td>
 
                   <td>
@@ -91,7 +117,7 @@ export default function ProductsTable({
                       <div className="flag">
                         <span className="chip chip-warn">{t("table.chipNeedsMerge")}</span>
                         <div className="sub muted" title={reason || ""}>
-                          {reason || "—"}
+                          <bdi>{reason || "—"}</bdi>
                         </div>
                       </div>
                     ) : (

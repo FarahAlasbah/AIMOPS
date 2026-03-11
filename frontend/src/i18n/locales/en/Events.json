@@ -152,7 +152,24 @@
     "emptySubtitle": "Create your first event to see it here and on the calendar.",
     "errorLoadFailed": "Failed to load events.",
     "errorCreateFailed": "Failed to create event.",
-    "noticeCreated": "Event created successfully."
+    "noticeCreated": "Event created successfully.",
+    "draftsBtnLabel": "{{count}} Detected Event",
+    "draftsBtnLabel_other": "{{count}} Detected Events",
+    "draftsBtnTitle": "{{count}} auto-detected event(s) need your review",
+    "draftsLoading": "Loading...",
+    "draftsBannerTitle": "{{count}} Auto-Detected Event Needs Review",
+    "draftsBannerTitle_other": "{{count}} Auto-Detected Events Need Review",
+    "draftsBannerSub": "Confirm or dismiss to improve your sales forecasts.",
+    "draftsCardTitle": "Detected Events",
+    "draftsCardTitleCount": "Detected Events ({{count}})",
+    "draftsCardSub": "AIMOPS found unusual sales activity in your data. Confirm each event to improve forecasting accuracy.",
+    "draftConfirmedNotice": "\"{{name}}\" confirmed and added to your calendar.",
+    "tabDrafts": "Detected Events",
+    "tabAll": "All Events",
+    "tabUpcoming": "Upcoming Events",
+    "draftsCardTitleEmpty": "Detected Events",
+    "draftsEmptyTitle": "No detected events",
+    "draftsEmptySubtitle": "Upload sales data to automatically detect unusual sales periods."
   },
   "eventDetailsPage": {
     "title": "Event Details",
@@ -193,5 +210,37 @@
     "errorAnalyzeFailed": "Failed to analyze impact.",
     "errorUpdateFailed": "Failed to update event.",
     "errorRequestFailed": "Request failed."
+  },
+  "draftModal": {
+    "badge": "Auto-Detected",
+    "title": "Detected Event: {{start}} – {{end}}",
+    "topbarLabel": "Detected sales activity — review and confirm to improve forecasts",
+    "close": "Close",
+    "impactTitle": "Sales Impact",
+    "vsLabel": "vs",
+    "unitsDay": "units/day",
+    "noImpacts": "No impact data available.",
+    "formTitle": "Confirm This Event",
+    "formSub": "Give it a name so it can be used in future forecasts.",
+    "labelEventName": "Event Name",
+    "placeholderEventName": "e.g. Ramadan 2024, Summer Promotion...",
+    "errorNameRequired": "Please enter a name for this event.",
+    "errorConfirmFailed": "Could not confirm event. Please try again.",
+    "errorDismissFailed": "Could not dismiss event. Please try again.",
+    "confirm": "Confirm Event",
+    "confirming": "Confirming...",
+    "dismiss": "Dismiss",
+    "dismissing": "Dismissing...",
+    "confirmedSuccess": "Event confirmed and added to your calendar.",
+    "dismissedInfo": "Event dismissed. It won't affect your forecasts."
+  },
+  "draftsTable": {
+    "colPeriod": "Period",
+    "colProducts": "Affected Products",
+    "colImpact": "Impact Level",
+    "colType": "Suggested Type",
+    "reviewBtn": "Review",
+    "durationDays_one": "{{count}} day",
+    "durationDays_other": "{{count}} days"
   }
 }
