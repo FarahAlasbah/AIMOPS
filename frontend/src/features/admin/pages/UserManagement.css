@@ -747,3 +747,83 @@
     justify-content: space-between;
   }
 }
+/* Skeleton loading */
+.skel {
+  position: relative;
+  overflow: hidden;
+  background: #f3f4f6;
+  border-radius: 999px;
+}
+
+.skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-60%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.7),
+    transparent
+  );
+  animation: users-skel 1.1s infinite;
+}
+
+@keyframes users-skel {
+  0% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
+}
+
+.skel-text {
+  height: 14px;
+}
+
+.skel-w-sm {
+  width: 90px;
+}
+
+.skel-w-md {
+  width: 140px;
+}
+
+.skel-w-lg {
+  width: 220px;
+  max-width: 100%;
+}
+
+.skel-pill {
+  width: 92px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.skel-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.user-card-skeleton {
+  pointer-events: none;
+}
+
+.users-cards-skeleton {
+  display: none;
+}
+
+/* keep table skeleton spacing nice */
+.users-table-clean tbody td .skel {
+  margin-block: 2px;
+}
+
+/* Tablet / small screens: switch to cards */
+@media (max-width: 1024px) {
+  .users-cards-skeleton {
+    display: grid;
+    gap: 12px;
+  }
+}

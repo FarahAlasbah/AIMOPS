@@ -9,6 +9,60 @@ const ROLE_BADGE_BY_NAME = {
   "Business Owner": "business_owner",
 };
 
+const UsersTableSkeleton = ({ rows = 6 }) => (
+  <>
+    {/* Desktop skeleton */}
+    <div className="users-table-wrapper users-table-desktop">
+      <table className="users-table users-table-clean">
+        <thead>
+          <tr>
+            <th>User name</th>
+            <th>Full name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th style={{ width: 56, textAlign: "right" }} />
+          </tr>
+        </thead>
+
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={`table-skel-${i}`}>
+              <td><div className="skel skel-text skel-w-sm" /></td>
+              <td><div className="skel skel-text skel-w-md" /></td>
+              <td><div className="skel skel-text skel-w-lg" /></td>
+              <td><div className="skel skel-pill" /></td>
+              <td style={{ textAlign: "right" }}>
+                <div className="skel skel-icon" style={{ marginInlineStart: "auto" }} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Mobile skeleton */}
+    <div className="users-cards users-cards-skeleton">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={`card-skel-${i}`} className="user-card user-card-skeleton">
+          <div className="user-card-top">
+            <div style={{ flex: 1 }}>
+              <div className="skel skel-text skel-w-sm" />
+              <div className="skel skel-text skel-w-md" style={{ marginTop: 8 }} />
+              <div className="skel skel-text skel-w-lg" style={{ marginTop: 10 }} />
+            </div>
+
+            <div className="skel skel-pill" />
+          </div>
+
+          <div className="user-card-actions">
+            <div className="skel skel-icon" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 const UsersTableCard = ({ users, loading, onEdit }) => {
   const { t } = useTranslation("admin");
   const badge = (u) => ROLE_BADGE_BY_NAME[u.role_name] || "unknown";
@@ -16,9 +70,7 @@ const UsersTableCard = ({ users, loading, onEdit }) => {
   return (
     <Card title={t("users.systemUsers")}>
       {loading ? (
-        <div className="loading-state">
-          <p>{t("users.loading")}</p>
-        </div>
+        <UsersTableSkeleton />
       ) : users.length === 0 ? (
         <div className="empty-state">
           <p>{t("users.empty")}</p>
@@ -66,7 +118,7 @@ const UsersTableCard = ({ users, loading, onEdit }) => {
             </table>
           </div>
 
-          {/* Tablet / small screens (your CSS already switches to this) */}
+          {/* Tablet / small screens */}
           <div className="users-cards">
             {users.map((u) => (
               <div key={u.user_id} className="user-card">

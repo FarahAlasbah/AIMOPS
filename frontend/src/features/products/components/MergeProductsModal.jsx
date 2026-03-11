@@ -14,7 +14,8 @@ export default function MergeProductsModal({
   mergeIds,
   setMergeIds,
 }) {
-  const { t } = useTranslation("products");
+  const { t, i18n } = useTranslation("products");
+  const pageDir = i18n.dir();
 
   return (
     <Modal
@@ -32,7 +33,7 @@ export default function MergeProductsModal({
         </>
       }
     >
-      <div className="modal-grid">
+      <div className="modal-grid" dir={pageDir}>
         <div className="field">
           <label>{t("mergeModal.primaryLabel")}</label>
           <select
@@ -64,7 +65,7 @@ export default function MergeProductsModal({
                   return (
                     <li key={id}>
                       <span>
-                        #{id} — {p?.product_name || "-"}
+                        <span>#{id}</span> — <bdi>{p?.product_name || "-"}</bdi>
                       </span>
                       <button
                         className="link"
