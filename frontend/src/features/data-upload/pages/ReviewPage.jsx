@@ -6,18 +6,17 @@ import { useTranslation } from "react-i18next";
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
-import { extractProducts, confirmProducts } from "../../../api/data";
+import { confirmProducts, getAllUploads } from "../../../api/data";
+import { broadcastNotification } from "../../../api/notifications";
 import ReviewStep from "../components/ReviewStep";
 import { ReviewPageSkeleton } from "../components/Skeletons";
 
-const LS_CONFIRMED_MAPPINGS_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
-const LS_EXTRACTED_PRODUCTS_KEY = (batchId) => `sales_extracted_products_v1_${batchId}`;
-const LS_PRODUCTS_DRAFT_KEY = (batchId) => `sales_products_draft_v1_${batchId}`;
-const LS_CONFIRMED_PRODUCTS_KEY = (batchId) => `sales_confirmed_products_v1_${batchId}`;
+const LS_CONFIRMED_MAPPINGS_KEY = (id) => `sales_confirmed_mappings_v1_${id}`;
+const LS_PRODUCTS_DRAFT_KEY = (id) => `sales_products_draft_v1_${id}`;
+const LS_CONFIRMED_PRODUCTS_KEY = (id) => `sales_confirmed_products_v1_${id}`;
 
 const extractApiError = (err, fallback) => {
   const data = err?.response?.data;
-
   if (Array.isArray(data?.detail)) {
     return data.detail
       .map((d) => {
@@ -27,9 +26,7 @@ const extractApiError = (err, fallback) => {
       })
       .join(" | ");
   }
-
   if (typeof data?.detail === "string") return data.detail;
-
   if (data?.detail && typeof data.detail === "object") {
     if (typeof data.detail.message === "string") return data.detail.message;
     try {
@@ -38,49 +35,23 @@ const extractApiError = (err, fallback) => {
       return fallback;
     }
   }
-
   if (typeof data?.message === "string") return data.message;
   if (typeof err?.message === "string") return err.message;
-
   return fallback;
 };
 
-const normalizeConfirmedMappings = (confirmResult) => {
-  const raw =
-    confirmResult?.confirmed_mappings ||
-    confirmResult?.mappings ||
-    confirmResult?.confirmedMappings ||
-    [];
+const extractProductsFromMappingResult = (confirmResult) => {
+  const list = confirmResult?.products?.products || confirmResult?.products || [];
+  if (!Array.isArray(list)) return [];
 
-  if (!Array.isArray(raw)) return [];
-
-  const cleaned = raw
-    .map((m) => ({
-      original_name: m?.original_name ?? m?.originalName ?? m?.name ?? "",
-      role: m?.role ?? "",
-    }))
-    .filter((m) => m.original_name && m.role);
-
-  const allowed = new Set([
-    "date",
-    "product_name",
-    "quantity",
-    "unit_price",
-    "total_amount",
-    "category",
-  ]);
-
-  return cleaned.filter((m) => allowed.has(String(m.role)));
-};
-
-const initDraftFromExtract = (extractResult) => {
-  const list = Array.isArray(extractResult?.products) ? extractResult.products : [];
   return list
     .map((p) => ({
+      primary_name: String(p?.primary_name ?? p?.name ?? "").trim(),
       normalized_name: String(p?.normalized_name ?? "").trim(),
-      merge_with: [],
+      category: p?.category == null ? null : String(p.category).trim() || null,
+      possible_typos: Array.isArray(p?.possible_typos) ? p.possible_typos : [],
     }))
-    .filter((p) => p.normalized_name);
+    .filter((p) => p.primary_name && p.normalized_name);
 };
 
 const buildDraftMap = (productsDraft) => {
@@ -88,18 +59,24 @@ const buildDraftMap = (productsDraft) => {
   (productsDraft || []).forEach((p) => {
     const key = String(p?.normalized_name || "").trim();
     if (!key) return;
-
     const merge_with = Array.from(
       new Set(
         (Array.isArray(p?.merge_with) ? p.merge_with : [])
           .map((x) => String(x).trim())
-          .filter(Boolean),
-      ),
+          .filter(Boolean)
+      )
     );
-
     map.set(key, merge_with);
   });
   return map;
+};
+
+const initDraftFromProducts = (products) =>
+  products.map((p) => ({ normalized_name: p.normalized_name, merge_with: [] }));
+
+const isProcessedStatus = (status) => {
+  const v = String(status || "").trim().toLowerCase();
+  return ["processed", "done", "success", "completed", "confirmed", "imported"].includes(v);
 };
 
 export default function ReviewPage() {
@@ -109,30 +86,21 @@ export default function ReviewPage() {
 
   const [localLoading, setLocalLoading] = useState(true);
   const [error, setError] = useState("");
-  const [confirmResult, setConfirmResult] = useState(null);
-  const [extracting, setExtracting] = useState(false);
-  const [extractResult, setExtractResult] = useState(null);
+  const [confirmMappingsResult, setConfirmMappingsResult] = useState(null);
   const [productsDraft, setProductsDraft] = useState([]);
   const [confirmingProducts, setConfirmingProducts] = useState(false);
   const [confirmProductsResult, setConfirmProductsResult] = useState(null);
+  const [batchStatus, setBatchStatus] = useState("");
 
   useEffect(() => {
     if (!batchId) return;
-
     setLocalLoading(true);
 
     try {
       const raw = localStorage.getItem(LS_CONFIRMED_MAPPINGS_KEY(batchId));
-      setConfirmResult(raw ? JSON.parse(raw) : null);
+      setConfirmMappingsResult(raw ? JSON.parse(raw) : null);
     } catch {
-      setConfirmResult(null);
-    }
-
-    try {
-      const raw = localStorage.getItem(LS_EXTRACTED_PRODUCTS_KEY(batchId));
-      setExtractResult(raw ? JSON.parse(raw) : null);
-    } catch {
-      setExtractResult(null);
+      setConfirmMappingsResult(null);
     }
 
     try {
@@ -145,7 +113,6 @@ export default function ReviewPage() {
     try {
       const raw = localStorage.getItem(LS_PRODUCTS_DRAFT_KEY(batchId));
       const parsed = raw ? JSON.parse(raw) : null;
-
       const cleaned = Array.isArray(parsed)
         ? parsed
             .map((p) => ({
@@ -154,7 +121,6 @@ export default function ReviewPage() {
             }))
             .filter((p) => p.normalized_name)
         : [];
-
       setProductsDraft(cleaned);
     } catch {
       setProductsDraft([]);
@@ -164,18 +130,56 @@ export default function ReviewPage() {
   }, [batchId]);
 
   useEffect(() => {
-    if (!batchId) return;
-    if (!extractResult?.success) return;
+    let cancelled = false;
 
-    if (!Array.isArray(productsDraft) || productsDraft.length === 0) {
-      const next = initDraftFromExtract(extractResult);
-      setProductsDraft(next);
+    const run = async () => {
+      if (!batchId) return;
+
+      try {
+        const uploads = await getAllUploads({ limit: 100, maxPages: 50 });
+        if (cancelled) return;
+
+        const found = Array.isArray(uploads)
+          ? uploads.find((u) => String(u?.batch_id ?? u?.batchId) === String(batchId))
+          : null;
+
+        setBatchStatus(found?.status || "");
+      } catch {
+        if (!cancelled) setBatchStatus("");
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [batchId]);
+
+  const products = useMemo(
+    () => extractProductsFromMappingResult(confirmMappingsResult),
+    [confirmMappingsResult]
+  );
+
+  const alreadyProcessed = useMemo(
+    () => isProcessedStatus(batchStatus) || !!confirmProductsResult?.success,
+    [batchStatus, confirmProductsResult]
+  );
+
+  useEffect(() => {
+    if (!batchId) return;
+    if (products.length === 0) return;
+    if (confirmProductsResult?.success) return;
+
+    setProductsDraft((prev) => {
+      if (Array.isArray(prev) && prev.length > 0) return prev;
+      const next = initDraftFromProducts(products);
       try {
         localStorage.setItem(LS_PRODUCTS_DRAFT_KEY(batchId), JSON.stringify(next));
       } catch {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extractResult, batchId]);
+      return next;
+    });
+  }, [products, batchId, confirmProductsResult?.success]);
 
   useEffect(() => {
     if (!batchId) return;
@@ -183,62 +187,6 @@ export default function ReviewPage() {
       localStorage.setItem(LS_PRODUCTS_DRAFT_KEY(batchId), JSON.stringify(productsDraft || []));
     } catch {}
   }, [productsDraft, batchId]);
-
-  const confirmedMappings = useMemo(
-    () => normalizeConfirmedMappings(confirmResult),
-    [confirmResult],
-  );
-
-  const canExtract = useMemo(() => {
-    if (!confirmResult?.success) return false;
-    return confirmedMappings.some((m) => m.role === "product_name");
-  }, [confirmResult, confirmedMappings]);
-
-  const handleExtract = async () => {
-    setError("");
-    if (!batchId) return;
-
-    if (extractResult?.success) return;
-    if (confirmProductsResult?.success) return;
-
-    if (!canExtract) {
-      setError(t("reviewPage.errorExtractNeedsProductName"));
-      return;
-    }
-
-    try {
-      setExtracting(true);
-
-      const payload = { mappings: confirmedMappings };
-      const res = await extractProducts(batchId, payload);
-
-      setExtractResult(res);
-      try {
-        localStorage.setItem(LS_EXTRACTED_PRODUCTS_KEY(batchId), JSON.stringify(res));
-      } catch {}
-
-      const nextDraft = initDraftFromExtract(res);
-      setProductsDraft(nextDraft);
-      try {
-        localStorage.setItem(LS_PRODUCTS_DRAFT_KEY(batchId), JSON.stringify(nextDraft));
-      } catch {}
-    } catch (err) {
-      setError(extractApiError(err, t("reviewPage.errorExtractFailed")));
-    } finally {
-      setExtracting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!batchId) return;
-    if (!confirmResult?.success) return;
-    if (confirmProductsResult?.success) return;
-    if (extractResult?.success) return;
-    if (!canExtract) return;
-
-    handleExtract();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchId, confirmResult?.success]);
 
   const toggleMerge = (normalized_name, variation) => {
     const key = String(normalized_name || "").trim();
@@ -249,67 +197,55 @@ export default function ReviewPage() {
       const list = Array.isArray(prev) ? [...prev] : [];
       const idx = list.findIndex((p) => String(p.normalized_name) === key);
 
-      if (idx === -1) {
-        return [...list, { normalized_name: key, merge_with: [v] }];
-      }
+      if (idx === -1) return [...list, { normalized_name: key, merge_with: [v] }];
 
       const cur = Array.isArray(list[idx].merge_with) ? list[idx].merge_with : [];
       const exists = cur.includes(v);
       const next = exists ? cur.filter((x) => x !== v) : [...cur, v];
-
       list[idx] = { ...list[idx], merge_with: next };
       return list;
     });
   };
 
   const canConfirmProducts = useMemo(() => {
-    if (!extractResult?.success) return false;
-    if (confirmProductsResult?.success) return false;
-
-    const products = Array.isArray(extractResult?.products) ? extractResult.products : [];
     if (products.length === 0) return false;
-
-    for (const p of products) {
-      if (!String(p?.normalized_name || "").trim()) return false;
-      if (!String(p?.primary_name || "").trim()) return false;
-    }
+    if (alreadyProcessed) return false;
     return true;
-  }, [extractResult, confirmProductsResult]);
+  }, [products, alreadyProcessed]);
 
   const handleConfirmProducts = async () => {
     setError("");
-    if (!batchId) return;
-
-    if (!canConfirmProducts) {
-      setError(t("reviewPage.errorCannotConfirmYet"));
-      return;
-    }
+    if (!batchId || !canConfirmProducts) return;
 
     try {
       setConfirmingProducts(true);
 
-      const products = Array.isArray(extractResult?.products) ? extractResult.products : [];
       const mergesByNorm = buildDraftMap(productsDraft);
-
-      const confirmed_products = products.map((p) => {
-        const primary_name = String(p.primary_name || "").trim();
-        const normalized_name = String(p.normalized_name || "").trim();
-        const merge_with = mergesByNorm.get(normalized_name) || [];
-        const categoryRaw = p?.category == null ? "" : String(p.category).trim();
-
-        return {
-          primary_name,
-          normalized_name,
-          category: categoryRaw ? categoryRaw : null,
-          merge_with,
-        };
-      });
+      const confirmed_products = products.map((p) => ({
+        primary_name: p.primary_name,
+        normalized_name: p.normalized_name,
+        category: p.category ?? null,
+        merge_with: mergesByNorm.get(p.normalized_name) || [],
+      }));
 
       const res = await confirmProducts(batchId, { confirmed_products });
 
       setConfirmProductsResult(res);
       try {
         localStorage.setItem(LS_CONFIRMED_PRODUCTS_KEY(batchId), JSON.stringify(res));
+      } catch {}
+
+      try {
+        await broadcastNotification({
+          title: t("reviewPage.notifTitle", { defaultValue: "New Products Confirmed" }),
+          message: t("reviewPage.notifMessage", {
+            count: confirmed_products.length,
+            batchId,
+            defaultValue: `${confirmed_products.length} new product(s) from batch #${batchId} have been confirmed and are now available.`,
+          }),
+          type: "info",
+          target_type: "all",
+        });
       } catch {}
     } catch (err) {
       setError(extractApiError(err, t("reviewPage.errorConfirmFailed")));
@@ -343,32 +279,37 @@ export default function ReviewPage() {
               </div>
             )}
 
-            {!confirmResult?.success && (
+            {alreadyProcessed && !confirmProductsResult?.success && (
               <div style={{ marginBottom: 12 }}>
-                <InfoMessage type="warn">
-                  {t("reviewPage.noMappingsWarn")}
+                <InfoMessage type="info">
+                  {t("reviewPage.alreadyProcessedInfo", {
+                    defaultValue:
+                      "This batch has already been processed. You can finish and return to uploads.",
+                  })}
                 </InfoMessage>
               </div>
             )}
 
-            {!canExtract && confirmResult?.success && (
+            {!confirmMappingsResult?.success && (
               <div style={{ marginBottom: 12 }}>
-                <InfoMessage type="info">
-                  {t("reviewPage.noProductNameInfo")}
-                </InfoMessage>
+                <InfoMessage type="warn">{t("reviewPage.noMappingsWarn")}</InfoMessage>
+              </div>
+            )}
+
+            {confirmMappingsResult?.success && products.length === 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <InfoMessage type="info">{t("reviewPage.noProductNameInfo")}</InfoMessage>
               </div>
             )}
 
             <ReviewStep
               batchId={batchId}
-              confirmResult={confirmResult}
-              confirmedMappings={confirmedMappings}
-              extracting={extracting}
-              extractResult={extractResult}
+              confirmMappingsResult={confirmMappingsResult}
+              products={products}
               productsDraft={productsDraft}
               confirmProductsResult={confirmProductsResult}
               confirmingProducts={confirmingProducts}
-              onExtract={canExtract ? handleExtract : () => {}}
+              alreadyProcessed={alreadyProcessed}
               onToggleMerge={toggleMerge}
               onConfirmProducts={canConfirmProducts ? handleConfirmProducts : () => {}}
               onBack={() => navigate(`/app/data-upload/map/${batchId}`)}

@@ -1,3 +1,4 @@
+// frontend/src/features/admin/components/EditUserModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../../shared/components";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
@@ -101,8 +102,16 @@ const EditUserModal = ({
   };
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card modal-card-scroll">
+    <div
+      className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="modal-card modal-card-scroll"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <div>
             <div className="modal-title">{t("editUser.title")}</div>
