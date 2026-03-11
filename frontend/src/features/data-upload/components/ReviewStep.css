@@ -385,3 +385,92 @@
   display: flex;
   justify-content: flex-end;
 }
+/* Add these styles to the END of ReviewStep.css */
+
+/* Auto-extract loading indicator */
+.review-extracting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+  font-size: var(--fs-md);
+  margin: 8px 0;
+}
+
+.review-extracting-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--c-border);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: review-spin 0.7s linear infinite;
+}
+
+@keyframes review-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-extracting-spinner {
+    animation: none;
+  }
+}
+
+/* Add these styles to the END of ReviewStep.css */
+
+/* Auto-extract loading indicator */
+.review-extracting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+  font-size: var(--fs-md);
+  margin: 8px 0;
+}
+
+.review-extracting-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--c-border);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: review-spin 0.7s linear infinite;
+}
+
+@keyframes review-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-extracting-spinner {
+    animation: none;
+  }
+}
+
+/* Typo warning chips on product rows */
+.product-typos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.typo-chip {
+  font-size: var(--fs-sm);
+  color: var(--c-warn-text);
+  background: var(--c-warn-bg);
+  border: 1px solid var(--c-warn-border);
+  border-radius: var(--r-pill);
+  padding: 3px 8px;
+  cursor: default;
+}

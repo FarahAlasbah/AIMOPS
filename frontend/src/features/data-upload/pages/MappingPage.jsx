@@ -45,6 +45,115 @@ const extractApiError = (err, fallback) => {
   return fallback;
 };
 
+// ---------- Backend response normalizer ----------
+/**
+ * The backend returns:
+ *   { columns: [{ suggested_role, confidence, confidence_level, ... }], required_missing: [] }
+ *
+ * The frontend MappingStep expects:
+ *   { columns: [{ role, confidence, confidence_level, verification_needed, auto_include, ... }],
+ *     classified: { high_confidence, needs_verification, needs_mapping, required_missing, suggested_skip } }
+ *
+ * This function bridges the gap so no other component needs to change.
+ */
+const normalizeAnalysisResponse = (raw) => {
+  if (!raw) return null;
+
+  const rawColumns = Array.isArray(raw.columns) ? raw.columns : [];
+
+  // Normalize each column: map suggested_role -> role, fill missing fields
+  const columns = rawColumns.map((c) => {
+    const role = normalizeRole(c.suggested_role ?? c.role ?? "skip");
+    const confidenceLevel = (c.confidence_level ?? "").toLowerCase();
+    const confidence = typeof c.confidence === "number" ? c.confidence : 0;
+
+    // verification_needed: medium confidence or if backend explicitly sets it
+    const verification_needed =
+      c.verification_needed != null
+        ? !!c.verification_needed
+        : confidenceLevel === "medium";
+
+    // auto_include: include by default if role is not skip and confidence is high/medium
+    const auto_include =
+      c.auto_include != null
+        ? !!c.auto_include
+        : role !== "skip" && (confidenceLevel === "high" || confidenceLevel === "medium");
+
+    // can_skip: non-required columns can be skipped
+    const classification = c.classification ?? "optional";
+    const can_skip = classification !== "required";
+
+    return {
+      ...c,
+      role,
+      // keep suggested_role too for reference
+      suggested_role: c.suggested_role ?? role,
+      confidence,
+      confidence_level: c.confidence_level ?? "low",
+      verification_needed,
+      auto_include,
+      can_skip,
+      // fill display fields if missing
+      non_null_values: c.non_null_values ?? c.total_values ?? null,
+      total_values: c.total_values ?? null,
+      completeness: c.completeness ?? null,
+      benefit: c.benefit ?? c.why ?? c.reason ?? null,
+      why: c.why ?? null,
+      reason: c.reason ?? null,
+      samples: Array.isArray(c.samples) ? c.samples : [],
+      user_prompt: c.display_hint ?? c.user_prompt ?? null,
+    };
+  });
+
+  // Build classified groups from normalized columns
+  const high_confidence = columns.filter(
+    (c) =>
+      (c.confidence_level ?? "").toLowerCase() === "high" &&
+      !c.verification_needed &&
+      normalizeRole(c.role) !== "skip",
+  );
+
+  const needs_verification = columns.filter((c) => c.verification_needed);
+
+  const needs_mapping = columns.filter(
+    (c) =>
+      !c.verification_needed &&
+      (c.confidence_level ?? "").toLowerCase() === "low" &&
+      normalizeRole(c.role) === "skip",
+  );
+
+  const suggested_skip = columns.filter(
+    (c) =>
+      !c.verification_needed &&
+      normalizeRole(c.role) === "skip" &&
+      (c.confidence_level ?? "").toLowerCase() !== "low",
+  );
+
+  // required_missing: from backend array or derive from required columns with no good role
+  const rawRequiredMissing = Array.isArray(raw.required_missing)
+    ? raw.required_missing
+    : [];
+
+  // Normalize required_missing items
+  const required_missing = rawRequiredMissing.map((r) => ({
+    role: r.role ?? r.required_role ?? "",
+    name: r.name ?? r.label ?? r.role ?? "",
+    user_prompt: r.user_prompt ?? r.display_hint ?? null,
+  })).filter((r) => r.role);
+
+  return {
+    ...raw,
+    columns,
+    classified: {
+      high_confidence,
+      needs_verification,
+      needs_mapping,
+      required_missing,
+      suggested_skip,
+    },
+  };
+};
+
 const extractConfirmedMappingsList = (confirmResult) => {
   const raw =
     confirmResult?.confirmed_mappings ||
@@ -214,18 +323,26 @@ export default function MappingPage() {
       setAnalysisLoading(true);
 
       try {
-        let res = null;
+        let rawRes = null;
 
         if (!refresh) {
           const cached = getCachedAnalysis(batchId);
-          if (cached) res = cached;
+          // Only use cache if it looks like raw backend data (has columns array).
+          // If somehow normalized data ended up cached, still fine — normalizer
+          // is idempotent (suggested_role ?? role handles both shapes).
+          if (cached?.columns) rawRes = cached;
         }
 
-        if (!res) {
-          res = await analyzeSalesBatch(batchId);
-          setCachedAnalysis(batchId, res);
+        if (!rawRes) {
+          rawRes = await analyzeSalesBatch(batchId);
+          // Always cache the raw backend response, not the normalized one,
+          // so we always normalize on read and stale shape is never an issue.
+          setCachedAnalysis(batchId, rawRes);
         }
 
+        // Normalize raw backend response into the shape the UI expects.
+        // This maps suggested_role -> role, builds classified groups, etc.
+        const res = normalizeAnalysisResponse(rawRes);
         setAnalysis(res);
 
         let confirmed = null;

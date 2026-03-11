@@ -135,3 +135,555 @@
   line-height: 1.6;
   white-space: pre-wrap;
 }
+/* ── Append to frontend/src/features/events/pages/Events.css ── */
+
+/* Draft events button in header */
+.events-drafts-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.events-drafts-btn:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.events-drafts-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.events-drafts-btn.has-drafts {
+  border-color: #2563eb;
+  background: #dbeafe;
+  animation: draft-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes draft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
+}
+
+.events-drafts-icon {
+  font-size: 14px;
+}
+
+.events-drafts-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: #1e40af;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* Draft events inline banner */
+.events-drafts-banner {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.events-drafts-banner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.events-drafts-banner-icon {
+  font-size: 20px;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.events-drafts-banner-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.events-drafts-banner-sub {
+  font-size: 12px;
+  color: #1e40af;
+  margin-top: 3px;
+}
+
+.events-drafts-banner-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+
+/* Individual draft chip */
+.events-draft-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.events-draft-chip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.events-draft-chip-date {
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+
+.events-draft-chip-impact {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.impact-veryhigh {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border: 1px solid #93c5fd;
+}
+
+.impact-high {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.impact-medium {
+  background: #f0f7ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.impact-low {
+  background: #f9fafb;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+/* ── Append to frontend/src/features/events/pages/Events.css ── */
+
+/* Draft count badge in card header */
+.drafts-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* ── Drafts table ── */
+.drafts-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.drafts-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.drafts-table th {
+  text-align: left;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.drafts-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  font-size: 13px;
+  color: #111827;
+}
+
+.drafts-row:last-child td {
+  border-bottom: none;
+}
+
+.drafts-dates {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.drafts-duration {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+.drafts-products {
+  font-size: 13px;
+  color: #374151;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.drafts-type {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+/* Impact pills */
+.drafts-impact-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.dimp-veryhigh { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.dimp-high     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.dimp-medium   { background: #f0f7ff; color: #2563eb; border-color: #bfdbfe; }
+.dimp-low      { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+
+/* Review button */
+.drafts-review-btn {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.drafts-review-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* ── Drafts skeleton ── */
+.drafts-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.drafts-sk-row {
+  display: grid;
+  grid-template-columns: 2fr 1.6fr 1fr 1fr 0.9fr;
+  gap: 12px;
+  padding: 14px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.drafts-sk-row:last-child {
+  border-bottom: none;
+}
+
+.drafts-sk-cell {
+  height: 14px;
+  border-radius: 6px;
+  background: #eef2f7;
+  position: relative;
+  overflow: hidden;
+}
+
+.drafts-sk-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+  animation: drafts-sk-shine 1.3s infinite;
+}
+
+/* Stagger shimmer per row for a cascade effect */
+.drafts-sk-row:nth-child(2) .drafts-sk-cell::after { animation-delay: 0.15s; }
+.drafts-sk-row:nth-child(3) .drafts-sk-cell::after { animation-delay: 0.30s; }
+
+@keyframes drafts-sk-shine {
+  100% { transform: translateX(100%); }
+}
+
+.drafts-sk-wide  { width: 75%; }
+.drafts-sk-mid   { width: 65%; }
+.drafts-sk-short { width: 50%; height: 20px; border-radius: 999px; }
+.drafts-sk-btn   { width: 80%; height: 28px; border-radius: 8px; }
+
+/* ── Append to frontend/src/features/events/pages/Events.css ── */
+
+/* ── Tab switcher ────────────────────────────────────────────────────────── */
+.ev-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.ev-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 11px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.ev-tab:hover {
+  color: #374151;
+}
+
+.ev-tab-active {
+  color: #03045e;
+  border-bottom-color: #03045e;
+}
+
+.ev-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  line-height: 1;
+}
+
+.ev-tab-active .ev-tab-badge {
+  background: #03045e;
+  color: #ffffff;
+  border-color: #03045e;
+}
+
+/* Tiny spinner inside tab for loading state */
+.ev-tab-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #6b7280;
+  border-radius: 50%;
+  animation: ev-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ev-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Push the upcoming toggle to the right */
+.ev-tabs-right {
+  margin-left: auto;
+  padding-bottom: 8px;
+}
+
+/* ── Drafts table ────────────────────────────────────────────────────────── */
+.drafts-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.drafts-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 580px;
+}
+
+.drafts-table th {
+  text-align: left;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.drafts-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  font-size: 13px;
+  color: #111827;
+}
+
+.drafts-row:last-child td {
+  border-bottom: none;
+}
+
+.drafts-dates {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.drafts-duration {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+.drafts-products {
+  font-size: 13px;
+  color: #374151;
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.drafts-type {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+.drafts-impact-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.dimp-veryhigh { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.dimp-high     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.dimp-medium   { background: #f0f7ff; color: #2563eb; border-color: #bfdbfe; }
+.dimp-low      { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+
+.drafts-review-btn {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.drafts-review-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* ── Drafts skeleton ─────────────────────────────────────────────────────── */
+.drafts-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.drafts-sk-row {
+  display: grid;
+  grid-template-columns: 2fr 1.6fr 1fr 1fr 0.9fr;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.drafts-sk-row:last-child { border-bottom: none; }
+
+.drafts-sk-cell {
+  height: 14px;
+  border-radius: 6px;
+  background: #eef2f7;
+  position: relative;
+  overflow: hidden;
+}
+
+.drafts-sk-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+  animation: drafts-sk-shine 1.3s infinite;
+}
+
+.drafts-sk-row:nth-child(2) .drafts-sk-cell::after { animation-delay: 0.15s; }
+.drafts-sk-row:nth-child(3) .drafts-sk-cell::after { animation-delay: 0.30s; }
+
+@keyframes drafts-sk-shine {
+  100% { transform: translateX(100%); }
+}
+
+.drafts-sk-wide  { width: 75%; }
+.drafts-sk-mid   { width: 60%; }
+.drafts-sk-short { width: 50%; height: 20px; border-radius: 999px; }
+.drafts-sk-btn   { width: 70%; height: 28px; border-radius: 8px; }

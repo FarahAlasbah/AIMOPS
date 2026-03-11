@@ -24,21 +24,49 @@ export async function analyzeEvent(eventId, payload) {
 }
 
 /**
- * UPDATE event
- * Tries PUT first, and if backend only supports PATCH it falls back automatically.
+ * UPDATE event — tries PUT first, falls back to PATCH if 405.
  */
 export async function updateEvent(eventId, payload) {
   const id = encodeURIComponent(String(eventId));
-
   try {
     const res = await api.put(`/api/events/${id}`, payload);
     return res.data;
   } catch (err) {
-    const status = err?.response?.status;
-    if (status === 405) {
+    if (err?.response?.status === 405) {
       const res = await api.patch(`/api/events/${id}`, payload);
       return res.data;
     }
     throw err;
   }
+}
+
+// ── Draft events ─────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/events/drafts
+ * Returns list of auto-detected draft events awaiting user review.
+ */
+export async function getDraftEvents() {
+  const res = await api.get("/api/events/drafts");
+  return res.data;
+}
+
+/**
+ * POST /api/events/drafts/{id}/confirm
+ * Confirms a draft event with a user-supplied name + metadata.
+ */
+export async function confirmDraftEvent(eventId, payload) {
+  const id = encodeURIComponent(String(eventId));
+  const res = await api.post(`/api/events/drafts/${id}/confirm`, payload);
+  return res.data;
+}
+
+/**
+ * POST /api/events/drafts/{id}/dismiss
+ * Dismisses a draft event — it won't affect forecasts.
+ */
+export async function dismissDraftEvent(eventId) {
+  const id = encodeURIComponent(String(eventId));
+  const res = await api.post(`/api/events/drafts/${id}/dismiss`);
+  return res.data;
 }

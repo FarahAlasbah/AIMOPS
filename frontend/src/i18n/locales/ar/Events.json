@@ -152,7 +152,24 @@
     "emptySubtitle": "أنشئ فعاليتك الأولى لتظهر هنا وعلى التقويم.",
     "errorLoadFailed": "فشل تحميل الفعاليات.",
     "errorCreateFailed": "فشل إنشاء الفعالية.",
-    "noticeCreated": "تم إنشاء الفعالية بنجاح."
+    "noticeCreated": "تم إنشاء الفعالية بنجاح.",
+    "draftsBtnLabel": "حدث مكتشف ({{count}})",
+    "draftsBtnLabel_other": "أحداث مكتشفة ({{count}})",
+    "draftsBtnTitle": "{{count}} حدث/أحداث مكتشفة تحتاج مراجعتك",
+    "draftsLoading": "جارٍ التحميل...",
+    "draftsBannerTitle": "{{count}} حدث مكتشف تلقائياً يحتاج مراجعة",
+    "draftsBannerTitle_other": "{{count}} أحداث مكتشفة تلقائياً تحتاج مراجعة",
+    "draftsBannerSub": "أكّد أو تجاهل لتحسين توقعات المبيعات.",
+    "draftsCardTitle": "الأحداث المكتشفة",
+    "draftsCardTitleCount": "الأحداث المكتشفة ({{count}})",
+    "draftsCardSub": "اكتشف AIMOPS نشاطاً غير عادي في بيانات مبيعاتك. أكّد كل حدث لتحسين دقة التوقعات.",
+    "draftConfirmedNotice": "تم تأكيد \"{{name}}\" وإضافته إلى التقويم.",
+    "tabDrafts": "الأحداث المكتشفة",
+    "tabAll": "جميع الأحداث",
+    "tabUpcoming": "الأحداث القادمة",
+    "draftsCardTitleEmpty": "الأحداث المكتشفة",
+    "draftsEmptyTitle": "لا توجد أحداث مكتشفة",
+    "draftsEmptySubtitle": "ارفع بيانات المبيعات لاكتشاف فترات النشاط غير العادي تلقائياً."
   },
   "eventDetailsPage": {
     "title": "تفاصيل الفعالية",
@@ -193,5 +210,37 @@
     "errorAnalyzeFailed": "فشل تحليل التأثير.",
     "errorUpdateFailed": "فشل تحديث الفعالية.",
     "errorRequestFailed": "فشل الطلب."
+  },
+  "draftModal": {
+    "badge": "مكتشف تلقائياً",
+    "title": "حدث مكتشف: {{start}} – {{end}}",
+    "topbarLabel": "نشاط مبيعات غير عادي — راجع وأكّد لتحسين التوقعات",
+    "close": "إغلاق",
+    "impactTitle": "تأثير المبيعات",
+    "vsLabel": "مقابل",
+    "unitsDay": "وحدة/يوم",
+    "noImpacts": "لا توجد بيانات تأثير.",
+    "formTitle": "تأكيد الحدث",
+    "formSub": "أعطِه اسماً حتى يُستخدم في التوقعات المستقبلية.",
+    "labelEventName": "اسم الحدث",
+    "placeholderEventName": "مثال: رمضان 2024، تخفيضات الصيف...",
+    "errorNameRequired": "يرجى إدخال اسم للحدث.",
+    "errorConfirmFailed": "تعذّر تأكيد الحدث. يرجى المحاولة مجدداً.",
+    "errorDismissFailed": "تعذّر تجاهل الحدث. يرجى المحاولة مجدداً.",
+    "confirm": "تأكيد الحدث",
+    "confirming": "جارٍ التأكيد...",
+    "dismiss": "تجاهل",
+    "dismissing": "جارٍ التجاهل...",
+    "confirmedSuccess": "تم تأكيد الحدث وإضافته إلى تقويمك.",
+    "dismissedInfo": "تم تجاهل الحدث ولن يؤثر على توقعاتك."
+  },
+  "draftsTable": {
+    "colPeriod": "الفترة",
+    "colProducts": "المنتجات المتأثرة",
+    "colImpact": "مستوى التأثير",
+    "colType": "النوع المقترح",
+    "reviewBtn": "مراجعة",
+    "durationDays_one": "{{count}} يوم",
+    "durationDays_other": "{{count}} أيام"
   }
 }

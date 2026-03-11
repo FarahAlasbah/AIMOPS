@@ -2,20 +2,21 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import UploadCard from "./UploadCard";
+import { UploadsListSkeleton } from "./Skeletons";
 
 export default function UploadsList({
   uploads,
   loading,
   limit,
   offset,
+  totalCount,
   hasNext,
   onPrev,
   onNext,
   hasLocalMapping,
   hasCachedAnalysis,
-  onAnalyze,
+  onOpenMapping,
   onReview,
-  onRefreshAnalysis,
   onClearLocal,
   onDelete,
   deletingId,
@@ -29,14 +30,20 @@ export default function UploadsList({
   }, [loading, uploads, offset, onPrev]);
 
   if (loading) {
-    return <div className="uploads-state">{t("uploadsList.loading")}</div>;
+    return <UploadsListSkeleton count={6} />;
   }
 
   if (!uploads || uploads.length === 0) {
-    return <div className="uploads-state">{t("uploadsList.empty")}</div>;
+    return (
+      <div className="uploads-state">
+        {t("uploadsList.emptyFiltered", { defaultValue: "No uploads match the current filters." })}
+      </div>
+    );
   }
 
   const page = Math.floor(offset / limit) + 1;
+  const from = totalCount > 0 ? offset + 1 : 0;
+  const to = offset + uploads.length;
 
   return (
     <>
@@ -47,9 +54,8 @@ export default function UploadsList({
             upload={u}
             hasLocalMapping={hasLocalMapping(u.batchId)}
             hasCachedAnalysis={hasCachedAnalysis(u.batchId)}
-            onAnalyze={onAnalyze}
+            onOpenMapping={onOpenMapping}
             onReview={onReview}
-            onRefreshAnalysis={onRefreshAnalysis}
             onClearLocal={onClearLocal}
             onDelete={onDelete}
             deleting={String(deletingId) === String(u.batchId)}
@@ -59,7 +65,11 @@ export default function UploadsList({
 
       <div className="pager">
         <div className="pager-info">
-          {t("uploadsList.pageInfo", { page, count: uploads.length })}
+          {t("uploadsList.pageInfoTotal", {
+            page,
+            total: totalCount,
+            defaultValue: `Page ${page} • ${totalCount} uploads`,
+          })}
         </div>
 
         <div className="pager-actions">
@@ -68,7 +78,12 @@ export default function UploadsList({
           </button>
 
           <div className="pager-page">
-            {t("uploadsList.offsetInfo", { offset, limit })}
+            {t("uploadsList.rangeInfo", {
+              from,
+              to,
+              total: totalCount,
+              defaultValue: `Showing ${from}-${to} of ${totalCount}`,
+            })}
           </div>
 
           <button className="pager-btn" onClick={onNext} disabled={!hasNext}>

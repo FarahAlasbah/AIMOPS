@@ -26,9 +26,8 @@ export default function UploadCard({
   upload,
   hasLocalMapping,
   hasCachedAnalysis,
-  onAnalyze,
+  onOpenMapping,
   onReview,
-  onRefreshAnalysis,
   onClearLocal,
   onDelete,
   deleting,
@@ -36,6 +35,17 @@ export default function UploadCard({
   const { t } = useTranslation("upload");
   const status = upload?.status || "unknown";
   const busy = !!deleting;
+
+  const hasConfirmedMappings = !!hasLocalMapping;
+
+  const handlePrimaryAction = () => {
+    if (hasConfirmedMappings) {
+      onReview?.(upload.batchId);
+      return;
+    }
+
+    onOpenMapping?.(upload.batchId);
+  };
 
   return (
     <div className="upload-card">
@@ -82,29 +92,16 @@ export default function UploadCard({
 
       <div className="upload-actions-row">
         <div className="upload-actions-main">
-          <Button variant="primary" onClick={() => onAnalyze(upload.batchId)} disabled={busy}>
-            {busy ? t("uploadCard.deleting") : t("uploadCard.analyzeMap")}
-          </Button>
-
-          <Button
-            variant="secondary"
-            onClick={() => onReview(upload.batchId)}
-            disabled={!hasLocalMapping || busy}
-          >
-            {t("uploadCard.products")}
+          <Button variant="primary" onClick={handlePrimaryAction} disabled={busy}>
+            {busy
+              ? t("uploadCard.deleting")
+              : hasConfirmedMappings
+              ? t("uploadCard.products")
+              : t("uploadCard.continueMapping", { defaultValue: "Continue mapping" })}
           </Button>
         </div>
 
         <div className="upload-actions-aux">
-          <button
-            type="button"
-            className="ghost-btn"
-            onClick={() => onRefreshAnalysis(upload.batchId)}
-            disabled={busy}
-          >
-            {t("uploadCard.refreshAnalysis")}
-          </button>
-
           <button
             type="button"
             className="ghost-btn"

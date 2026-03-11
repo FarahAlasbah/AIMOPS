@@ -86,7 +86,7 @@
   z-index: 1;
   font-size: 12px;
   color: #374151;
-  text-align: left;
+  text-align: start;
   padding: 10px 10px;
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
@@ -103,6 +103,7 @@
   vertical-align: top;
   font-size: 14px;
   color: #111827;
+  text-align: start;
 }
 
 .products-table tbody tr:hover {
@@ -281,7 +282,7 @@
 
 .picklist ul {
   margin: 0;
-  padding-left: 16px;
+  padding-inline-start: 16px;
 }
 
 .picklist li {
@@ -321,19 +322,6 @@
   color: #111827;
 }
 
-/* NEW: Soft delete button style (not full red) */
-/* .btn-danger-soft {
-  background: #ffffff ;
-  border: 1px solid #e5e7eb ;
-  color: #b91c1c;
-}
-
-.btn-danger-soft:hover {
-  background: #fef2f2 !important;
-  border-color: #fecaca !important;
-  color: #991b1b !important;
-} */
-/* --- Delete button (text always visible + hover darken) --- */
 .danger-btn {
   display: inline-flex;
   align-items: center;
@@ -361,7 +349,6 @@
   cursor: not-allowed;
 }
 
-/* small version for row actions */
 .danger-btn.sm {
   height: 32px;
   padding: 0 12px;
