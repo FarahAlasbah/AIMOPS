@@ -380,7 +380,9 @@ def _send_notification(db, batch_id: int, uploaded_by: int, draft_events: List[D
             title=title,
             message=message,
             related_id=batch_id,
+            related_type='batch',
             is_read=False,
+            email_sent=False,
         ))
 
     except Exception as e:
