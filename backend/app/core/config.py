@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    #AI
+    ANTHROPIC_API_KEY: str
     
     # Application
     ENVIRONMENT: str = "development"
@@ -26,6 +28,7 @@ class Settings(BaseSettings):
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 50
     UPLOAD_FOLDER: str = "./uploads"
+    
     
     class Config:
         env_file = ".env"  # Load from .env file

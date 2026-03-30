@@ -309,11 +309,20 @@ async def confirm_products_and_import(
         # This runs AFTER the response is sent — user isn't waiting for it.
         # detect_campaigns_for_batch will analyze the imported sales records
         # and create a notification when it finds anything.
+        # ── Fire Background Tasks ──
+        from app.services.campaign_detection_service import detect_campaigns_for_batch
+        # from app.services.forecasting_service import train_all_products
+
         background_tasks.add_task(
             detect_campaigns_for_batch,
             batch_id=batch_id,
             uploaded_by=current_user.user_id
         )
+        # background_tasks.add_task(
+        #     train_all_products,
+        #     db=db,
+        #     user_id=current_user.user_id
+        # )
 
     except Exception as e:
         db.rollback()
@@ -337,6 +346,7 @@ async def confirm_products_and_import(
         },
         "rejected_details": rejected_details,
         "campaign_detection": "Running in background. You'll be notified when complete.",
+        "forecast_training": "Running in background. You'll be notified when forecasts are ready.",
         "next_step": "Your data is ready for forecasting and campaign analysis"
     }
 
