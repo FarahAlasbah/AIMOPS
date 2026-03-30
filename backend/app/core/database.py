@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
 from .config import settings
 
+
 # URL-encode password to handle special characters
 encoded_password = quote_plus(settings.DB_PASSWORD)
 
@@ -43,3 +44,4 @@ def get_db():
         yield db
     finally:
         db.close()
+        
