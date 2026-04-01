@@ -17,6 +17,8 @@ from app.api import products
 from app.api import events
 from app.api import notifications
 from app.api.draft_events import router as draft_events_router
+from app.api.forecasts import router as forecasts_router
+
 
 
 
@@ -47,6 +49,8 @@ app.include_router(products.router)
 app.include_router(draft_events_router)
 app.include_router(events.router)
 app.include_router(notifications.router)
+app.include_router(forecasts_router)
+
 
 @app.get("/")
 def root():
