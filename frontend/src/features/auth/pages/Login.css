@@ -79,8 +79,16 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+@font-face {
+  font-family: "Believe Stronger";
+  src: url("../../../assets/fonts/believestronger-regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .brand-name {
-  font-family: 'Inria Serif', serif;
+  font-family: "Believe Stronger", serif;
   font-size: 36px;
   font-weight: 700;
   letter-spacing: -0.5px;
