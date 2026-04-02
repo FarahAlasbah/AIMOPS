@@ -1,0 +1,83 @@
+{
+  "page": {
+    "title": "التنبؤ",
+    "subtitle": "أنشئ التوقعات وتابع حالتها وراجع نتائجها لكل منتج."
+  },
+  "toolbar": {
+    "searchLabel": "بحث",
+    "searchPlaceholder": "ابحث باسم المنتج أو الفئة...",
+    "refresh": "تحديث",
+    "results": "{{count}} منتج"
+  },
+  "summary": {
+    "total": "المنتجات",
+    "ready": "جاهز",
+    "training": "قيد التدريب",
+    "failed": "فشل"
+  },
+  "table": {
+    "colProduct": "المنتج",
+    "colCategory": "الفئة",
+    "colDataAvailable": "البيانات المتاحة",
+    "colRevenue": "الإيراد",
+    "colAction": "الإجراء",
+    "empty": "لا توجد منتجات.",
+    "salesRecords": "{{count}} سجل مبيعات",
+    "noData": "لا توجد بيانات مبيعات كافية",
+    "lastSale": "آخر بيع: {{date}}",
+    "notStarted": "لم يُنشأ بعد",
+    "ready": "جاهز",
+    "training": "قيد التدريب",
+    "failed": "فشل"
+  },
+  "actions": {
+    "generate": "إنشاء التوقع",
+    "generating": "جارٍ البدء...",
+    "training": "جارٍ التدريب...",
+    "retry": "إعادة المحاولة",
+    "view": "عرض التوقع",
+    "goDashboard": "اذهب إلى لوحة التحكم",
+    "stayHere": "ابق هنا",
+    "close": "إغلاق"
+  },
+  "messages": {
+    "loadFailed": "فشل تحميل بيانات التنبؤ.",
+    "generateAccepted": "بدأ إنشاء التوقع للمنتج {{name}}.",
+    "generateFailed": "فشل بدء التوقع للمنتج {{name}}.",
+    "detailsFailed": "فشل تحميل تفاصيل التوقع.",
+    "watchNotice": "ما زال التدريب جارياً لـ {{count}} منتج/منتجات. يمكنك البقاء في هذه الصفحة أو الذهاب إلى لوحة التحكم وسيصلك إشعار عند الانتهاء.",
+    "watchSaved": "سنرسل إشعاراً في الجرس عندما تصبح هذه التوقعات جاهزة."
+  },
+  "modal": {
+    "title": "تفاصيل التوقع",
+    "daysLabel": "فترة التوقع",
+    "days30": "30 يوماً",
+    "days60": "60 يوماً",
+    "days90": "90 يوماً",
+    "metaProduct": "المنتج",
+    "metaCategory": "الفئة",
+    "metaModel": "نوع النموذج",
+    "metaTrained": "تاريخ التدريب",
+    "metaPeriod": "فترة التوقع",
+    "summaryQuantity": "إجمالي الكمية",
+    "summaryAvg": "المتوسط / يوم",
+    "summaryPeak": "يوم الذروة",
+    "summaryRevenue": "إجمالي الإيراد",
+    "summaryConfidence": "الثقة",
+    "dailyTitle": "توقع الطلب اليومي",
+    "dailySubtitle": "اتجاه يومي واضح مع نطاق ثقة ناعم.",
+    "weeklyTitle": "النظرة الأسبوعية",
+    "weeklySubtitleRevenue": "توقع الإيراد الأسبوعي.",
+    "weeklySubtitleQuantity": "توقع الكمية الأسبوعية.",
+    "explanationTitle": "التفسير",
+    "explanationBody": "يتوقع هذا النموذج نحو {{quantity}} وحدة خلال {{days}} يوماً، بمتوسط {{avg}} وحدة يومياً. من المتوقع أن تبلغ الذروة حول {{peakDate}}، بينما يصل الإيراد المتوقع إلى {{revenue}}. استخدم الرسم اليومي لمعرفة القمم القصيرة، واستخدم الرسم الأسبوعي لتخطيط المخزون والعروض.",
+    "noChartData": "لا توجد بيانات توقع متاحة حالياً.",
+    "datasets": {
+      "quantity": "الكمية المتوقعة",
+      "upper": "الحد الأعلى",
+      "lower": "الحد الأدنى",
+      "weeklyRevenue": "الإيراد الأسبوعي",
+      "weeklyQuantity": "الكمية الأسبوعية"
+    }
+  }
+}

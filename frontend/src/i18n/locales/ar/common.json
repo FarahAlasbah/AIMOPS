@@ -5,6 +5,7 @@
     "campaigns": "الحملات",
     "feedback": "الآراء",
     "dataUpload": "رفع البيانات",
+    "forecasting": "التنبؤ",
     "products": "المنتجات",
     "events": "الفعاليات",
     "calendar": "التقويم",
@@ -58,6 +59,11 @@
     "sentOk": "تم إرسال الإشعار.",
     "sendError": "فشل إرسال الإشعار.",
     "roleHint": "الإرسال حسب الدور يعمل فقط إذا كان السيرفر يدعم target_type=role.",
+    "forecastReadyTitle": "أصبح التوقع جاهزاً",
+    "forecastReadyBody": "أصبح توقع المنتج {{name}} جاهزاً للعرض.",
+    "forecastFailedTitle": "فشل التوقع",
+    "forecastFailedBody": "فشل توقع المنتج {{name}}. ارجع إلى صفحة التنبؤ وحاول مرة أخرى.",
+    "forecastUnknownProduct": "هذا المنتج",
     "errors": {
       "userRequired": "اختر مستخدماً.",
       "roleRequired": "اختر دوراً."
