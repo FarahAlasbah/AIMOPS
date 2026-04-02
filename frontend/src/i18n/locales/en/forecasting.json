@@ -1,0 +1,83 @@
+{
+  "page": {
+    "title": "Forecasting",
+    "subtitle": "Generate, monitor, and review product forecasts."
+  },
+  "toolbar": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search by product or category...",
+    "refresh": "Refresh",
+    "results": "{{count}} products"
+  },
+  "summary": {
+    "total": "Products",
+    "ready": "Ready",
+    "training": "Training",
+    "failed": "Failed"
+  },
+  "table": {
+    "colProduct": "Product",
+    "colCategory": "Category",
+    "colDataAvailable": "Data available",
+    "colRevenue": "Revenue",
+    "colAction": "Action",
+    "empty": "No products found.",
+    "salesRecords": "{{count}} sales records",
+    "noData": "No usable sales data",
+    "lastSale": "Last sale: {{date}}",
+    "notStarted": "Not generated",
+    "ready": "Ready",
+    "training": "Training",
+    "failed": "Failed"
+  },
+  "actions": {
+    "generate": "Generate Forecast",
+    "generating": "Starting...",
+    "training": "Training...",
+    "retry": "Retry Forecast",
+    "view": "View Forecast",
+    "goDashboard": "Go to Dashboard",
+    "stayHere": "Stay here",
+    "close": "Close"
+  },
+  "messages": {
+    "loadFailed": "Failed to load forecasting data.",
+    "generateAccepted": "Forecast started for {{name}}.",
+    "generateFailed": "Failed to start forecast for {{name}}.",
+    "detailsFailed": "Failed to load forecast details.",
+    "watchNotice": "Training is still running for {{count}} product(s). You can stay on this page or go to the dashboard and get notified when it finishes.",
+    "watchSaved": "We’ll notify you in the bell when these forecasts are ready."
+  },
+  "modal": {
+    "title": "Forecast Details",
+    "daysLabel": "Forecast window",
+    "days30": "30 days",
+    "days60": "60 days",
+    "days90": "90 days",
+    "metaProduct": "Product",
+    "metaCategory": "Category",
+    "metaModel": "Model tier",
+    "metaTrained": "Trained at",
+    "metaPeriod": "Forecast period",
+    "summaryQuantity": "Total quantity",
+    "summaryAvg": "Average / day",
+    "summaryPeak": "Peak day",
+    "summaryRevenue": "Total revenue",
+    "summaryConfidence": "Confidence",
+    "dailyTitle": "Daily demand forecast",
+    "dailySubtitle": "Clean daily trend with a soft confidence range.",
+    "weeklyTitle": "Weekly outlook",
+    "weeklySubtitleRevenue": "Weekly revenue projection.",
+    "weeklySubtitleQuantity": "Weekly quantity projection.",
+    "explanationTitle": "Explanation",
+    "explanationBody": "This forecast projects about {{quantity}} units over {{days}} days, with an average of {{avg}} units per day. Demand is expected to peak around {{peakDate}}, and projected revenue is {{revenue}}. Use the daily chart to spot short-term peaks and the weekly chart to plan stock and promotions.",
+    "noChartData": "No forecast data available yet.",
+    "datasets": {
+      "quantity": "Predicted quantity",
+      "upper": "Upper range",
+      "lower": "Lower range",
+      "weeklyRevenue": "Weekly revenue",
+      "weeklyQuantity": "Weekly quantity"
+    }
+  }
+}

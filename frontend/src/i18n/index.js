@@ -17,6 +17,8 @@ import enAuth from "./locales/en/auth.json";
 import arAuth from "./locales/ar/auth.json";
 import enDashboard from "./locales/en/dashboard.json";
 import arDashboard from "./locales/ar/dashboard.json";
+import enForecasting from "./locales/en/forecasting.json";
+import arForecasting from "./locales/ar/forecasting.json";
 
 const resources = {
   en: {
@@ -27,6 +29,7 @@ const resources = {
     products: enProducts,
     auth: enAuth,
     dashboard: enDashboard,
+    forecasting: enForecasting,
   },
   ar: {
     common: arCommon,
@@ -36,6 +39,7 @@ const resources = {
     products: arProducts,
     auth: arAuth,
     dashboard: arDashboard,
+    forecasting: arForecasting,
   },
 };
 

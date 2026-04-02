@@ -12,11 +12,15 @@ import {
   getUpcomingReminders,
   sendNotificationToUser,
 } from "../../api/notifications";
+import { getForecastStatuses } from "../../api/forecasts";
+import {
+  getLocalForecastNotifications,
+  syncForecastNotificationQueue,
+} from "../../shared/utils/forecastNotifications";
 
 const SEEN_NOTIF_KEY = "aimops_seen_notifications_v1";
 const SEEN_REMINDERS_KEY = "aimops_seen_reminders_v1";
 
-// NEW: hidden (cleared) items
 const HIDDEN_NOTIF_KEY = "aimops_hidden_notifications_v1";
 const HIDDEN_REMINDERS_KEY = "aimops_hidden_reminders_v1";
 
@@ -53,6 +57,37 @@ const normalizeNotif = (n) => {
   };
 };
 
+const normalizeLocalForecastNotification = (item, t) => {
+  const isReady = String(item?.status || "").toLowerCase() === "ready";
+  const productName = item?.product_name || t("notifications.forecastUnknownProduct");
+
+  return {
+    id: item?.id || `forecast:${item?.product_id || ""}`,
+    title: isReady
+      ? t("notifications.forecastReadyTitle")
+      : t("notifications.forecastFailedTitle"),
+    message: isReady
+      ? t("notifications.forecastReadyBody", { name: productName })
+      : t("notifications.forecastFailedBody", { name: productName }),
+    type: isReady ? "forecast-ready" : "forecast-failed",
+    createdAt: item?.created_at || item?.createdAt || "",
+  };
+};
+
+const dedupeById = (items) => {
+  const seen = new Set();
+  const out = [];
+
+  for (const item of items) {
+    const id = String(item?.id ?? "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(item);
+  }
+
+  return out;
+};
+
 export default function NotificationBell() {
   const { t, i18n } = useTranslation();
   const { user, hasPermission } = useAuth();
@@ -70,7 +105,7 @@ export default function NotificationBell() {
   const scrollRef = useRef(null);
 
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("reminders"); // reminders | inbox
+  const [activeTab, setActiveTab] = useState("reminders");
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -78,15 +113,13 @@ export default function NotificationBell() {
   const [reminders, setReminders] = useState([]);
   const [inbox, setInbox] = useState([]);
 
-  // NEW: trigger rerender when hiding/clearing
   const [hiddenTick, setHiddenTick] = useState(0);
 
-  // Admin modal
   const [composerOpen, setComposerOpen] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [users, setUsers] = useState([]);
 
-  const [targetMode, setTargetMode] = useState("all"); // all | role | user
+  const [targetMode, setTargetMode] = useState("all");
   const [targetRole, setTargetRole] = useState("");
   const [targetUserId, setTargetUserId] = useState("");
 
@@ -111,18 +144,27 @@ export default function NotificationBell() {
     setLoadError("");
 
     try {
-      const [remRes, notifRes] = await Promise.all([
+      const [remRes, notifRes, forecastRes] = await Promise.all([
         getUpcomingReminders().catch(() => null),
         getMyNotifications().catch(() => []),
+        getForecastStatuses().catch(() => null),
       ]);
 
       const remList = Array.isArray(remRes?.reminders) ? remRes.reminders : [];
       const notifList = Array.isArray(notifRes) ? notifRes : [];
 
+      if (Array.isArray(forecastRes?.models)) {
+        syncForecastNotificationQueue(forecastRes.models);
+      }
+
+      const localForecastInbox = getLocalForecastNotifications().map((item) =>
+        normalizeLocalForecastNotification(item, t)
+      );
+
       setReminders(remList);
-      setInbox(notifList.map(normalizeNotif));
+      setInbox(dedupeById([...localForecastInbox, ...notifList.map(normalizeNotif)]));
     } catch {
-      setLoadError(t("notifications.loadError", { defaultValue: "Failed to load notifications." }));
+      setLoadError(t("notifications.loadError"));
       setReminders([]);
       setInbox([]);
     } finally {
@@ -130,7 +172,6 @@ export default function NotificationBell() {
     }
   };
 
-  // Initial + periodic refresh
   useEffect(() => {
     fetchAll();
     const id = window.setInterval(fetchAll, 60_000);
@@ -138,7 +179,6 @@ export default function NotificationBell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
 
@@ -155,26 +195,21 @@ export default function NotificationBell() {
     };
   }, [open]);
 
-  // Scroll to top when switching "pages"
   useEffect(() => {
     if (!open) return;
     scrollRef.current?.scrollTo?.({ top: 0, behavior: "smooth" });
   }, [activeTab, open]);
 
-  // Visible lists (filtered by "hidden/cleared" sets)
   const visibleReminders = useMemo(() => {
     const hidden = loadSet(HIDDEN_REMINDERS_KEY);
     return reminders.filter((r) => !hidden.has(String(r?.original_event_id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reminders, hiddenTick]);
 
   const visibleInbox = useMemo(() => {
     const hidden = loadSet(HIDDEN_NOTIF_KEY);
     return inbox.filter((n) => !hidden.has(String(n?.id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inbox, hiddenTick]);
 
-  // Mark seen ONLY for active tab + only for visible items
   useEffect(() => {
     if (!open) return;
 
@@ -218,7 +253,6 @@ export default function NotificationBell() {
     };
   }, [visibleInbox, visibleReminders]);
 
-  // --- Clear / hide helpers (client-side) ---
   const hideOneReminder = (eventId) => {
     const hidden = loadSet(HIDDEN_REMINDERS_KEY);
     hidden.add(String(eventId));
@@ -309,13 +343,13 @@ export default function NotificationBell() {
       if (targetMode === "user") {
         const uid = Number(targetUserId);
         if (Number.isNaN(uid)) {
-          setSendError(t("notifications.errors.userRequired", { defaultValue: "Select a user." }));
+          setSendError(t("notifications.errors.userRequired"));
           return;
         }
         await sendNotificationToUser({ user_id: uid, title: title.trim(), message: message.trim(), type });
       } else if (targetMode === "role") {
         if (!targetRole.trim()) {
-          setSendError(t("notifications.errors.roleRequired", { defaultValue: "Select a role." }));
+          setSendError(t("notifications.errors.roleRequired"));
           return;
         }
         await broadcastNotification({
@@ -334,14 +368,14 @@ export default function NotificationBell() {
         });
       }
 
-      setSendOk(t("notifications.sentOk", { defaultValue: "Notification sent." }));
+      setSendOk(t("notifications.sentOk"));
       await fetchAll();
       resetComposer();
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
         err?.response?.data?.detail ||
-        t("notifications.sendError", { defaultValue: "Failed to send notification." });
+        t("notifications.sendError");
       setSendError(String(msg));
     } finally {
       setSending(false);
@@ -369,7 +403,7 @@ export default function NotificationBell() {
         type="button"
         className="notif-btn"
         onClick={() => setOpen((v) => !v)}
-        aria-label={t("notifications.ariaOpen", { defaultValue: "Open notifications" })}
+        aria-label={t("notifications.ariaOpen")}
       >
         <Bell size={18} />
         {unseen.total > 0 && <span className="notif-badge">{unseen.total > 99 ? "99+" : unseen.total}</span>}
@@ -379,15 +413,15 @@ export default function NotificationBell() {
         <div
           className="notif-popover"
           role="dialog"
-          aria-label={t("notifications.title", { defaultValue: "Notifications" })}
+          aria-label={t("notifications.title")}
         >
           <div className="notif-header">
-            <div className="notif-title">{t("notifications.title", { defaultValue: "Notifications" })}</div>
+            <div className="notif-title">{t("notifications.title")}</div>
 
             <div className="notif-header-actions">
               {isAdmin && (
                 <button type="button" className="notif-linkbtn" onClick={openComposer}>
-                  {t("notifications.create", { defaultValue: "New" })}
+                  {t("notifications.create")}
                 </button>
               )}
               <button type="button" className="notif-iconbtn" onClick={() => setOpen(false)} aria-label="Close">
@@ -396,26 +430,24 @@ export default function NotificationBell() {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="notif-tabs">
             <TabButton
               tab="reminders"
-              label={t("notifications.reminders", { defaultValue: "Reminders" })}
+              label={t("notifications.reminders")}
               count={unseen.remindersUnseen}
             />
             <TabButton
               tab="inbox"
-              label={t("notifications.inbox", { defaultValue: "Inbox" })}
+              label={t("notifications.inbox")}
               count={unseen.inboxUnseen}
             />
           </div>
 
-          {/* Clear actions */}
           <div className="notif-tools">
             <div className="notif-tools-left">
               {activeTab === "reminders"
-                ? t("notifications.reminders", { defaultValue: "Reminders" })
-                : t("notifications.inbox", { defaultValue: "Inbox" })}
+                ? t("notifications.reminders")
+                : t("notifications.inbox")}
             </div>
 
             <div className="notif-tools-right">
@@ -441,15 +473,14 @@ export default function NotificationBell() {
             </div>
           </div>
 
-          {/* Scrollable body */}
           <div className="notif-body" ref={scrollRef}>
             {loading ? (
-              <div className="notif-loading">{t("notifications.loading", { defaultValue: "Loading..." })}</div>
+              <div className="notif-loading">{t("notifications.loading")}</div>
             ) : loadError ? (
               <div className="notif-error">{loadError}</div>
             ) : activeTab === "reminders" ? (
               visibleReminders.length === 0 ? (
-                <div className="notif-empty">{t("notifications.noReminders", { defaultValue: "No upcoming reminders." })}</div>
+                <div className="notif-empty">{t("notifications.noReminders")}</div>
               ) : (
                 <div className="notif-list">
                   {visibleReminders.map((r) => (
@@ -464,7 +495,7 @@ export default function NotificationBell() {
 
                         <div className="notif-item-right">
                           <div className="notif-chip">
-                            {t("notifications.daysUntil", { defaultValue: "{{n}} days", n: r.days_until })}
+                            {t("notifications.daysUntil", { n: r.days_until })}
                           </div>
 
                           <button
@@ -486,7 +517,7 @@ export default function NotificationBell() {
                       <div className="notif-item-body">{r.message}</div>
 
                       <div className="notif-item-meta">
-                        <span className="meta-label">{t("notifications.suggested", { defaultValue: "Suggested:" })}</span>{" "}
+                        <span className="meta-label">{t("notifications.suggested")}</span>{" "}
                         <span className="meta-val">
                           {r?.suggested_dates?.start} → {r?.suggested_dates?.end}
                         </span>
@@ -496,14 +527,14 @@ export default function NotificationBell() {
                 </div>
               )
             ) : visibleInbox.length === 0 ? (
-              <div className="notif-empty">{t("notifications.empty", { defaultValue: "You're all caught up." })}</div>
+              <div className="notif-empty">{t("notifications.empty")}</div>
             ) : (
               <div className="notif-list">
                 {visibleInbox.map((n) => (
                   <div key={String(n.id)} className="notif-item static">
                     <div className="notif-item-top">
                       <div className="notif-item-title">
-                        {n.title || t("notifications.untitled", { defaultValue: "Untitled" })}
+                        {n.title || t("notifications.untitled")}
                       </div>
 
                       <div className="notif-item-right">
@@ -531,12 +562,11 @@ export default function NotificationBell() {
         </div>
       )}
 
-      {/* Admin composer modal */}
       {composerOpen && isAdmin && (
         <div className="notif-modal-overlay" role="dialog" aria-label="Create notification">
           <div className="notif-modal">
             <div className="notif-modal-header">
-              <div className="notif-modal-title">{t("notifications.createTitle", { defaultValue: "Create notification" })}</div>
+              <div className="notif-modal-title">{t("notifications.createTitle")}</div>
               <button type="button" className="notif-iconbtn" onClick={closeComposer} aria-label="Close">
                 <X size={16} />
               </button>
@@ -544,29 +574,29 @@ export default function NotificationBell() {
 
             <div className="notif-form">
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.target", { defaultValue: "Send to" })}</label>
+                <label className="notif-label">{t("notifications.target")}</label>
                 <select
                   className="notif-select"
                   value={targetMode}
                   onChange={(e) => setTargetMode(e.target.value)}
                   disabled={sending}
                 >
-                  <option value="all">{t("notifications.targetAll", { defaultValue: "All users" })}</option>
-                  <option value="user">{t("notifications.targetUser", { defaultValue: "Single user" })}</option>
-                  <option value="role">{t("notifications.targetRole", { defaultValue: "Users by role" })}</option>
+                  <option value="all">{t("notifications.targetAll")}</option>
+                  <option value="user">{t("notifications.targetUser")}</option>
+                  <option value="role">{t("notifications.targetRole")}</option>
                 </select>
               </div>
 
               {targetMode === "user" && (
                 <div className="notif-row">
-                  <label className="notif-label">{t("notifications.user", { defaultValue: "User" })}</label>
+                  <label className="notif-label">{t("notifications.user")}</label>
                   <select
                     className="notif-select"
                     value={targetUserId}
                     onChange={(e) => setTargetUserId(e.target.value)}
                     disabled={sending || usersLoading}
                   >
-                    <option value="">{usersLoading ? t("notifications.loading", { defaultValue: "Loading..." }) : "—"}</option>
+                    <option value="">{usersLoading ? t("notifications.loading") : "—"}</option>
                     {users.map((u) => (
                       <option key={u.user_id ?? u.id} value={String(u.user_id ?? u.id)}>
                         {u.username} ({u.email})
@@ -578,14 +608,14 @@ export default function NotificationBell() {
 
               {targetMode === "role" && (
                 <div className="notif-row">
-                  <label className="notif-label">{t("notifications.role", { defaultValue: "Role" })}</label>
+                  <label className="notif-label">{t("notifications.role")}</label>
                   <select
                     className="notif-select"
                     value={targetRole}
                     onChange={(e) => setTargetRole(e.target.value)}
                     disabled={sending || usersLoading}
                   >
-                    <option value="">{usersLoading ? t("notifications.loading", { defaultValue: "Loading..." }) : "—"}</option>
+                    <option value="">{usersLoading ? t("notifications.loading") : "—"}</option>
                     {roles.map((r) => (
                       <option key={r} value={r}>
                         {r}
@@ -593,43 +623,39 @@ export default function NotificationBell() {
                     ))}
                   </select>
 
-                  <div className="notif-hint">
-                    {t("notifications.roleHint", {
-                      defaultValue: "Role targeting only works if your backend supports target_type=role.",
-                    })}
-                  </div>
+                  <div className="notif-hint">{t("notifications.roleHint")}</div>
                 </div>
               )}
 
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.title", { defaultValue: "Title" })}</label>
+                <label className="notif-label">{t("notifications.fields.title")}</label>
                 <input
                   className="notif-input"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={sending}
-                  placeholder={t("notifications.placeholders.title", { defaultValue: "Title..." })}
+                  placeholder={t("notifications.placeholders.title")}
                 />
               </div>
 
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.message", { defaultValue: "Message" })}</label>
+                <label className="notif-label">{t("notifications.fields.message")}</label>
                 <textarea
                   className="notif-textarea"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   disabled={sending}
-                  placeholder={t("notifications.placeholders.message", { defaultValue: "Message..." })}
+                  placeholder={t("notifications.placeholders.message")}
                   rows={4}
                 />
               </div>
 
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.type", { defaultValue: "Type" })}</label>
+                <label className="notif-label">{t("notifications.fields.type")}</label>
                 <select className="notif-select" value={type} onChange={(e) => setType(e.target.value)} disabled={sending}>
-                  <option value="system">{t("notifications.types.system", { defaultValue: "System" })}</option>
-                  <option value="info">{t("notifications.types.info", { defaultValue: "Info" })}</option>
-                  <option value="warning">{t("notifications.types.warning", { defaultValue: "Warning" })}</option>
+                  <option value="system">{t("notifications.types.system")}</option>
+                  <option value="info">{t("notifications.types.info")}</option>
+                  <option value="warning">{t("notifications.types.warning")}</option>
                 </select>
               </div>
 
@@ -638,14 +664,12 @@ export default function NotificationBell() {
 
               <div className="notif-actions">
                 <button type="button" className="notif-secondary" onClick={closeComposer} disabled={sending}>
-                  {t("actions.cancel", { defaultValue: "Cancel" })}
+                  {t("actions.cancel")}
                 </button>
 
                 <button type="button" className="notif-primary" onClick={submit} disabled={!canSendNow}>
                   <Send size={16} />
-                  {sending
-                    ? t("notifications.sending", { defaultValue: "Sending..." })
-                    : t("notifications.send", { defaultValue: "Send" })}
+                  {sending ? t("notifications.sending") : t("notifications.send")}
                 </button>
               </div>
             </div>
