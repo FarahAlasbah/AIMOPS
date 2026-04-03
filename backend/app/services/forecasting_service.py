@@ -456,7 +456,8 @@ def _generate_future(df: pd.DataFrame, model, feature_cols: list,
     """
     # Start with full historical data as context
     history = df[['date', 'quantity']].copy()
-    forecast_start = df['date'].max() + timedelta(days=1)
+    today = pd.Timestamp(date.today())
+    forecast_start = max(df['date'].max() + timedelta(days=1), today)
 
     results = []
     std_dev = df['quantity'].std()  # For confidence intervals
@@ -693,7 +694,7 @@ def forecast_with_campaign(
             Event, EventImpactResult.event_id == Event.event_id
         ).filter(
             EventImpactResult.product_id == product_id,
-            Event.event_type == 'promotional',
+            # Event.event_type == 'promotional',
             Event.status == 'confirmed'
         ).all()
 
