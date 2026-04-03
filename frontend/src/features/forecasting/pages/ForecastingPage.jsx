@@ -2,42 +2,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar, Line } from "react-chartjs-2";
-
 import { Button, Card, FormSelect, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
 import { getProducts } from "../../../api/products";
-import {
-  generateForecast,
-  getForecastStatuses,
-  getProductForecast,
-} from "../../../api/forecasts";
+import { generateForecast, getForecastStatuses } from "../../../api/forecasts";
 import { watchForecastProducts } from "../../../shared/utils/forecastNotifications";
 
 import "./ForecastingPage.css";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend
-);
 
 const POLL_MS = 4000;
 
@@ -48,21 +20,6 @@ const normalizeStatus = (value) => {
   if (["training", "queued", "pending", "running"].includes(v)) return "training";
   if (["failed", "error"].includes(v)) return "failed";
   return "idle";
-};
-
-const buildStatusMap = (models = []) => {
-  const map = {};
-
-  for (const model of Array.isArray(models) ? models : []) {
-    if (model?.product_id == null) continue;
-
-    map[model.product_id] = {
-      ...model,
-      status: normalizeStatus(model?.status),
-    };
-  }
-
-  return map;
 };
 
 const fmtNumber = (value, locale = "en") => {
@@ -93,18 +50,36 @@ const fmtDate = (value, locale = "en") => {
   });
 };
 
-const fmtDateTime = (value, locale = "en") => {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString(locale === "ar" ? "ar" : "en");
-};
+function ForecastTableSkeleton({ rows = 8 }) {
+  return (
+    <div className="forecast-skeleton-wrap">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="forecast-skeleton-row">
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "70%" }} />
+            <div className="forecast-sk" style={{ width: "45%" }} />
+          </div>
+          <div className="forecast-sk" style={{ width: "60%" }} />
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "52%" }} />
+            <div className="forecast-sk" style={{ width: "78%" }} />
+          </div>
+          <div className="forecast-sk" style={{ width: "58%" }} />
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "72%" }} />
+            <div className="forecast-sk" style={{ width: "50%" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-function ForecastStatusChip({ status, t }) {
+function ForecastChip({ status, t }) {
   const safe = normalizeStatus(status);
 
   return (
-    <span className={`forecast-status-chip ${safe}`}>
+    <span className={`forecast-chip ${safe}`}>
       {safe === "ready"
         ? t("table.ready")
         : safe === "training"
@@ -116,429 +91,29 @@ function ForecastStatusChip({ status, t }) {
   );
 }
 
-function ForecastTableSkeleton({ rows = 8 }) {
-  return (
-    <div className="forecast-skeleton-wrap">
-      <div className="forecast-sk-table">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="forecast-sk-row">
-            <div>
-              <div className="forecast-sk-line" style={{ width: "72%", marginBottom: 8 }} />
-              <div className="forecast-sk-line" style={{ width: "44%" }} />
-            </div>
-
-            <div className="forecast-sk-line" style={{ width: "66%" }} />
-            <div>
-              <div className="forecast-sk-line" style={{ width: "52%", marginBottom: 8 }} />
-              <div className="forecast-sk-line" style={{ width: "78%" }} />
-            </div>
-            <div className="forecast-sk-line" style={{ width: "60%" }} />
-
-            <div className="forecast-sk-actions">
-              <div className="forecast-sk-pill" />
-              <div className="forecast-sk-pill" style={{ width: 140 }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ForecastDetailsSkeleton() {
-  return (
-    <>
-      <div className="forecast-meta-grid">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="forecast-meta-card">
-            <div className="forecast-sk-line" style={{ width: "42%", marginBottom: 10 }} />
-            <div className="forecast-sk-line" style={{ width: "74%" }} />
-          </div>
-        ))}
-      </div>
-
-      <div className="forecast-chart-grid">
-        <div className="forecast-chart-card">
-          <div className="forecast-sk-line" style={{ width: 180, marginBottom: 10 }} />
-          <div className="forecast-sk-line" style={{ width: "54%", marginBottom: 14 }} />
-          <div className="forecast-sk-box" style={{ height: 320 }} />
-        </div>
-
-        <div className="forecast-chart-card">
-          <div className="forecast-sk-line" style={{ width: 160, marginBottom: 10 }} />
-          <div className="forecast-sk-line" style={{ width: "46%", marginBottom: 14 }} />
-          <div className="forecast-sk-box" style={{ height: 280 }} />
-        </div>
-      </div>
-
-      <div className="forecast-explanation-card">
-        <div className="forecast-sk-line" style={{ width: 140, marginBottom: 12 }} />
-        <div className="forecast-sk-line" style={{ width: "100%", marginBottom: 10 }} />
-        <div className="forecast-sk-line" style={{ width: "94%", marginBottom: 10 }} />
-        <div className="forecast-sk-line" style={{ width: "82%" }} />
-      </div>
-    </>
-  );
-}
-
-function ForecastModal({
-  open,
-  onClose,
-  forecastData,
-  loading,
-  error,
-  days,
-  onDaysChange,
-  locale,
-}) {
-  const { t } = useTranslation("forecasting");
-
-  if (!open) return null;
-
-  const daily = Array.isArray(forecastData?.daily) ? forecastData.daily : [];
-  const weekly = Array.isArray(forecastData?.weekly_summary) ? forecastData.weekly_summary : [];
-
-  const hasBounds = daily.some(
-    (item) =>
-      item?.quantity_lower != null ||
-      item?.quantity_upper != null
-  );
-
-  const quantityLabels = daily.map((item) => fmtDate(item?.date, locale));
-
-  const dailyChartData = {
-    labels: quantityLabels,
-    datasets: [
-      {
-        label: t("modal.datasets.quantity"),
-        data: daily.map((item) => Number(item?.predicted_quantity || 0)),
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37, 99, 235, 0.12)",
-        fill: true,
-        tension: 0.35,
-        borderWidth: 3,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-        pointBackgroundColor: "#2563eb",
-      },
-      ...(hasBounds
-        ? [
-            {
-              label: t("modal.datasets.upper"),
-              data: daily.map((item) =>
-                item?.quantity_upper == null ? null : Number(item.quantity_upper)
-              ),
-              borderColor: "rgba(37, 99, 235, 0.35)",
-              backgroundColor: "transparent",
-              borderDash: [6, 6],
-              borderWidth: 2,
-              pointRadius: 0,
-              tension: 0.3,
-            },
-            {
-              label: t("modal.datasets.lower"),
-              data: daily.map((item) =>
-                item?.quantity_lower == null ? null : Number(item.quantity_lower)
-              ),
-              borderColor: "rgba(147, 197, 253, 0.95)",
-              backgroundColor: "transparent",
-              borderDash: [6, 6],
-              borderWidth: 2,
-              pointRadius: 0,
-              tension: 0.3,
-            },
-          ]
-        : []),
-    ],
-  };
-
-  const dailyChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: "index", intersect: false },
-    plugins: {
-      legend: { position: "bottom" },
-      tooltip: {
-        backgroundColor: "#0f172a",
-        padding: 12,
-        callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${fmtNumber(ctx.parsed.y, locale)}`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: { maxRotation: 0, minRotation: 0 },
-        grid: { display: false },
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: (value) => fmtNumber(value, locale),
-        },
-      },
-    },
-  };
-
-  const hasWeeklyRevenue = weekly.some((item) => Number(item?.revenue || 0) > 0);
-
-  const weeklyChartData = {
-    labels: weekly.map((item) => fmtDate(item?.week_start, locale)),
-    datasets: [
-      {
-        label: hasWeeklyRevenue
-          ? t("modal.datasets.weeklyRevenue")
-          : t("modal.datasets.weeklyQuantity"),
-        data: weekly.map((item) =>
-          Number(hasWeeklyRevenue ? item?.revenue || 0 : item?.quantity || 0)
-        ),
-        backgroundColor: hasWeeklyRevenue
-          ? "rgba(13, 148, 136, 0.78)"
-          : "rgba(245, 158, 11, 0.78)",
-        borderColor: hasWeeklyRevenue ? "#0f766e" : "#d97706",
-        borderWidth: 1.5,
-        borderRadius: 8,
-      },
-    ],
-  };
-
-  const weeklyChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#0f172a",
-        padding: 12,
-        callbacks: {
-          label: (ctx) =>
-            `${ctx.dataset.label}: ${fmtNumber(ctx.parsed.y, locale)}`,
-        },
-      },
-    },
-    scales: {
-      x: { grid: { display: false } },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: (value) => fmtNumber(value, locale),
-        },
-      },
-    },
-  };
-
-  const explanation = forecastData?.summary
-    ? t("modal.explanationBody", {
-        quantity: fmtNumber(forecastData.summary.total_quantity, locale),
-        days: forecastData?.forecast_period?.days || Number(days),
-        avg: fmtNumber(forecastData.summary.avg_daily_quantity, locale),
-        peakDate: fmtDate(forecastData.summary.peak_date, locale),
-        revenue: fmtMoney(forecastData.summary.total_revenue, locale),
-      })
-    : "";
-
-  return (
-    <div
-      className="forecast-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("modal.title")}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
-      <div className="forecast-modal-card">
-        <div className="forecast-modal-head">
-          <div>
-            <div className="forecast-modal-title">{t("modal.title")}</div>
-            <div className="forecast-modal-sub">
-              {forecastData?.product_name || "—"}
-            </div>
-          </div>
-
-          <div className="forecast-modal-actions">
-            <FormSelect
-              label={t("modal.daysLabel")}
-              options={[
-                { value: "30", label: t("modal.days30") },
-                { value: "60", label: t("modal.days60") },
-                { value: "90", label: t("modal.days90") },
-              ]}
-              value={String(days)}
-              onChange={(e) => onDaysChange?.(e.target.value)}
-            />
-
-            <button
-              type="button"
-              className="forecast-close-x"
-              onClick={onClose}
-              aria-label={t("actions.close")}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div className="forecast-modal-body">
-          {loading ? (
-            <ForecastDetailsSkeleton />
-          ) : error ? (
-            <InfoMessage type="error">{error}</InfoMessage>
-          ) : !forecastData?.success ? (
-            <InfoMessage type="warning">{t("modal.noChartData")}</InfoMessage>
-          ) : (
-            <>
-              <div className="forecast-meta-grid">
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.summaryQuantity")}</div>
-                  <div className="forecast-meta-value">
-                    {fmtNumber(forecastData?.summary?.total_quantity, locale)}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.summaryAvg")}</div>
-                  <div className="forecast-meta-value">
-                    {fmtNumber(forecastData?.summary?.avg_daily_quantity, locale)}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.summaryPeak")}</div>
-                  <div className="forecast-meta-value">
-                    {fmtDate(forecastData?.summary?.peak_date, locale)}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.summaryRevenue")}</div>
-                  <div className="forecast-meta-value">
-                    {fmtMoney(forecastData?.summary?.total_revenue, locale)}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.summaryConfidence")}</div>
-                  <div className="forecast-meta-value">
-                    {String(forecastData?.summary?.confidence || "—")}
-                  </div>
-                </div>
-              </div>
-
-              <div className="forecast-meta-grid" style={{ marginTop: 0 }}>
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.metaProduct")}</div>
-                  <div className="forecast-meta-value">{forecastData?.product_name || "—"}</div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.metaCategory")}</div>
-                  <div className="forecast-meta-value">{forecastData?.category || "—"}</div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.metaModel")}</div>
-                  <div className="forecast-meta-value">
-                    {forecastData?.model?.tier || "—"}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.metaTrained")}</div>
-                  <div className="forecast-meta-value">
-                    {fmtDateTime(forecastData?.model?.trained_at, locale)}
-                  </div>
-                </div>
-
-                <div className="forecast-meta-card">
-                  <div className="forecast-meta-label">{t("modal.metaPeriod")}</div>
-                  <div className="forecast-meta-value">
-                    {forecastData?.forecast_period?.start || "—"} →{" "}
-                    {forecastData?.forecast_period?.end || "—"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="forecast-chart-grid">
-                <div className="forecast-chart-card">
-                  <div className="forecast-chart-title">{t("modal.dailyTitle")}</div>
-                  <div className="forecast-chart-sub">{t("modal.dailySubtitle")}</div>
-
-                  <div className="forecast-chart-area">
-                    <Line data={dailyChartData} options={dailyChartOptions} />
-                  </div>
-                </div>
-
-                <div className="forecast-chart-card">
-                  <div className="forecast-chart-title">{t("modal.weeklyTitle")}</div>
-                  <div className="forecast-chart-sub">
-                    {hasWeeklyRevenue
-                      ? t("modal.weeklySubtitleRevenue")
-                      : t("modal.weeklySubtitleQuantity")}
-                  </div>
-
-                  <div className="forecast-chart-area small">
-                    <Bar data={weeklyChartData} options={weeklyChartOptions} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="forecast-explanation-card">
-                <div className="forecast-chart-title">{t("modal.explanationTitle")}</div>
-                <div className="forecast-explanation-text">{explanation}</div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="forecast-modal-foot">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            {t("actions.close")}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ForecastingPage() {
   const { t, i18n } = useTranslation("forecasting");
   const navigate = useNavigate();
   const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
 
   const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState("");
+  const [err, setErr] = useState("");
   const [info, setInfo] = useState(null);
 
   const [products, setProducts] = useState([]);
   const [statusMap, setStatusMap] = useState({});
-  const [statusSummary, setStatusSummary] = useState(null);
+  const [summary, setSummary] = useState(null);
 
-  const [search, setSearch] = useState("");
+  const [q, setQ] = useState("");
+  const [category, setCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dataFilter, setDataFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("nameAsc");
+
   const [rowBusy, setRowBusy] = useState({});
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalProduct, setModalProduct] = useState(null);
-  const [modalDays, setModalDays] = useState("30");
-  const [forecastDetails, setForecastDetails] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [detailsError, setDetailsError] = useState("");
-
-  const syncStatuses = useCallback(async () => {
-    try {
-      const res = await getForecastStatuses();
-      setStatusMap(buildStatusMap(res?.models));
-      setStatusSummary(res?.summary || null);
-    } catch {
-      // fail softly; table can still work from products endpoint
-    }
-  }, []);
-
-  const loadPage = useCallback(async () => {
-    setLoading(true);
-    setPageError("");
-    setInfo(null);
-
+  const loadData = useCallback(async () => {
+    setErr("");
     try {
       const [productsRes, statusRes] = await Promise.all([
         getProducts(),
@@ -549,95 +124,139 @@ export default function ForecastingPage() {
       setProducts(list);
 
       if (statusRes) {
-        setStatusMap(buildStatusMap(statusRes?.models));
-        setStatusSummary(statusRes?.summary || null);
-      } else {
-        setStatusMap({});
-        setStatusSummary(null);
+        const models = Array.isArray(statusRes?.models) ? statusRes.models : [];
+        const nextMap = {};
+        for (const model of models) {
+          if (model?.product_id == null) continue;
+          nextMap[model.product_id] = {
+            ...model,
+            status: normalizeStatus(model?.status),
+          };
+        }
+        setStatusMap(nextMap);
+        setSummary(statusRes?.summary || null);
       }
-    } catch (err) {
-      setPageError(err?.message || t("messages.loadFailed"));
+    } catch (e) {
+      setErr(e?.message || t("messages.loadFailed"));
     } finally {
       setLoading(false);
     }
   }, [t]);
 
   useEffect(() => {
-    loadPage();
-  }, [loadPage]);
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
-    const id = window.setInterval(syncStatuses, POLL_MS);
+    const id = window.setInterval(loadData, POLL_MS);
     return () => window.clearInterval(id);
-  }, [syncStatuses]);
+  }, [loadData]);
 
-  const trainingIds = useMemo(() => {
-    return Object.values(statusMap)
-      .filter((row) => normalizeStatus(row?.status) === "training")
-      .map((row) => Number(row?.product_id))
-      .filter((id) => !Number.isNaN(id));
-  }, [statusMap]);
+  const categories = useMemo(() => {
+    const set = new Set();
+    for (const p of products) {
+      if (p?.category) set.add(String(p.category));
+    }
 
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    return [
+      { value: "all", label: t("toolbar.categoryAll") },
+      ...Array.from(set).sort((a, b) => a.localeCompare(b)).map((item) => ({
+        value: item,
+        label: item,
+      })),
+    ];
+  }, [products, t]);
 
-    return products.filter((product) => {
-      if (!q) return true;
-
-      const haystack = [
-        product?.product_name,
-        product?.normalized_name,
-        product?.category,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(q);
-    });
-  }, [products, search]);
-
-  const orderedProducts = useMemo(() => {
-    return [...filteredProducts].sort((a, b) =>
-      String(a?.product_name || "").localeCompare(String(b?.product_name || ""))
-    );
-  }, [filteredProducts]);
-
-  const loadForecastDetails = useCallback(
-    async (productId, days) => {
-      setDetailsLoading(true);
-      setDetailsError("");
-
-      try {
-        const res = await getProductForecast(productId, { days: Number(days) || 30 });
-        setForecastDetails(res);
-      } catch (err) {
-        setDetailsError(err?.message || t("messages.detailsFailed"));
-      } finally {
-        setDetailsLoading(false);
-      }
-    },
+  const statusOptions = useMemo(
+    () => [
+      { value: "all", label: t("toolbar.statusAll") },
+      { value: "idle", label: t("toolbar.statusNotStarted") },
+      { value: "training", label: t("toolbar.statusTraining") },
+      { value: "ready", label: t("toolbar.statusReady") },
+      { value: "failed", label: t("toolbar.statusFailed") },
+    ],
     [t]
   );
 
-  const handleOpenForecast = async (product) => {
-    setModalProduct(product);
-    setModalOpen(true);
-    setForecastDetails(null);
-    await loadForecastDetails(product?.product_id, modalDays);
-  };
+  const dataOptions = useMemo(
+    () => [
+      { value: "all", label: t("toolbar.dataAll") },
+      { value: "has", label: t("toolbar.dataHas") },
+      { value: "none", label: t("toolbar.dataNone") },
+    ],
+    [t]
+  );
 
-  useEffect(() => {
-    if (!modalOpen || !modalProduct?.product_id) return;
-    loadForecastDetails(modalProduct.product_id, modalDays);
-  }, [modalDays, modalOpen, modalProduct, loadForecastDetails]);
+  const sortOptions = useMemo(
+    () => [
+      { value: "nameAsc", label: t("toolbar.sortName") },
+      { value: "revenueDesc", label: t("toolbar.sortRevenue") },
+      { value: "dataDesc", label: t("toolbar.sortData") },
+      { value: "categoryAsc", label: t("toolbar.sortCategory") },
+    ],
+    [t]
+  );
 
-  const handleGenerate = async (product, { retrain = false } = {}) => {
+  const filtered = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+
+    const next = products.filter((p) => {
+      const name = String(p?.product_name || "");
+      const normalized = String(p?.normalized_name || "");
+      const cat = String(p?.category || "");
+      const totalSales = Number(p?.stats?.total_sales || 0);
+      const status = normalizeStatus(statusMap?.[p?.product_id]?.status);
+
+      if (qq) {
+        const hay = `${name} ${normalized} ${cat}`.toLowerCase();
+        if (!hay.includes(qq)) return false;
+      }
+
+      if (category !== "all" && cat !== category) return false;
+      if (statusFilter !== "all" && status !== statusFilter) return false;
+      if (dataFilter === "has" && totalSales <= 0) return false;
+      if (dataFilter === "none" && totalSales > 0) return false;
+
+      return true;
+    });
+
+    next.sort((a, b) => {
+      const aRevenue = Number(a?.stats?.total_revenue || 0);
+      const bRevenue = Number(b?.stats?.total_revenue || 0);
+      const aSales = Number(a?.stats?.total_sales || 0);
+      const bSales = Number(b?.stats?.total_sales || 0);
+      const aCategory = String(a?.category || "");
+      const bCategory = String(b?.category || "");
+      const aName = String(a?.product_name || "");
+      const bName = String(b?.product_name || "");
+
+      switch (sortKey) {
+        case "revenueDesc":
+          return bRevenue - aRevenue;
+        case "dataDesc":
+          return bSales - aSales;
+        case "categoryAsc":
+          return aCategory.localeCompare(bCategory) || aName.localeCompare(bName);
+        case "nameAsc":
+        default:
+          return aName.localeCompare(bName);
+      }
+    });
+
+    return next;
+  }, [products, q, category, statusFilter, dataFilter, sortKey, statusMap]);
+
+  const trainingProducts = useMemo(() => {
+    return products.filter((p) => normalizeStatus(statusMap?.[p?.product_id]?.status) === "training");
+  }, [products, statusMap]);
+
+  const handleGenerate = async (product, retrain = false) => {
     const productId = Number(product?.product_id);
     if (Number.isNaN(productId)) return;
 
-    setInfo(null);
     setRowBusy((prev) => ({ ...prev, [productId]: true }));
+    setErr("");
+    setInfo(null);
 
     try {
       const res = await generateForecast({ productId, retrain });
@@ -646,204 +265,150 @@ export default function ForecastingPage() {
         type: "success",
         text:
           res?.message ||
-          t("messages.generateAccepted", { name: product?.product_name || "#" + productId }),
+          t("messages.generateAccepted", {
+            name: product?.product_name || `#${productId}`,
+          }),
       });
 
-      setStatusMap((prev) => ({
-        ...prev,
-        [productId]: {
-          ...(prev[productId] || {}),
-          product_id: productId,
-          product_name: product?.product_name,
-          status: normalizeStatus(res?.model_status || "training"),
-          trained_at: res?.trained_at || prev?.[productId]?.trained_at || null,
-          error: null,
-        },
-      }));
-
-      await syncStatuses();
-    } catch (err) {
-      setInfo({
-        type: "error",
-        text:
-          err?.message ||
-          t("messages.generateFailed", { name: product?.product_name || "#" + productId }),
-      });
-
-      setStatusMap((prev) => ({
-        ...prev,
-        [productId]: {
-          ...(prev[productId] || {}),
-          product_id: productId,
-          product_name: product?.product_name,
-          status: "failed",
-          error: err?.message || "",
-        },
-      }));
+      await loadData();
+    } catch (e) {
+      setErr(
+        e?.message ||
+          t("messages.generateFailed", {
+            name: product?.product_name || `#${productId}`,
+          })
+      );
     } finally {
       setRowBusy((prev) => ({ ...prev, [productId]: false }));
     }
   };
 
-  const goToDashboardAndWatch = () => {
-    const watchItems = orderedProducts
-      .filter((product) => {
-        const row = statusMap[product?.product_id];
-        return normalizeStatus(row?.status) === "training";
-      })
-      .map((product) => ({
-        product_id: Number(product.product_id),
-        product_name: product.product_name,
-      }));
+  const handleGoDashboard = () => {
+    const items = trainingProducts.map((p) => ({
+      product_id: Number(p.product_id),
+      product_name: p.product_name,
+    }));
 
-    if (watchItems.length > 0) {
-      watchForecastProducts(watchItems);
+    if (items.length) {
+      watchForecastProducts(items);
       setInfo({ type: "info", text: t("messages.watchSaved") });
     }
 
     navigate("/app/overview");
   };
 
-  const actionForRow = (product) => {
-    const productId = Number(product?.product_id);
-    const totalSales = Number(product?.stats?.total_sales || 0);
-    const rowStatus = normalizeStatus(statusMap?.[productId]?.status);
-    const busy = !!rowBusy[productId];
-    const hasData = totalSales > 0;
-
-    if (rowStatus === "ready") {
-      return (
-        <>
-          <ForecastStatusChip status="ready" t={t} />
-          <Button type="button" onClick={() => handleOpenForecast(product)}>
-            {t("actions.view")}
-          </Button>
-        </>
-      );
-    }
-
-    if (rowStatus === "training" || busy) {
-      return (
-        <>
-          <ForecastStatusChip status="training" t={t} />
-          <Button type="button" disabled>
-            {busy ? t("actions.generating") : t("actions.training")}
-          </Button>
-        </>
-      );
-    }
-
-    if (rowStatus === "failed") {
-      return (
-        <>
-          <ForecastStatusChip status="failed" t={t} />
-          <Button type="button" variant="secondary" onClick={() => handleGenerate(product, { retrain: true })}>
-            {t("actions.retry")}
-          </Button>
-          {statusMap?.[productId]?.error ? (
-            <div className="forecast-error-text">{statusMap[productId].error}</div>
-          ) : null}
-        </>
-      );
-    }
-
-    return (
-      <>
-        <ForecastStatusChip status="idle" t={t} />
-        <Button
-          type="button"
-          onClick={() => handleGenerate(product)}
-          disabled={!hasData}
-          title={!hasData ? t("table.noData") : ""}
-        >
-          {t("actions.generate")}
-        </Button>
-        {!hasData ? (
-          <div className="forecast-disabled-note">{t("table.noData")}</div>
-        ) : null}
-      </>
-    );
-  };
-
   return (
     <div className="forecasting-page">
-      <PageHeader
-        title={t("page.title")}
-        subtitle={t("page.subtitle")}
-      />
+      <PageHeader title={t("page.title")} subtitle={t("page.subtitle")} />
 
-      {pageError ? <InfoMessage type="error">{pageError}</InfoMessage> : null}
+      {err ? <InfoMessage type="error">{err}</InfoMessage> : null}
       {info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
 
-      {statusSummary ? (
-        <div className="forecast-summary-grid">
+      {summary ? (
+        <div className="forecast-summary-row">
           <div className="forecast-summary-card">
             <div className="forecast-summary-label">{t("summary.total")}</div>
             <div className="forecast-summary-value">
-              {fmtNumber(statusSummary?.total_products, locale)}
+              {fmtNumber(summary?.total_products, locale)}
             </div>
           </div>
 
           <div className="forecast-summary-card">
             <div className="forecast-summary-label">{t("summary.ready")}</div>
             <div className="forecast-summary-value">
-              {fmtNumber(statusSummary?.ready, locale)}
+              {fmtNumber(summary?.ready, locale)}
             </div>
           </div>
 
           <div className="forecast-summary-card">
             <div className="forecast-summary-label">{t("summary.training")}</div>
             <div className="forecast-summary-value">
-              {fmtNumber(statusSummary?.training, locale)}
+              {fmtNumber(summary?.training, locale)}
             </div>
           </div>
 
           <div className="forecast-summary-card">
             <div className="forecast-summary-label">{t("summary.failed")}</div>
             <div className="forecast-summary-value">
-              {fmtNumber(statusSummary?.failed, locale)}
+              {fmtNumber(summary?.failed, locale)}
             </div>
           </div>
         </div>
       ) : null}
 
-      {trainingIds.length > 0 ? (
-        <div className="forecast-watch-banner">
+      {trainingProducts.length > 0 ? (
+        <div className="forecast-banner">
           <InfoMessage type="info">
-            {t("messages.watchNotice", { count: trainingIds.length })}
+            {t("messages.watchNotice", { count: trainingProducts.length })}
           </InfoMessage>
 
-          <div className="forecast-watch-actions">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
             <Button type="button" variant="secondary">
               {t("actions.stayHere")}
             </Button>
-            <Button type="button" onClick={goToDashboardAndWatch}>
+            <Button type="button" onClick={handleGoDashboard}>
               {t("actions.goDashboard")}
             </Button>
           </div>
         </div>
       ) : null}
 
-      <Card className="no-padding">
-        <div className="forecast-toolbar">
-          <div className="forecast-toolbar-left">
+      <Card className="forecast-panel">
+        <div className="forecast-controls">
+          <div className="forecast-search-block">
+            <label>{t("toolbar.searchLabel")}</label>
+            <input
+              className="forecast-text forecast-text-search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("toolbar.searchPlaceholder")}
+            />
+          </div>
+
+          <div className="forecast-filters-block">
             <div className="forecast-field">
-              <label>{t("toolbar.searchLabel")}</label>
-              <input
-                className="forecast-search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("toolbar.searchPlaceholder")}
+              <FormSelect
+                label={t("toolbar.categoryLabel")}
+                value={category}
+                onChange={(e) => setCategory(e.target.value || "all")}
+                options={categories}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.statusLabel")}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value || "all")}
+                options={statusOptions}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.dataLabel")}
+                value={dataFilter}
+                onChange={(e) => setDataFilter(e.target.value || "all")}
+                options={dataOptions}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.sortLabel")}
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value || "nameAsc")}
+                options={sortOptions}
               />
             </div>
           </div>
 
-          <div className="forecast-toolbar-right">
-            <div className="forecast-results">
-              {t("toolbar.results", { count: orderedProducts.length })}
+          <div className="forecast-toolbar-right forecast-toolbar-right-modern">
+            <div className="forecast-results-pill">
+              {t("toolbar.results", { count: filtered.length })}
             </div>
 
-            <Button type="button" variant="secondary" onClick={loadPage}>
+            <Button type="button" variant="secondary" onClick={loadData}>
               {t("toolbar.refresh")}
             </Button>
           </div>
@@ -865,54 +430,86 @@ export default function ForecastingPage() {
               </thead>
 
               <tbody>
-                {orderedProducts.length === 0 ? (
+                {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="forecast-empty">
+                    <td colSpan={5} className="empty">
                       {t("table.empty")}
                     </td>
                   </tr>
                 ) : (
-                  orderedProducts.map((product) => {
+                  filtered.map((product) => {
+                    const productId = Number(product?.product_id);
+                    const row = statusMap?.[productId] || {};
+                    const status = normalizeStatus(row?.status);
                     const totalSales = Number(product?.stats?.total_sales || 0);
                     const totalRevenue = Number(product?.stats?.total_revenue || 0);
-                    const lastSale = product?.stats?.last_sale || null;
+                    const busy = !!rowBusy[productId];
 
                     return (
-                      <tr key={product?.product_id}>
+                      <tr key={productId}>
+                        <td className="forecast-name-cell">
+                          <div className="name">{product?.product_name || `#${productId}`}</div>
+                          <div className="sub">{product?.normalized_name || "—"}</div>
+                        </td>
+
+                        <td>{product?.category || "—"}</td>
+
                         <td>
-                          <div className="forecast-name">
-                            {product?.product_name || `#${product?.product_id}`}
-                          </div>
-                          <div className="forecast-sub">
-                            {product?.normalized_name || "—"}
+                          <div>{totalSales > 0 ? t("table.salesRecords", { count: totalSales }) : t("table.noData")}</div>
+                          <div className="forecast-note">
+                            {product?.stats?.last_sale
+                              ? t("table.lastSale", {
+                                  date: fmtDate(product.stats.last_sale, locale),
+                                })
+                              : "—"}
                           </div>
                         </td>
 
-                        <td>
-                          <div className="forecast-name">{product?.category || "—"}</div>
-                        </td>
+                        <td>{fmtMoney(totalRevenue, locale)}</td>
 
                         <td>
-                          <div className="forecast-data-stack">
-                            <div className="forecast-name">
-                              {totalSales > 0
-                                ? t("table.salesRecords", { count: totalSales })
-                                : t("table.noData")}
+                          <div className="forecast-actions">
+                            <div className="forecast-action-row">
+                              <ForecastChip status={status} t={t} />
+
+                              {status === "ready" ? (
+                                <Button
+                                  type="button"
+                                  onClick={() => navigate(`/app/forecasting/${productId}`)}
+                                >
+                                  {t("actions.view")}
+                                </Button>
+                              ) : status === "training" || busy ? (
+                                <Button type="button" disabled>
+                                  {busy ? t("actions.generating") : t("actions.training")}
+                                </Button>
+                              ) : status === "failed" ? (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => handleGenerate(product, true)}
+                                >
+                                  {t("actions.retry")}
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  onClick={() => handleGenerate(product)}
+                                  disabled={totalSales <= 0}
+                                >
+                                  {t("actions.generate")}
+                                </Button>
+                              )}
                             </div>
-                            <div className="forecast-sub">
-                              {lastSale
-                                ? t("table.lastSale", { date: fmtDate(lastSale, locale) })
-                                : "—"}
-                            </div>
+
+                            {status === "failed" && row?.error ? (
+                              <div className="forecast-error-text">{row.error}</div>
+                            ) : null}
+
+                            {status === "idle" && totalSales <= 0 ? (
+                              <div className="forecast-note">{t("table.noData")}</div>
+                            ) : null}
                           </div>
-                        </td>
-
-                        <td>
-                          <div className="forecast-money">{fmtMoney(totalRevenue, locale)}</div>
-                        </td>
-
-                        <td>
-                          <div className="forecast-action-stack">{actionForRow(product)}</div>
                         </td>
                       </tr>
                     );
@@ -923,17 +520,6 @@ export default function ForecastingPage() {
           </div>
         )}
       </Card>
-
-      <ForecastModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        forecastData={forecastDetails}
-        loading={detailsLoading}
-        error={detailsError}
-        days={modalDays}
-        onDaysChange={setModalDays}
-        locale={locale}
-      />
     </div>
   );
 }

@@ -22,7 +22,12 @@ export const ROLE_FALLBACK_PERMISSIONS = {
 };
 
 export const getRoleName = (user) => {
-  return user?.role?.display_name || user?.role_name || user?.role || "";
+  return (
+    user?.role?.display_name ||
+    user?.role_name ||
+    user?.role ||
+    ""
+  );
 };
 
 export const inferFallbackPermissions = (user) => {
