@@ -17,6 +17,7 @@ import Denied from "./shared/pages/Denied";
 
 import ProductsPage from "./features/products/pages/ProductsPage";
 import ForecastingPage from "./features/forecasting/pages/ForecastingPage";
+import ForecastDetailsPage from "./features/forecasting/pages/ForecastDetailsPage";
 
 import EventsPage from "./features/events/pages/EventsPage";
 import EventDetailsPage from "./features/events/pages/EventDetailsPage";
@@ -135,6 +136,15 @@ function App() {
               element={
                 <RequirePermission anyOf={["forecasts.view"]}>
                   <ForecastingPage />
+                </RequirePermission>
+              }
+            />
+
+            <Route
+              path="forecasting/:productId"
+              element={
+                <RequirePermission anyOf={["forecasts.view"]}>
+                  <ForecastDetailsPage />
                 </RequirePermission>
               }
             />

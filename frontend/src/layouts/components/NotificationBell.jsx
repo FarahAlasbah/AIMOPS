@@ -1,3 +1,4 @@
+// frontend/src/layouts/components/NotificationBell.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, X, Send } from "lucide-react";
