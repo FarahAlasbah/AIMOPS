@@ -1,0 +1,525 @@
+// frontend/src/features/forecasting/pages/ForecastingPage.jsx
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Button, Card, FormSelect, PageHeader } from "../../../shared/components";
+import InfoMessage from "../../../shared/components/InfoMessage";
+
+import { getProducts } from "../../../api/products";
+import { generateForecast, getForecastStatuses } from "../../../api/forecasts";
+import { watchForecastProducts } from "../../../shared/utils/forecastNotifications";
+
+import "./ForecastingPage.css";
+
+const POLL_MS = 4000;
+
+const normalizeStatus = (value) => {
+  const v = String(value || "").toLowerCase();
+
+  if (["ready", "done", "success", "completed"].includes(v)) return "ready";
+  if (["training", "queued", "pending", "running"].includes(v)) return "training";
+  if (["failed", "error"].includes(v)) return "failed";
+  return "idle";
+};
+
+const fmtNumber = (value, locale = "en") => {
+  const n = Number(value);
+  if (Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat(locale === "ar" ? "ar" : "en", {
+    maximumFractionDigits: 2,
+  }).format(n);
+};
+
+const fmtMoney = (value, locale = "en") => {
+  const n = Number(value);
+  if (Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat(locale === "ar" ? "ar" : "en", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(n);
+};
+
+const fmtDate = (value, locale = "en") => {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString(locale === "ar" ? "ar" : "en", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+function ForecastTableSkeleton({ rows = 8 }) {
+  return (
+    <div className="forecast-skeleton-wrap">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="forecast-skeleton-row">
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "70%" }} />
+            <div className="forecast-sk" style={{ width: "45%" }} />
+          </div>
+          <div className="forecast-sk" style={{ width: "60%" }} />
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "52%" }} />
+            <div className="forecast-sk" style={{ width: "78%" }} />
+          </div>
+          <div className="forecast-sk" style={{ width: "58%" }} />
+          <div className="forecast-skeleton-stack">
+            <div className="forecast-sk" style={{ width: "72%" }} />
+            <div className="forecast-sk" style={{ width: "50%" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ForecastChip({ status, t }) {
+  const safe = normalizeStatus(status);
+
+  return (
+    <span className={`forecast-chip ${safe}`}>
+      {safe === "ready"
+        ? t("table.ready")
+        : safe === "training"
+        ? t("table.training")
+        : safe === "failed"
+        ? t("table.failed")
+        : t("table.notStarted")}
+    </span>
+  );
+}
+
+export default function ForecastingPage() {
+  const { t, i18n } = useTranslation("forecasting");
+  const navigate = useNavigate();
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [info, setInfo] = useState(null);
+
+  const [products, setProducts] = useState([]);
+  const [statusMap, setStatusMap] = useState({});
+  const [summary, setSummary] = useState(null);
+
+  const [q, setQ] = useState("");
+  const [category, setCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dataFilter, setDataFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("nameAsc");
+
+  const [rowBusy, setRowBusy] = useState({});
+
+  const loadData = useCallback(async () => {
+    setErr("");
+    try {
+      const [productsRes, statusRes] = await Promise.all([
+        getProducts(),
+        getForecastStatuses().catch(() => null),
+      ]);
+
+      const list = Array.isArray(productsRes?.products) ? productsRes.products : [];
+      setProducts(list);
+
+      if (statusRes) {
+        const models = Array.isArray(statusRes?.models) ? statusRes.models : [];
+        const nextMap = {};
+        for (const model of models) {
+          if (model?.product_id == null) continue;
+          nextMap[model.product_id] = {
+            ...model,
+            status: normalizeStatus(model?.status),
+          };
+        }
+        setStatusMap(nextMap);
+        setSummary(statusRes?.summary || null);
+      }
+    } catch (e) {
+      setErr(e?.message || t("messages.loadFailed"));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const id = window.setInterval(loadData, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [loadData]);
+
+  const categories = useMemo(() => {
+    const set = new Set();
+    for (const p of products) {
+      if (p?.category) set.add(String(p.category));
+    }
+
+    return [
+      { value: "all", label: t("toolbar.categoryAll") },
+      ...Array.from(set).sort((a, b) => a.localeCompare(b)).map((item) => ({
+        value: item,
+        label: item,
+      })),
+    ];
+  }, [products, t]);
+
+  const statusOptions = useMemo(
+    () => [
+      { value: "all", label: t("toolbar.statusAll") },
+      { value: "idle", label: t("toolbar.statusNotStarted") },
+      { value: "training", label: t("toolbar.statusTraining") },
+      { value: "ready", label: t("toolbar.statusReady") },
+      { value: "failed", label: t("toolbar.statusFailed") },
+    ],
+    [t]
+  );
+
+  const dataOptions = useMemo(
+    () => [
+      { value: "all", label: t("toolbar.dataAll") },
+      { value: "has", label: t("toolbar.dataHas") },
+      { value: "none", label: t("toolbar.dataNone") },
+    ],
+    [t]
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      { value: "nameAsc", label: t("toolbar.sortName") },
+      { value: "revenueDesc", label: t("toolbar.sortRevenue") },
+      { value: "dataDesc", label: t("toolbar.sortData") },
+      { value: "categoryAsc", label: t("toolbar.sortCategory") },
+    ],
+    [t]
+  );
+
+  const filtered = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+
+    const next = products.filter((p) => {
+      const name = String(p?.product_name || "");
+      const normalized = String(p?.normalized_name || "");
+      const cat = String(p?.category || "");
+      const totalSales = Number(p?.stats?.total_sales || 0);
+      const status = normalizeStatus(statusMap?.[p?.product_id]?.status);
+
+      if (qq) {
+        const hay = `${name} ${normalized} ${cat}`.toLowerCase();
+        if (!hay.includes(qq)) return false;
+      }
+
+      if (category !== "all" && cat !== category) return false;
+      if (statusFilter !== "all" && status !== statusFilter) return false;
+      if (dataFilter === "has" && totalSales <= 0) return false;
+      if (dataFilter === "none" && totalSales > 0) return false;
+
+      return true;
+    });
+
+    next.sort((a, b) => {
+      const aRevenue = Number(a?.stats?.total_revenue || 0);
+      const bRevenue = Number(b?.stats?.total_revenue || 0);
+      const aSales = Number(a?.stats?.total_sales || 0);
+      const bSales = Number(b?.stats?.total_sales || 0);
+      const aCategory = String(a?.category || "");
+      const bCategory = String(b?.category || "");
+      const aName = String(a?.product_name || "");
+      const bName = String(b?.product_name || "");
+
+      switch (sortKey) {
+        case "revenueDesc":
+          return bRevenue - aRevenue;
+        case "dataDesc":
+          return bSales - aSales;
+        case "categoryAsc":
+          return aCategory.localeCompare(bCategory) || aName.localeCompare(bName);
+        case "nameAsc":
+        default:
+          return aName.localeCompare(bName);
+      }
+    });
+
+    return next;
+  }, [products, q, category, statusFilter, dataFilter, sortKey, statusMap]);
+
+  const trainingProducts = useMemo(() => {
+    return products.filter((p) => normalizeStatus(statusMap?.[p?.product_id]?.status) === "training");
+  }, [products, statusMap]);
+
+  const handleGenerate = async (product, retrain = false) => {
+    const productId = Number(product?.product_id);
+    if (Number.isNaN(productId)) return;
+
+    setRowBusy((prev) => ({ ...prev, [productId]: true }));
+    setErr("");
+    setInfo(null);
+
+    try {
+      const res = await generateForecast({ productId, retrain });
+
+      setInfo({
+        type: "success",
+        text:
+          res?.message ||
+          t("messages.generateAccepted", {
+            name: product?.product_name || `#${productId}`,
+          }),
+      });
+
+      await loadData();
+    } catch (e) {
+      setErr(
+        e?.message ||
+          t("messages.generateFailed", {
+            name: product?.product_name || `#${productId}`,
+          })
+      );
+    } finally {
+      setRowBusy((prev) => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const handleGoDashboard = () => {
+    const items = trainingProducts.map((p) => ({
+      product_id: Number(p.product_id),
+      product_name: p.product_name,
+    }));
+
+    if (items.length) {
+      watchForecastProducts(items);
+      setInfo({ type: "info", text: t("messages.watchSaved") });
+    }
+
+    navigate("/app/overview");
+  };
+
+  return (
+    <div className="forecasting-page">
+      <PageHeader title={t("page.title")} subtitle={t("page.subtitle")} />
+
+      {err ? <InfoMessage type="error">{err}</InfoMessage> : null}
+      {info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
+
+      {summary ? (
+        <div className="forecast-summary-row">
+          <div className="forecast-summary-card">
+            <div className="forecast-summary-label">{t("summary.total")}</div>
+            <div className="forecast-summary-value">
+              {fmtNumber(summary?.total_products, locale)}
+            </div>
+          </div>
+
+          <div className="forecast-summary-card">
+            <div className="forecast-summary-label">{t("summary.ready")}</div>
+            <div className="forecast-summary-value">
+              {fmtNumber(summary?.ready, locale)}
+            </div>
+          </div>
+
+          <div className="forecast-summary-card">
+            <div className="forecast-summary-label">{t("summary.training")}</div>
+            <div className="forecast-summary-value">
+              {fmtNumber(summary?.training, locale)}
+            </div>
+          </div>
+
+          <div className="forecast-summary-card">
+            <div className="forecast-summary-label">{t("summary.failed")}</div>
+            <div className="forecast-summary-value">
+              {fmtNumber(summary?.failed, locale)}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {trainingProducts.length > 0 ? (
+        <div className="forecast-banner">
+          <InfoMessage type="info">
+            {t("messages.watchNotice", { count: trainingProducts.length })}
+          </InfoMessage>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+            <Button type="button" variant="secondary">
+              {t("actions.stayHere")}
+            </Button>
+            <Button type="button" onClick={handleGoDashboard}>
+              {t("actions.goDashboard")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <Card className="forecast-panel">
+        <div className="forecast-controls">
+          <div className="forecast-search-block">
+            <label>{t("toolbar.searchLabel")}</label>
+            <input
+              className="forecast-text forecast-text-search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("toolbar.searchPlaceholder")}
+            />
+          </div>
+
+          <div className="forecast-filters-block">
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.categoryLabel")}
+                value={category}
+                onChange={(e) => setCategory(e.target.value || "all")}
+                options={categories}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.statusLabel")}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value || "all")}
+                options={statusOptions}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.dataLabel")}
+                value={dataFilter}
+                onChange={(e) => setDataFilter(e.target.value || "all")}
+                options={dataOptions}
+              />
+            </div>
+
+            <div className="forecast-field">
+              <FormSelect
+                label={t("toolbar.sortLabel")}
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value || "nameAsc")}
+                options={sortOptions}
+              />
+            </div>
+          </div>
+
+          <div className="forecast-toolbar-right forecast-toolbar-right-modern">
+            <div className="forecast-results-pill">
+              {t("toolbar.results", { count: filtered.length })}
+            </div>
+
+            <Button type="button" variant="secondary" onClick={loadData}>
+              {t("toolbar.refresh")}
+            </Button>
+          </div>
+        </div>
+
+        {loading ? (
+          <ForecastTableSkeleton />
+        ) : (
+          <div className="forecast-table-wrap">
+            <table className="forecast-table">
+              <thead>
+                <tr>
+                  <th>{t("table.colProduct")}</th>
+                  <th>{t("table.colCategory")}</th>
+                  <th>{t("table.colDataAvailable")}</th>
+                  <th>{t("table.colRevenue")}</th>
+                  <th>{t("table.colAction")}</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty">
+                      {t("table.empty")}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((product) => {
+                    const productId = Number(product?.product_id);
+                    const row = statusMap?.[productId] || {};
+                    const status = normalizeStatus(row?.status);
+                    const totalSales = Number(product?.stats?.total_sales || 0);
+                    const totalRevenue = Number(product?.stats?.total_revenue || 0);
+                    const busy = !!rowBusy[productId];
+
+                    return (
+                      <tr key={productId}>
+                        <td className="forecast-name-cell">
+                          <div className="name">{product?.product_name || `#${productId}`}</div>
+                          <div className="sub">{product?.normalized_name || "—"}</div>
+                        </td>
+
+                        <td>{product?.category || "—"}</td>
+
+                        <td>
+                          <div>{totalSales > 0 ? t("table.salesRecords", { count: totalSales }) : t("table.noData")}</div>
+                          <div className="forecast-note">
+                            {product?.stats?.last_sale
+                              ? t("table.lastSale", {
+                                  date: fmtDate(product.stats.last_sale, locale),
+                                })
+                              : "—"}
+                          </div>
+                        </td>
+
+                        <td>{fmtMoney(totalRevenue, locale)}</td>
+
+                        <td>
+                          <div className="forecast-actions">
+                            <div className="forecast-action-row">
+                              <ForecastChip status={status} t={t} />
+
+                              {status === "ready" ? (
+                                <Button
+                                  type="button"
+                                  onClick={() => navigate(`/app/forecasting/${productId}`)}
+                                >
+                                  {t("actions.view")}
+                                </Button>
+                              ) : status === "training" || busy ? (
+                                <Button type="button" disabled>
+                                  {busy ? t("actions.generating") : t("actions.training")}
+                                </Button>
+                              ) : status === "failed" ? (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => handleGenerate(product, true)}
+                                >
+                                  {t("actions.retry")}
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  onClick={() => handleGenerate(product)}
+                                  disabled={totalSales <= 0}
+                                >
+                                  {t("actions.generate")}
+                                </Button>
+                              )}
+                            </div>
+
+                            {status === "failed" && row?.error ? (
+                              <div className="forecast-error-text">{row.error}</div>
+                            ) : null}
+
+                            {status === "idle" && totalSales <= 0 ? (
+                              <div className="forecast-note">{t("table.noData")}</div>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
