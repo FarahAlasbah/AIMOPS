@@ -293,9 +293,17 @@ def _save_draft_event(
 
     baseline_quality = 'high_confidence' if not non_spike.empty else 'event_only'
 
+    # ── Check for matching campaign ──
+    from app.services.campaign_service import find_matching_campaign
+
+    matching_campaign = find_matching_campaign(
+        db=db,
+        spike_start=event_start,
+        spike_end=event_end,
+        product_id=product_id
+    )
+
     # ── Save Draft Event ──
-    # Generic name — user renames when confirming
-    # event_type defaults to 'promotional' — user changes it
     draft_event = Event(
         event_name=f"Detected: {event_start.strftime('%b %d')}–{event_end.strftime('%b %d, %Y')}",
         event_type='promotional',
@@ -308,14 +316,13 @@ def _save_draft_event(
         ),
         is_recurring=False,
         recurrence_type='one_time',
-        status='draft',                 # User must confirm — won't affect forecasts yet
+        status='draft',
         created_by=uploaded_by,
     )
     db.add(draft_event)
-    db.flush()  # Flush to get event_id before creating impact result
+    db.flush()
 
-    # ── Save EventImpactResult ──
-    # Pre-filled from detection — user doesn't need to enter any numbers
+    # ── Save EventImpactResult (always — regardless of campaign match) ──
     impact = EventImpactResult(
         event_id=draft_event.event_id,
         product_id=product_id,
@@ -329,6 +336,20 @@ def _save_draft_event(
     )
     db.add(impact)
 
+    # ── If campaign matches, silently record results against it ──
+    # We do this regardless of user answer — data doesn't lie.
+    if matching_campaign:
+        try:
+            from app.services.campaign_service import record_results
+            record_results(
+                db=db,
+                campaign_id=matching_campaign["campaign_id"],
+                linked_event_id=draft_event.event_id,
+                current_user_id=uploaded_by
+            )
+        except Exception as e:
+            print(f"[EventDetection] Campaign result recording failed: {str(e)}")
+
     return {
         "event_id": draft_event.event_id,
         "product_id": product_id,
@@ -336,6 +357,7 @@ def _save_draft_event(
         "end_date": event_end.isoformat(),
         "change_pct": change_pct,
         "impact_level": impact_level,
+        "matching_campaign": matching_campaign,
     }
 
 
@@ -346,9 +368,7 @@ def _save_draft_event(
 def _send_notification(db, batch_id: int, uploaded_by: int, draft_events: List[Dict]) -> None:
     """
     Notify the uploader about what was detected.
-
-    No events detected → still notify so user knows the background
-    process completed (no silent failures).
+    Differentiates between generic spikes and campaign matches.
     """
     try:
         from app.models.notification import Notification
@@ -361,18 +381,30 @@ def _send_notification(db, batch_id: int, uploaded_by: int, draft_events: List[D
             )
         else:
             count = len(draft_events)
+            campaign_matches = [e for e in draft_events if e.get("matching_campaign")]
+            match_count = len(campaign_matches)
             high_count = sum(
                 1 for e in draft_events
                 if e["impact_level"] in ("high", "very_high")
             )
-            title = f"{count} Possible Event{'s' if count != 1 else ''} Detected"
-            message = (
-                f"AIMOPS found {count} period{'s' if count != 1 else ''} of unusual "
-                f"sales activity in your imported data"
-                f"{f' — {high_count} with high impact' if high_count else ''}. "
-                f"Open your Events Calendar to review and confirm them. "
-                f"Confirmed events improve your sales forecasts."
-            )
+
+            if campaign_matches:
+                title = f"{count} Sales Spike{'s' if count != 1 else ''} Detected"
+                message = (
+                    f"AIMOPS found {count} period{'s' if count != 1 else ''} of unusual "
+                    f"sales activity in your imported data. "
+                    f"{match_count} overlap{'s' if match_count != 1 else ''} with a "
+                    f"campaign you planned — open the Events Calendar to review and confirm."
+                )
+            else:
+                title = f"{count} Possible Event{'s' if count != 1 else ''} Detected"
+                message = (
+                    f"AIMOPS found {count} period{'s' if count != 1 else ''} of unusual "
+                    f"sales activity in your imported data"
+                    f"{f' — {high_count} with high impact' if high_count else ''}. "
+                    f"Open your Events Calendar to review and confirm them. "
+                    f"Confirmed events improve your sales forecasts."
+                )
 
         db.add(Notification(
             user_id=uploaded_by,

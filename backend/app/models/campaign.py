@@ -1,114 +1,12 @@
 """
-Campaign-related SQLAlchemy models
 File: backend/app/models/campaign.py
-
-Purpose: Python classes that map to your database tables
-Why: Work with database as objects instead of raw SQL
-
-Example:
-    campaign = Campaign(campaign_name="Ramadan 2026", ...)
-    db.add(campaign)
-    db.commit()
+Purpose: Campaign, Product, and junction table models
 """
 from sqlalchemy import Column, Integer, String, Text, Date, DECIMAL, Enum, TIMESTAMP, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
-import enum
-
-
-# ============================================
-# Enums 
-# ============================================
-
-class CampaignStatusEnum(str, enum.Enum):
-    """Campaign status - matches your DB enum"""
-    PLANNED = "planned"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-
-class ChannelEnum(str, enum.Enum):
-    """Marketing channels - matches your campaign_channels table"""
-    FACEBOOK = "facebook"
-    INSTAGRAM = "instagram"
-    TWITTER = "twitter"
-    TIKTOK = "tiktok"
-    EMAIL = "email"
-    SMS = "sms"
-    IN_STORE = "in_store"
-    WEBSITE = "website"
-    OTHER = "other"
-
-
-# ============================================
-# Campaign Model (Main table)
-# ============================================
-
-class Campaign(Base):
-    """
-    Main campaign table
-    
-    Maps to: campaigns table 
-    Used for: Creating marketing campaigns with products, channels, events
-    """
-    __tablename__ = "campaigns"
-    
-    # Primary key
-    campaign_id = Column(Integer, primary_key=True, autoincrement=True)
-    
-    # Basic info
-    campaign_name = Column(String(200), nullable=False)  # e.g., "Ramadan Special 2026"
-    description = Column(Text, nullable=True)
-    
-    # Date range
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    
-    # Budget & settings
-    budget = Column(DECIMAL(12, 2), nullable=True)  # Total budget
-    currency = Column(String(10), nullable=True, default="USD")
-    target_audience = Column(Text, nullable=True)  # Who is this for?
-    
-    # Status tracking
-    status = Column(
-        Enum('planned', 'active', 'completed', 'cancelled', name='campaign_status_enum'),
-        nullable=False,
-        default='planned'
-    )
-    
-    # Performance metrics (filled after campaign completes)
-    actual_revenue = Column(DECIMAL(12, 2), nullable=True)  # How much we earned
-    actual_cost = Column(DECIMAL(12, 2), nullable=True)  # How much we spent
-    uplift_percentage = Column(DECIMAL(5, 2), nullable=True)  # % increase vs baseline
-    roi = Column(DECIMAL(10, 2), nullable=True)  # Return on investment
-    
-    # Soft delete (keep data but mark as deleted)
-    deleted_at = Column(TIMESTAMP, nullable=True)
-    
-    # Audit fields (WHO created/updated and WHEN)
-    created_by = Column(Integer, ForeignKey('users.user_id'), nullable=False)
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
-    updated_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
-    
-    # ============================================
-    # Relationships 
-    # ============================================
-    
-    # Link to products (many-to-many through campaign_products)
-    products = relationship("CampaignProduct", back_populates="campaign", cascade="all, delete-orphan")
-    
-    # Link to channels (many-to-many through campaign_channels)
-    channels = relationship("CampaignChannel", back_populates="campaign", cascade="all, delete-orphan")
-    
-    # Link to events (many-to-many through campaign_events)
-    # events = relationship("CampaignEvent", back_populates="campaign", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        """String representation for debugging"""
-        return f"<Campaign {self.campaign_id}: {self.campaign_name}>"
+from datetime import date
 
 
 # ============================================
@@ -117,167 +15,307 @@ class Campaign(Base):
 
 class Product(Base):
     """
-    Product catalog
-    
-    Maps to: products table
-    Why: Store product info once, reuse across campaigns
+    Product catalog.
+    Products are created during data import (confirm-products step).
+    They can also be created manually via the products API.
+
+    WHY NORMALIZED_NAME:
+    Allows fuzzy matching during import — "Premium Dates 500g" and
+    "premium dates 500g" both map to the same product.
     """
     __tablename__ = "products"
-    
-    # Primary key
+
     product_id = Column(Integer, primary_key=True, autoincrement=True)
-    
-    # Product identifiers
-    product_code = Column(String(50), unique=True, nullable=True)  # SKU/barcode
-    product_name = Column(String(200), nullable=False)  # English name
-    product_name_ar = Column(String(200), nullable=True)  # Arabic name
-    
-    # Classification
-    category = Column(String(100), nullable=True)  # e.g., "Food & Beverages"
-    category_ar = Column(String(100), nullable=True)  # Arabic category
+
+    product_code = Column(String(50), unique=True, nullable=True)
+    product_name = Column(String(200), nullable=False)
+    product_name_ar = Column(String(200), nullable=True)
+
+    category = Column(String(100), nullable=True)
+    category_ar = Column(String(100), nullable=True)
     brand = Column(String(100), nullable=True)
-    
-    # Pricing (optional - can come from sales data)
+
     unit_price = Column(DECIMAL(10, 2), nullable=True)
     cost_price = Column(DECIMAL(10, 2), nullable=True)
-    
+
     normalized_name = Column(String(200), nullable=True, index=True)
-    # QUERY: SELECT * FROM products WHERE normalized_name = 'premium dates 500g'
-    # WITH INDEX: Direct lookup via B-tree
-    
-    # Status
-    is_active = Column(Boolean, default=True)  # Can be discontinued
+
+    is_active = Column(Boolean, default=True)
     deleted_at = Column(TIMESTAMP, nullable=True)
-    
-    # Audit
+
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(),
+                        onupdate=func.current_timestamp())
     created_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
     updated_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
-    
+
     # Relationships
     campaigns = relationship("CampaignProduct", back_populates="product")
-    
+
     def __repr__(self):
         return f"<Product {self.product_id}: {self.product_name}>"
 
 
 # ============================================
-# Junction Tables (Many-to-Many Links)
+# Campaign Model
+# ============================================
+
+class Campaign(Base):
+    """
+    A marketing campaign planned by a marketing user.
+
+    LIFECYCLE:
+    planned → active → completed (or cancelled)
+
+    FORECASTING INTEGRATION:
+    When created, AIMOPS runs forecast_impact and stores
+    forecast_uplift_pct and forecast_additional_revenue.
+    After the campaign runs and results are entered, we compare
+    predicted vs actual to improve future forecasts.
+
+    EVENT LINKING:
+    After the campaign runs, if new sales data is uploaded and a spike
+    is detected matching the campaign dates, the user can confirm
+    that event and link it here via linked_event_id.
+    This closes the loop: plan → run → measure → learn.
+    """
+    __tablename__ = "campaigns"
+
+    campaign_id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # ── Basic Info ──
+    campaign_name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    # Notes: free text passed to Claude for context-aware advice
+    # Example: "Targeting Ramadan shoppers, Bethlehem market only"
+
+    # ── Campaign Type ──
+    # Drives which historical events we use as multiplier reference.
+    # discount → uses past promotional event impacts
+    # seasonal → uses past seasonal event impacts
+    campaign_type = Column(
+        Enum(
+            'discount',    # Price reduction
+            'bundle',      # Buy X get Y
+            'flash_sale',  # Short burst, high urgency
+            'seasonal',    # Tied to season or holiday
+            'loyalty',     # Rewards program promotion
+            'other',
+            name='campaign_type_enum'
+        ),
+        nullable=True
+    )
+
+    # ── Date Range ──
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    # ── Budget ──
+    budget = Column(DECIMAL(12, 2), nullable=True)
+    currency = Column(String(10), nullable=True, default='ILS')
+
+    # ── Target Audience ──
+    target_audience = Column(Text, nullable=True)
+
+    # ── Status ──
+    status = Column(
+        Enum(
+            'planned',    # Created, not yet running
+            'active',     # Currently running
+            'completed',  # Finished
+            'cancelled',  # Cancelled before running
+            name='campaign_status_enum'
+        ),
+        nullable=False,
+        default='planned'
+    )
+
+    # ── AIMOPS Forecast (stored at creation time) ──
+    # What AIMOPS predicted before the campaign ran.
+    # Stored so we can compare predicted vs actual after.
+    forecast_uplift_pct = Column(DECIMAL(6, 2), nullable=True)
+    forecast_additional_revenue = Column(DECIMAL(12, 2), nullable=True)
+
+    # ── Actual Results (entered after campaign completes) ──
+    actual_revenue = Column(DECIMAL(12, 2), nullable=True)
+    actual_cost = Column(DECIMAL(12, 2), nullable=True)
+    actual_uplift_pct = Column(DECIMAL(6, 2), nullable=True)
+    roi = Column(DECIMAL(10, 2), nullable=True)
+
+    # ── Event Link ──
+    # After campaign runs and spike is confirmed as an event,
+    # link the event here to close the learning loop.
+    linked_event_id = Column(
+        Integer,
+        ForeignKey('events.event_id', ondelete='SET NULL'),
+        nullable=True
+    )
+
+    # ── Soft Delete ──
+    deleted_at = Column(TIMESTAMP, nullable=True)
+
+    # ── Audit ──
+    created_by = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(),
+                        onupdate=func.current_timestamp())
+    updated_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
+
+    # ── Relationships ──
+    products = relationship(
+        "CampaignProduct",
+        back_populates="campaign",
+        cascade="all, delete-orphan"
+    )
+    channels = relationship(
+        "CampaignChannel",
+        back_populates="campaign",
+        cascade="all, delete-orphan"
+    )
+    linked_event = relationship(
+        "Event",
+        foreign_keys=[linked_event_id]
+    )
+
+    # ── Helper Methods ──
+
+    def duration_days(self) -> int:
+        """How many days does this campaign run?"""
+        return (self.end_date - self.start_date).days + 1
+
+    def is_active_now(self) -> bool:
+        """Is this campaign currently running?"""
+        today = date.today()
+        return (
+            self.status == 'active' and
+            self.deleted_at is None and
+            self.start_date <= today <= self.end_date
+        )
+
+    def predicted_roi(self) -> float | None:
+        """
+        Calculate predicted ROI from forecast data.
+
+        ROI = (additional_revenue - budget) / budget * 100
+        Example: 8594 additional revenue, 5000 budget
+                 → (8594 - 5000) / 5000 * 100 = 71.9% ROI
+
+        Returns None if budget or forecast not set.
+        """
+        if not self.budget or not self.forecast_additional_revenue:
+            return None
+        if float(self.budget) == 0:
+            return None
+        roi = (
+            (float(self.forecast_additional_revenue) - float(self.budget))
+            / float(self.budget)
+        ) * 100
+        return round(roi, 1)
+
+    def actual_roi(self) -> float | None:
+        """
+        Calculate actual ROI after campaign completes.
+        Same formula but uses real numbers entered by marketing.
+        """
+        if not self.actual_cost or not self.actual_revenue:
+            return None
+        if float(self.actual_cost) == 0:
+            return None
+        roi = (
+            (float(self.actual_revenue) - float(self.actual_cost))
+            / float(self.actual_cost)
+        ) * 100
+        return round(roi, 1)
+
+    def forecast_vs_actual(self) -> dict | None:
+        """
+        Compare predicted vs actual performance.
+        Only available after results are entered.
+        Returns None if results not yet entered.
+        """
+        if not self.actual_revenue or not self.forecast_additional_revenue:
+            return None
+        accuracy = (
+            float(self.actual_revenue) /
+            float(self.forecast_additional_revenue)
+        ) * 100
+        return {
+            "predicted_revenue": float(self.forecast_additional_revenue),
+            "actual_revenue": float(self.actual_revenue),
+            "accuracy_pct": round(accuracy, 1),
+            "over_under": "over" if accuracy > 100 else "under"
+        }
+
+    def __repr__(self):
+        return f"<Campaign {self.campaign_id}: {self.campaign_name} ({self.status})>"
+
+
+# ============================================
+# Junction Tables
 # ============================================
 
 class CampaignProduct(Base):
     """
-    Links campaigns to products
-    
-    Maps to: campaign_products table
-    Why: One campaign can have many products
-         One product can be in many campaigns
-    Extra: Stores campaign-specific targets per product
+    Links a campaign to a product with campaign-specific details.
+
+    WHY PER-PRODUCT DISCOUNT:
+    A campaign might offer 20% off dates but 10% off coffee.
+    Each product can have its own discount and target quantity.
     """
     __tablename__ = "campaign_products"
-    
-    # Composite primary key
-    campaign_id = Column(Integer, ForeignKey('campaigns.campaign_id'), primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.product_id'), primary_key=True)
-    
-    # Product-specific campaign details
-    target_quantity = Column(Integer, nullable=True)  # Goal: sell 1000 units
-    discount_percentage = Column(DECIMAL(5, 2), nullable=True)  # e.g., 15% off
-    
+
+    campaign_id = Column(
+        Integer,
+        ForeignKey('campaigns.campaign_id', ondelete='CASCADE'),
+        primary_key=True
+    )
+    product_id = Column(
+        Integer,
+        ForeignKey('products.product_id', ondelete='CASCADE'),
+        primary_key=True
+    )
+
+    target_quantity = Column(Integer, nullable=True)
+    discount_percentage = Column(DECIMAL(5, 2), nullable=True)
+
     # Relationships
     campaign = relationship("Campaign", back_populates="products")
     product = relationship("Product", back_populates="campaigns")
-    
+
     def __repr__(self):
         return f"<CampaignProduct C{self.campaign_id}-P{self.product_id}>"
 
 
 class CampaignChannel(Base):
     """
-    Links campaigns to marketing channels
-    
-    Maps to: campaign_channels table
-    Why: Track budget per channel
-         e.g., $10,000 on Facebook, $5,000 on Instagram
+    Links a campaign to a marketing channel with budget allocation.
+
+    WHY TRACK BUDGET PER CHANNEL:
+    Marketing can allocate 3,000 ILS to Instagram and 2,000 ILS
+    to in-store promotions. After the campaign, they can see which
+    channel gave the best ROI.
     """
     __tablename__ = "campaign_channels"
-    
-    # Composite primary key
-    campaign_id = Column(Integer, ForeignKey('campaigns.campaign_id'), primary_key=True)
-    channel_name = Column(
-        Enum('facebook', 'instagram', 'twitter', 'tiktok', 'email', 'sms', 'in_store', 'website', 'other',
-             name='channel_enum'),
+
+    campaign_id = Column(
+        Integer,
+        ForeignKey('campaigns.campaign_id', ondelete='CASCADE'),
         primary_key=True
     )
-    
-    # Budget per channel
-    budget_allocated = Column(DECIMAL(10, 2), nullable=True)
-    
-    # Relationships
-    campaign = relationship("Campaign", back_populates="channels")
-    
-    def __repr__(self):
-        return f"<CampaignChannel C{self.campaign_id}-{self.channel_name}>"
-
-
-# class CampaignEvent(Base):
-#     """
-#     Links campaigns to seasonal events
-    
-#     Maps to: campaign_events table
-#     Why: Track which events affect campaign (used in forecasting)
-#          e.g., Ramadan campaign linked to Ramadan event
-#     """
-#     __tablename__ = "campaign_events"
-    
-#     # Composite primary key
-#     campaign_id = Column(Integer, ForeignKey('campaigns.campaign_id'), primary_key=True)
-#     event_id = Column(Integer, ForeignKey('events.event_id'), primary_key=True)
-    
-#     # How relevant is this event? (0.00 to 1.00)
-#     relevance_score = Column(DECIMAL(3, 2), default=1.00)
-    
-#     # Relationships
-#     campaign = relationship("Campaign", back_populates="events")
-#     # Note: Event model will be created when we build Events feature
-    
-#     def __repr__(self):
-#         return f"<CampaignEvent C{self.campaign_id}-E{self.event_id}>"
-
-
-# ============================================
-# Helper Methods 
-# ============================================
-
-def get_product_count(self):
-    """Count products in this campaign"""
-    return len(self.products)
-
-def get_channel_names(self):
-    """Get list of channel names as strings"""
-    return [ch.channel_name for ch in self.channels]
-
-def is_active_now(self):
-    """Check if campaign is currently running"""
-    from datetime import date
-    today = date.today()
-    return (
-        self.status == 'active' and 
-        self.deleted_at is None and
-        self.start_date <= today <= self.end_date
+    channel_name = Column(
+        Enum(
+            'facebook', 'instagram', 'twitter', 'tiktok',
+            'email', 'sms', 'in_store', 'website', 'other',
+            name='channel_enum'
+        ),
+        primary_key=True
     )
 
-# Add helper methods to Campaign class
-Campaign.get_product_count = get_product_count
-Campaign.get_channel_names = get_channel_names
-Campaign.is_active_now = is_active_now
+    budget_allocated = Column(DECIMAL(10, 2), nullable=True)
 
+    # Relationship
+    campaign = relationship("Campaign", back_populates="channels")
 
-
-#  Relationships work both ways:
-#    campaign.products[0].product  # → Access Product from Campaign
-#    product.campaigns[0].campaign # → Access Campaign from Product
-
-
-
+    def __repr__(self):
+        return f"<CampaignChannel C{self.campaign_id}-{self.channel_name}>"

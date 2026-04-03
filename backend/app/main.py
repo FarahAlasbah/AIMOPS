@@ -18,7 +18,7 @@ from app.api import events
 from app.api import notifications
 from app.api.draft_events import router as draft_events_router
 from app.api.forecasts import router as forecasts_router
-
+from app.api import campaigns
 
 
 
@@ -50,6 +50,7 @@ app.include_router(draft_events_router)
 app.include_router(events.router)
 app.include_router(notifications.router)
 app.include_router(forecasts_router)
+app.include_router(campaigns.router)
 
 
 @app.get("/")
