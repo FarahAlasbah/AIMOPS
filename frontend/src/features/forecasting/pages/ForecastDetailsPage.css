@@ -1,5 +1,3 @@
-/* frontend/src/features/forecasting/pages/ForecastDetailsPage.css */
-
 .forecast-details-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -7,12 +5,12 @@
 
 .forecast-details-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .forecast-details-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -54,13 +52,75 @@
   margin-bottom: 16px;
 }
 
+.forecast-range-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.forecast-range-field {
+  min-width: 220px;
+  flex: 0 0 220px;
+}
+
+.forecast-range-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.forecast-date-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  padding: 0 12px;
+  outline: none;
+  font-size: 14px;
+  background: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.forecast-date-input:focus {
+  border-color: #bfd0ff;
+  box-shadow: 0 0 0 4px rgba(191, 208, 255, 0.32);
+}
+
+.forecast-range-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.forecast-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.forecast-badge.accent {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
 .forecast-meta-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .forecast-meta-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -131,11 +191,11 @@
 
 .forecast-chart-box {
   margin-top: 14px;
-  height: 340px;
+  min-height: 340px;
 }
 
 .forecast-chart-box.small {
-  height: 300px;
+  min-height: 300px;
 }
 
 .forecast-explanation {
@@ -157,6 +217,32 @@
   font-size: 14px;
   color: #374151;
   line-height: 1.7;
+}
+
+.forecast-drivers-title {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.forecast-explanation-list {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: #374151;
+  line-height: 1.7;
+}
+
+[dir="rtl"] .forecast-explanation-list {
+  padding-left: 0;
+  padding-right: 20px;
+}
+
+.forecast-state-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
 }
 
 /* Skeleton */

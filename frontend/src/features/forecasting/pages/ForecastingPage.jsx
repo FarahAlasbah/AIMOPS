@@ -1,4 +1,3 @@
-// frontend/src/features/forecasting/pages/ForecastingPage.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -12,6 +11,16 @@ import { watchForecastProducts } from "../../../shared/utils/forecastNotificatio
 import "./ForecastingPage.css";
 
 const POLL_MS = 4000;
+const NO_DATA_HINTS = [
+  "no data",
+  "no usable",
+  "not enough",
+  "insufficient",
+  "sales data",
+  "history",
+  "upload",
+  "empty",
+];
 
 const normalizeStatus = (value) => {
   const v = String(value || "").toLowerCase();
@@ -20,6 +29,11 @@ const normalizeStatus = (value) => {
   if (["training", "queued", "pending", "running"].includes(v)) return "training";
   if (["failed", "error"].includes(v)) return "failed";
   return "idle";
+};
+
+const isLikelyNoDataMessage = (value) => {
+  const text = String(value || "").toLowerCase();
+  return NO_DATA_HINTS.some((token) => text.includes(token));
 };
 
 const fmtNumber = (value, locale = "en") => {
@@ -444,6 +458,7 @@ export default function ForecastingPage() {
                     const totalSales = Number(product?.stats?.total_sales || 0);
                     const totalRevenue = Number(product?.stats?.total_revenue || 0);
                     const busy = !!rowBusy[productId];
+                    const needsUpload = totalSales <= 0 || isLikelyNoDataMessage(row?.error);
 
                     return (
                       <tr key={productId}>
@@ -455,7 +470,11 @@ export default function ForecastingPage() {
                         <td>{product?.category || "—"}</td>
 
                         <td>
-                          <div>{totalSales > 0 ? t("table.salesRecords", { count: totalSales }) : t("table.noData")}</div>
+                          <div>
+                            {totalSales > 0
+                              ? t("table.salesRecords", { count: totalSales })
+                              : t("table.noData")}
+                          </div>
                           <div className="forecast-note">
                             {product?.stats?.last_sale
                               ? t("table.lastSale", {
@@ -483,6 +502,14 @@ export default function ForecastingPage() {
                                 <Button type="button" disabled>
                                   {busy ? t("actions.generating") : t("actions.training")}
                                 </Button>
+                              ) : needsUpload ? (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => navigate("/app/data-upload")}
+                                >
+                                  {t("actions.uploadData")}
+                                </Button>
                               ) : status === "failed" ? (
                                 <Button
                                   type="button"
@@ -495,7 +522,6 @@ export default function ForecastingPage() {
                                 <Button
                                   type="button"
                                   onClick={() => handleGenerate(product)}
-                                  disabled={totalSales <= 0}
                                 >
                                   {t("actions.generate")}
                                 </Button>
@@ -506,8 +532,8 @@ export default function ForecastingPage() {
                               <div className="forecast-error-text">{row.error}</div>
                             ) : null}
 
-                            {status === "idle" && totalSales <= 0 ? (
-                              <div className="forecast-note">{t("table.noData")}</div>
+                            {needsUpload ? (
+                              <div className="forecast-warning-text">{t("table.uploadHint")}</div>
                             ) : null}
                           </div>
                         </td>

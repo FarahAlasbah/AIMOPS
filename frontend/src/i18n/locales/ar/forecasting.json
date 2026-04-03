@@ -42,6 +42,7 @@
     "salesRecords": "{{count}} سجل مبيعات",
     "lastSale": "آخر بيع: {{date}}",
     "noData": "لا توجد بيانات مبيعات كافية",
+    "uploadHint": "ارفع بيانات مبيعات جديدة لهذا المنتج ثم أنشئ التوقع مرة أخرى.",
     "notStarted": "لم يُنشأ بعد",
     "ready": "جاهز",
     "training": "قيد التدريب",
@@ -53,6 +54,7 @@
     "training": "جارٍ التدريب...",
     "retry": "إعادة المحاولة",
     "view": "عرض التوقع",
+    "uploadData": "رفع البيانات",
     "goDashboard": "اذهب إلى لوحة التحكم",
     "stayHere": "ابق هنا"
   },
@@ -63,7 +65,9 @@
     "watchNotice": "ما زال التدريب جارياً لـ {{count}} منتج/منتجات. يمكنك البقاء في هذه الصفحة أو الذهاب إلى لوحة التحكم وسيصلك إشعار عند الانتهاء.",
     "watchSaved": "سنرسل إشعاراً في الجرس عندما تصبح هذه التوقعات جاهزة.",
     "statusFailed": "فشل تحميل حالة التوقع.",
-    "detailsFailed": "فشل تحميل تفاصيل التوقع."
+    "detailsFailed": "فشل تحميل تفاصيل التوقع.",
+    "explanationFailed": "فشل تحميل تفسير التوقع.",
+    "noDataDetected": "لم يتم العثور على بيانات مبيعات كافية لهذا المنتج. ارفع بيانات جديدة ثم أنشئ التوقع مرة أخرى."
   },
   "details": {
     "pageTitle": "تفاصيل التوقع",
@@ -74,32 +78,55 @@
     "trainingMessage": "هذا التوقع قيد التدريب حالياً. ستستمر الصفحة في التحقق تلقائياً.",
     "failedMessage": "فشل هذا التوقع سابقاً. يمكنك إعادة المحاولة من هنا.",
     "daysLabel": "فترة التوقع",
+    "visibleWindowLabel": "النافذة المعروضة",
+    "endDateLabel": "تاريخ النهاية",
+    "rangeSummary": "{{start}} ← {{end}} · {{days}} يوم/أيام توقع",
+    "days14": "أسبوعان",
+    "days21": "3 أسابيع",
     "days30": "30 يوماً",
     "days60": "60 يوماً",
     "days90": "90 يوماً",
+    "daysCustom": "مخصص",
     "metaProduct": "المنتج",
     "metaCategory": "الفئة",
     "metaModel": "نوع النموذج",
     "metaTrained": "تاريخ التدريب",
     "metaPeriod": "فترة التوقع",
+    "metaTrainingPeriod": "فترة التدريب",
+    "metaGenerated": "تاريخ الإنشاء",
+    "metaCached": "نتيجة مخزنة",
+    "metaYes": "نعم",
+    "metaNo": "لا",
     "summaryQuantity": "إجمالي الكمية",
     "summaryAvg": "المتوسط / يوم",
     "summaryPeak": "يوم الذروة",
+    "summaryPeakQty": "كمية الذروة",
     "summaryRevenue": "إجمالي الإيراد",
     "summaryConfidence": "الثقة",
     "dailyTitle": "توقع الطلب اليومي",
-    "dailySubtitle": "الكمية اليومية المتوقعة مع نطاق أوضح وأسهل للقراءة.",
+    "explanationLoading": "جارٍ تحميل التفسير...",
+    "dailySubtitle": "اتجاه تفاعلي للكمية مع نطاق الثقة، والتكبير، وتحديد يوم الذروة.",
     "weeklyTitle": "النظرة الأسبوعية",
-    "weeklySubtitleRevenue": "توقع الإيراد الأسبوعي.",
-    "weeklySubtitleQuantity": "توقع الكمية الأسبوعية.",
+    "weeklySubtitle": "اتجاه أسبوعي للكمية والإيراد ضمن الفترة المختارة.",
+    "selectionEmpty": "لا توجد نقاط توقع داخل نطاق التاريخ المحدد.",
+    "eventBoostsActive": "يحتوي على أيام تعزيز أحداث",
     "explanationTitle": "التفسير",
-    "explanationBody": "يتوقع هذا النموذج نحو {{quantity}} وحدة خلال {{days}} يوماً، بمتوسط {{avg}} وحدة يومياً. من المتوقع أن تبلغ الذروة حول {{peakDate}}، بينما يصل الإيراد المتوقع إلى {{revenue}}. استخدم الرسم اليومي لمتابعة الحركة قصيرة المدى، واستخدم الرسم الأسبوعي لتخطيط المخزون والعروض.",
+    "explanationFallback": "من {{start}} إلى {{end}}، يتوقع هذا التنبؤ ما يقارب {{quantity}} وحدة إجمالاً، بمتوسط {{avg}} يومياً، مع إيراد متوقع يقارب {{revenue}}. أعلى طلب داخل هذه الفترة المختارة متوقع في {{peakDate}}.",
+    "keyDriversTitle": "العوامل الرئيسية",
     "datasets": {
       "quantity": "الكمية المتوقعة",
+      "confidenceBand": "نطاق الثقة",
       "upper": "الحد الأعلى",
       "lower": "الحد الأدنى",
       "weeklyRevenue": "الإيراد الأسبوعي",
       "weeklyQuantity": "الكمية الأسبوعية"
+    },
+    "annotations": {
+      "peakDay": "يوم الذروة"
+    },
+    "yAxes": {
+      "quantity": "الكمية",
+      "revenue": "الإيراد"
     }
   }
 }
