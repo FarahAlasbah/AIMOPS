@@ -33,3 +33,9 @@ export async function getForecastSummary({ days = 30 } = {}) {
   const res = await api.get(`/api/forecasts?days=${safeDays}`);
   return res.data;
 }
+
+export async function getForecastExplanation(productId) {
+  const id = encodeURIComponent(String(productId));
+  const res = await api.get(`/api/forecasts/${id}/explanation`);
+  return res.data;
+}
