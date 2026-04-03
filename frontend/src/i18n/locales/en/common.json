@@ -5,6 +5,7 @@
     "campaigns": "Campaigns",
     "feedback": "Feedback",
     "dataUpload": "Data Upload",
+    "forecasting": "Forecasting",
     "products": "Products",
     "events": "Events",
     "calendar": "Calendar",
@@ -58,6 +59,11 @@
     "sentOk": "Notification sent.",
     "sendError": "Failed to send notification.",
     "roleHint": "Role targeting only works if your backend supports target_type=role.",
+    "forecastReadyTitle": "Forecast ready",
+    "forecastReadyBody": "The forecast for {{name}} is ready to view.",
+    "forecastFailedTitle": "Forecast failed",
+    "forecastFailedBody": "The forecast for {{name}} failed. Go back to Forecasting and retry it.",
+    "forecastUnknownProduct": "this product",
     "errors": {
       "userRequired": "Select a user.",
       "roleRequired": "Select a role."

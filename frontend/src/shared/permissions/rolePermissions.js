@@ -1,6 +1,5 @@
 // frontend/src/shared/permissions/rolePermissions.js
 
-// UI fallback permissions (NOT security). Backend must still enforce access.
 export const ROLE_FALLBACK_PERMISSIONS = {
   "Marketing User": [
     "dashboard.view",
@@ -9,14 +8,15 @@ export const ROLE_FALLBACK_PERMISSIONS = {
     "feedback.view",
     "feedback.upload",
     "data.upload",
+    "forecasts.view",
     "reports.view",
   ],
 
-  // keep owner more restricted (adjust if you want)
   "Business Owner": [
     "dashboard.view",
     "campaigns.view",
     "feedback.view",
+    "forecasts.view",
     "reports.view",
   ],
 };
@@ -41,6 +41,5 @@ export const mergePermissions = (user) => {
   const backendPerms = Array.isArray(user?.permissions) ? user.permissions : [];
   const fallbackPerms = inferFallbackPermissions(user);
 
-  // unique merge
   return Array.from(new Set([...backendPerms, ...fallbackPerms]));
 };
