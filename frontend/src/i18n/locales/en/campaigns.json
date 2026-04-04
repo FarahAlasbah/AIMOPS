@@ -1,0 +1,199 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "optional": "optional"
+  },
+  "actions": {
+    "newCampaign": "New Campaign",
+    "calendarView": "Calendar View",
+    "view": "View",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "retry": "Retry",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "saveAsPlanned": "Save as Planned",
+    "createAndPublish": "Create & Publish",
+    "saving": "Saving...",
+    "createAnother": "Create Another Campaign",
+    "backToCampaigns": "Back to Campaigns",
+    "apply": "Apply",
+    "add": "Add",
+    "selectProducts": "Select Products"
+  },
+  "status": {
+    "planned": "Planned",
+    "active": "Published",
+    "completed": "Completed"
+  },
+  "types": {
+    "discount": "Discount",
+    "bundle": "Bundle",
+    "flash_sale": "Flash Sale",
+    "seasonal": "Seasonal",
+    "loyalty": "Loyalty",
+    "other": "Other"
+  },
+  "channels": {
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "google_ads": "Google Ads",
+    "email": "Email",
+    "sms": "SMS",
+    "in_store": "In-Store"
+  },
+  "filters": {
+    "search": "Search",
+    "searchPlaceholder": "Search by name, type, or status",
+    "status": "Status",
+    "type": "Type",
+    "allStatuses": "All statuses",
+    "allTypes": "All types",
+    "category": "Category",
+    "allCategories": "All categories",
+    "sortBy": "Sort by",
+    "sortNameAsc": "Name (A-Z)",
+    "sortNameDesc": "Name (Z-A)",
+    "sortCategory": "Category"
+  },
+  "summary": {
+    "total": "Total Campaigns",
+    "active": "Published",
+    "planned": "Planned",
+    "completed": "Completed"
+  },
+  "fields": {
+    "campaignName": "Campaign Name",
+    "campaignNamePlaceholder": "Enter campaign name",
+    "campaignType": "Campaign Type",
+    "customCampaignTypeName": "Custom Campaign Type Name",
+    "customCampaignTypeNamePlaceholder": "Example: Clearance Push",
+    "budget": "Budget",
+    "budgetPlaceholder": "Enter budget",
+    "notes": "Notes",
+    "notesPlaceholder": "Add campaign notes or business context",
+    "description": "Description",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "products": "Products",
+    "productsSearchPlaceholder": "Search by product name or category",
+    "discountPct": "Discount %",
+    "targetQuantity": "Target Quantity",
+    "targetQuantityPlaceholder": "Enter quantity",
+    "discountRequiredPlaceholder": "Required for discount campaigns",
+    "discountOptionalPlaceholder": "Optional"
+  },
+  "list": {
+    "title": "Campaigns",
+    "subtitle": "Manage, publish, and track your marketing campaigns",
+    "headers": {
+      "name": "Campaign Name",
+      "type": "Type",
+      "status": "Status",
+      "budget": "Budget",
+      "dates": "Dates",
+      "products": "Products",
+      "uplift": "Forecast Uplift",
+      "actions": "Actions"
+    }
+  },
+  "form": {
+    "title": "New Campaign",
+    "subtitle": "Create a campaign and preview its expected business impact",
+    "sections": {
+      "details": "Campaign Details",
+      "detailsSubtitle": "Set the campaign basics before selecting products and channels.",
+      "schedule": "Schedule",
+      "scheduleSubtitle": "Pick the campaign duration.",
+      "channels": "Channels",
+      "channelsSubtitle": "Select one or more campaign channels.",
+      "products": "Target Products",
+      "productsSubtitle": "Search and add the products included in this campaign."
+    }
+  },
+  "details": {
+    "title": "Campaign Details",
+    "subtitle": "Review campaign status, products, channels, and summary information",
+    "duration": "Duration (days)",
+    "predictedRoi": "Predicted ROI",
+    "additionalRevenue": "Forecast Additional Revenue",
+    "schedule": "Schedule",
+    "createdAt": "Created At",
+    "productCount": "Product Count",
+    "summary": "Summary",
+    "targetAudience": "Target Audience",
+    "channels": "Channels",
+    "products": "Products",
+    "productName": "Product Name",
+    "category": "Category"
+  },
+  "calendar": {
+    "title": "Campaign Calendar",
+    "subtitle": "View campaigns across a selected date range",
+    "noCampaigns": "No campaigns found for the selected period."
+  },
+  "insights": {
+    "dateSuggestions": "Date Suggestions",
+    "dateSuggestionsSubtitle": "Returned directly from the backend after campaign creation.",
+    "forecastImpact": "Forecast Impact",
+    "businessAdvice": "Business Advice",
+    "forecastQuantity": "Forecast Quantity",
+    "uplift": "Uplift",
+    "confidence": "Confidence",
+    "source": "Source",
+    "risk": "Risk",
+    "additionalUnits": "Additional Units",
+    "baseRevenue": "Base Revenue",
+    "additionalRevenue": "Additional Revenue",
+    "estimatedRoi": "Estimated ROI",
+    "baseQuantity": "Base Quantity",
+    "adjustedQuantity": "Adjusted Quantity"
+  },
+  "validation": {
+    "campaignNameRequired": "Campaign name is required.",
+    "startDateRequired": "Start date is required.",
+    "endDateRequired": "End date is required.",
+    "endDateInvalid": "End date cannot be before start date.",
+    "budgetRequired": "Budget must be greater than 0.",
+    "customTypeRequired": "Please enter a custom campaign type name.",
+    "channelsRequired": "Select at least one channel.",
+    "productsRequired": "Select at least one product.",
+    "targetQuantityRequired": "Target quantity must be greater than 0.",
+    "discountRequired": "Discount is required for discount campaigns.",
+    "discountRange": "Discount must be between 0 and 100."
+  },
+  "messages": {
+    "loadError": "Failed to load campaign data.",
+    "publishError": "Failed to publish campaign.",
+    "deleteError": "Failed to delete campaign.",
+    "createError": "Failed to create campaign.",
+    "productsLoadError": "Could not load products.",
+    "noCampaigns": "No campaigns found.",
+    "noCampaignFound": "Campaign not found.",
+    "loadingProducts": "Loading products...",
+    "noMatchingProducts": "No matching products found.",
+    "noSelectedProducts": "No products selected yet.",
+    "confirmDelete": "Are you sure you want to delete this campaign?",
+    "confirmPublish": "Are you sure you want to publish this campaign?",
+    "createPlannedSuccess": "Campaign created successfully and saved as planned.",
+    "createPublishedSuccess": "Campaign created and published successfully.",
+    "publishFailedStillPlanned": "Campaign was created successfully, but publishing failed. It is still saved as planned.",
+    "createdCampaignSummary": "The backend response is shown below.",
+    "noPermission": "You do not have permission to create campaigns.",
+    "noProductsLeftToSelect": "All available products are already selected."
+  },
+  "picker": {
+    "selectedProductsLabel": "Selected products",
+    "selectedCountText": "{{count}} selected",
+    "selectedEmpty": "Choose products from the selector, then configure quantity and discount below.",
+    "selectedPreviewWithMore": "{{names}}, and {{count}} more",
+    "modalTitle": "Select products",
+    "modalSubtitle": "Search, filter, and add products to this campaign."
+  },
+  "dialogs": {
+  "publishTitle": "Publish this campaign?",
+  "deleteTitle": "Delete this campaign?"
+}
+}

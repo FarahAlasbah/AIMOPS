@@ -1,4 +1,3 @@
-// frontend/src/i18n/index.js
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
@@ -19,6 +18,8 @@ import enDashboard from "./locales/en/dashboard.json";
 import arDashboard from "./locales/ar/dashboard.json";
 import enForecasting from "./locales/en/forecasting.json";
 import arForecasting from "./locales/ar/forecasting.json";
+import enCampaigns from "./locales/en/campaigns.json";
+import arCampaigns from "./locales/ar/campaigns.json";
 
 const resources = {
   en: {
@@ -30,6 +31,7 @@ const resources = {
     auth: enAuth,
     dashboard: enDashboard,
     forecasting: enForecasting,
+    campaigns: enCampaigns,
   },
   ar: {
     common: arCommon,
@@ -40,6 +42,7 @@ const resources = {
     auth: arAuth,
     dashboard: arDashboard,
     forecasting: arForecasting,
+    campaigns: arCampaigns,
   },
 };
 
