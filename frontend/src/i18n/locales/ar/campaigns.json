@@ -1,0 +1,199 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "optional": "اختياري"
+  },
+  "actions": {
+    "newCampaign": "حملة جديدة",
+    "calendarView": "عرض التقويم",
+    "view": "عرض",
+    "publish": "نشر",
+    "publishing": "جارٍ النشر...",
+    "delete": "حذف",
+    "deleting": "جارٍ الحذف...",
+    "retry": "إعادة المحاولة",
+    "remove": "إزالة",
+    "cancel": "إلغاء",
+    "saveAsPlanned": "حفظ كمخططة",
+    "createAndPublish": "إنشاء ونشر",
+    "saving": "جارٍ الحفظ...",
+    "createAnother": "إنشاء حملة أخرى",
+    "backToCampaigns": "العودة إلى الحملات",
+    "apply": "تطبيق",
+    "add": "إضافة",
+    "selectProducts": "اختيار المنتجات"
+  },
+  "status": {
+    "planned": "مخططة",
+    "active": "منشورة",
+    "completed": "مكتملة"
+  },
+  "types": {
+    "discount": "خصم",
+    "bundle": "عرض تجميعي",
+    "flash_sale": "تخفيض سريع",
+    "seasonal": "موسمية",
+    "loyalty": "ولاء",
+    "other": "أخرى"
+  },
+  "channels": {
+    "facebook": "فيسبوك",
+    "instagram": "إنستغرام",
+    "google_ads": "إعلانات جوجل",
+    "email": "البريد الإلكتروني",
+    "sms": "رسائل SMS",
+    "in_store": "داخل المتجر"
+  },
+  "filters": {
+    "search": "بحث",
+    "searchPlaceholder": "ابحث بالاسم أو النوع أو الحالة",
+    "status": "الحالة",
+    "type": "النوع",
+    "allStatuses": "كل الحالات",
+    "allTypes": "كل الأنواع",
+    "category": "الفئة",
+    "allCategories": "كل الفئات",
+    "sortBy": "الترتيب حسب",
+    "sortNameAsc": "الاسم (أ-ي)",
+    "sortNameDesc": "الاسم (ي-أ)",
+    "sortCategory": "الفئة"
+  },
+  "summary": {
+    "total": "إجمالي الحملات",
+    "active": "منشورة",
+    "planned": "مخططة",
+    "completed": "مكتملة"
+  },
+  "fields": {
+    "campaignName": "اسم الحملة",
+    "campaignNamePlaceholder": "أدخل اسم الحملة",
+    "campaignType": "نوع الحملة",
+    "customCampaignTypeName": "اسم نوع الحملة المخصص",
+    "customCampaignTypeNamePlaceholder": "مثال: حملة تصفية",
+    "budget": "الميزانية",
+    "budgetPlaceholder": "أدخل الميزانية",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "أضف ملاحظات أو سياق العمل",
+    "description": "الوصف",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "products": "المنتجات",
+    "productsSearchPlaceholder": "ابحث باسم المنتج أو الفئة",
+    "discountPct": "نسبة الخصم %",
+    "targetQuantity": "الكمية المستهدفة",
+    "targetQuantityPlaceholder": "أدخل الكمية",
+    "discountRequiredPlaceholder": "مطلوب في حملات الخصم",
+    "discountOptionalPlaceholder": "اختياري"
+  },
+  "list": {
+    "title": "الحملات",
+    "subtitle": "إدارة الحملات التسويقية ونشرها ومتابعتها",
+    "headers": {
+      "name": "اسم الحملة",
+      "type": "النوع",
+      "status": "الحالة",
+      "budget": "الميزانية",
+      "dates": "التواريخ",
+      "products": "المنتجات",
+      "uplift": "الزيادة المتوقعة",
+      "actions": "الإجراءات"
+    }
+  },
+  "form": {
+    "title": "حملة جديدة",
+    "subtitle": "أنشئ حملة واعرض أثرها المتوقع على الأعمال",
+    "sections": {
+      "details": "تفاصيل الحملة",
+      "detailsSubtitle": "حدد أساسيات الحملة قبل اختيار المنتجات والقنوات.",
+      "schedule": "الجدول الزمني",
+      "scheduleSubtitle": "اختر مدة الحملة.",
+      "channels": "القنوات",
+      "channelsSubtitle": "اختر قناة واحدة أو أكثر للحملة.",
+      "products": "المنتجات المستهدفة",
+      "productsSubtitle": "ابحث عن المنتجات وأضفها إلى الحملة."
+    }
+  },
+  "details": {
+    "title": "تفاصيل الحملة",
+    "subtitle": "راجع حالة الحملة والمنتجات والقنوات ومعلوماتها",
+    "duration": "المدة (أيام)",
+    "predictedRoi": "العائد المتوقع على الاستثمار",
+    "additionalRevenue": "الإيراد الإضافي المتوقع",
+    "schedule": "الجدول الزمني",
+    "createdAt": "تاريخ الإنشاء",
+    "productCount": "عدد المنتجات",
+    "summary": "الملخص",
+    "targetAudience": "الجمهور المستهدف",
+    "channels": "القنوات",
+    "products": "المنتجات",
+    "productName": "اسم المنتج",
+    "category": "الفئة"
+  },
+  "calendar": {
+    "title": "تقويم الحملات",
+    "subtitle": "عرض الحملات ضمن نطاق زمني محدد",
+    "noCampaigns": "لا توجد حملات في الفترة المحددة."
+  },
+  "insights": {
+    "dateSuggestions": "اقتراحات التواريخ",
+    "dateSuggestionsSubtitle": "تم إرجاعها مباشرة من الخلفية بعد إنشاء الحملة.",
+    "forecastImpact": "الأثر المتوقع",
+    "businessAdvice": "نصيحة الأعمال",
+    "forecastQuantity": "الكمية المتوقعة",
+    "uplift": "الزيادة",
+    "confidence": "الثقة",
+    "source": "المصدر",
+    "risk": "المخاطر",
+    "additionalUnits": "الوحدات الإضافية",
+    "baseRevenue": "الإيراد الأساسي",
+    "additionalRevenue": "الإيراد الإضافي",
+    "estimatedRoi": "العائد المتوقع",
+    "baseQuantity": "الكمية الأساسية",
+    "adjustedQuantity": "الكمية المعدلة"
+  },
+  "validation": {
+    "campaignNameRequired": "اسم الحملة مطلوب.",
+    "startDateRequired": "تاريخ البداية مطلوب.",
+    "endDateRequired": "تاريخ النهاية مطلوب.",
+    "endDateInvalid": "لا يمكن أن يكون تاريخ النهاية قبل تاريخ البداية.",
+    "budgetRequired": "يجب أن تكون الميزانية أكبر من 0.",
+    "customTypeRequired": "يرجى إدخال اسم مخصص لنوع الحملة.",
+    "channelsRequired": "اختر قناة واحدة على الأقل.",
+    "productsRequired": "اختر منتجًا واحدًا على الأقل.",
+    "targetQuantityRequired": "يجب أن تكون الكمية المستهدفة أكبر من 0.",
+    "discountRequired": "الخصم مطلوب في حملات الخصم.",
+    "discountRange": "يجب أن تكون نسبة الخصم بين 0 و100."
+  },
+  "messages": {
+    "loadError": "فشل في تحميل بيانات الحملة.",
+    "publishError": "فشل في نشر الحملة.",
+    "deleteError": "فشل في حذف الحملة.",
+    "createError": "فشل في إنشاء الحملة.",
+    "productsLoadError": "تعذر تحميل المنتجات.",
+    "noCampaigns": "لا توجد حملات.",
+    "noCampaignFound": "الحملة غير موجودة.",
+    "loadingProducts": "جارٍ تحميل المنتجات...",
+    "noMatchingProducts": "لا توجد منتجات مطابقة.",
+    "noSelectedProducts": "لم يتم اختيار أي منتجات بعد.",
+    "confirmDelete": "هل أنت متأكد من حذف هذه الحملة؟",
+    "confirmPublish": "هل أنت متأكد من نشر هذه الحملة؟",
+    "createPlannedSuccess": "تم إنشاء الحملة وحفظها كمخططة بنجاح.",
+    "createPublishedSuccess": "تم إنشاء الحملة ونشرها بنجاح.",
+    "publishFailedStillPlanned": "تم إنشاء الحملة بنجاح، لكن فشل النشر. ما زالت محفوظة كمخططة.",
+    "createdCampaignSummary": "تم عرض استجابة الخلفية بالأسفل.",
+    "noPermission": "ليس لديك صلاحية لإنشاء الحملات.",
+    "noProductsLeftToSelect": "تم اختيار جميع المنتجات المتاحة بالفعل."
+  },
+  "picker": {
+    "selectedProductsLabel": "المنتجات المحددة",
+    "selectedCountText": "{{count}} محدد",
+    "selectedEmpty": "اختر المنتجات من النافذة، ثم عدّل الكمية والخصم بالأسفل.",
+    "selectedPreviewWithMore": "{{names}}، و{{count}} أخرى",
+    "modalTitle": "اختيار المنتجات",
+    "modalSubtitle": "ابحث وفلتر وأضف المنتجات إلى هذه الحملة."
+  },
+  "dialogs": {
+  "publishTitle": "هل تريد نشر هذه الحملة؟",
+  "deleteTitle": "هل تريد حذف هذه الحملة؟"
+}
+}

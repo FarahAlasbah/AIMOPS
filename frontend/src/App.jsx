@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 import MainLayout from "./layouts/MainLayout";
@@ -9,6 +8,8 @@ import Profile from "./features/profile/pages/Profile";
 import Overview from "./features/dashboard/pages/Overview";
 import CampaignList from "./features/campaigns/pages/CampaignList";
 import NewCampaign from "./features/campaigns/pages/NewCampaign";
+import CampaignDetails from "./features/campaigns/pages/CampaignDetails";
+import CampaignCalendar from "./features/campaigns/pages/CampaignCalendar";
 import DataUpload from "./features/data-upload/pages/DataUpload";
 import FeedbackList from "./features/feedback/pages/FeedbackList";
 import FeedbackUpload from "./features/feedback/pages/FeedbackUpload";
@@ -101,6 +102,22 @@ function App() {
               element={
                 <RequirePermission anyOf={["campaigns.create"]}>
                   <NewCampaign />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="campaigns/calendar"
+              element={
+                <RequirePermission anyOf={["campaigns.view"]}>
+                  <CampaignCalendar />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="campaigns/:campaignId"
+              element={
+                <RequirePermission anyOf={["campaigns.view"]}>
+                  <CampaignDetails />
                 </RequirePermission>
               }
             />
