@@ -27,21 +27,27 @@ const AdminSidebar = ({ isOpen }) => {
   const { user, logout, hasPermission } = useAuth();
   const { t } = useTranslation();
 
-  const isActive = (path) => location.pathname === path;
+const isActive = (path) => {
+  if (path === "/app/overview") {
+    return location.pathname === path;
+  }
 
+  return (
+    location.pathname === path ||
+    location.pathname.startsWith(`${path}/`)
+  );
+};
   const menuItems = [
     { key: "overview", path: "/app/overview", icon: LayoutDashboard, perm: "dashboard.view" },
-    { key: "campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
-    { key: "feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
-    { key: "dataUpload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
-    { key: "forecasting", path: "/app/forecasting", icon: TrendingUp, perm: "forecasts.view" },
+        { key: "dataUpload", path: "/app/data-upload", icon: Upload, perm: "data.upload" },
     { key: "products", path: "/app/products", icon: Package, perm: "products.view" },
+    { key: "forecasting", path: "/app/forecasting", icon: TrendingUp, perm: "forecasts.view" },
+
+    { key: "campaigns", path: "/app/campaigns", icon: Megaphone, perm: "campaigns.view" },
+    // { key: "feedback", path: "/app/feedback", icon: MessageSquare, perm: "feedback.view" },
     { key: "events", path: "/app/events", icon: CalendarDays, perm: "events.view" },
     { key: "calendar", path: "/app/calendar", icon: Calendar, perm: "calendar.view" },
-    { key: "audit", path: "/app/audit", icon: UserCheck, perm: "system.audit" },
-    { key: "dataSources", path: "/app/data-sources", icon: Database, perm: "system.settings" },
     { key: "reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
-    { key: "settings", path: "/app/settings", icon: Settings, perm: "system.settings" },
     { key: "userManagement", path: "/app/user-management", icon: Users, perm: "users.view" },
   ].filter((item) => hasPermission(item.perm));
 

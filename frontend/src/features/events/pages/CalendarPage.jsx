@@ -45,7 +45,14 @@ export default function CalendarPage() {
       try {
         const data = await getEvents({ upcoming: false });
         if (!alive) return;
-        setEvents(Array.isArray(data?.events) ? data.events : []);
+
+        const allEvents = Array.isArray(data?.events) ? data.events : [];
+        const readyEvents = allEvents.filter((event) => {
+          const status = String(event?.status || "").toLowerCase();
+          return status !== "detected" && status !== "draft";
+        });
+
+        setEvents(readyEvents);
       } catch (e) {
         if (!alive) return;
         setEvents([]);
@@ -57,7 +64,7 @@ export default function CalendarPage() {
 
     load();
     return () => { alive = false; };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     setJumpYm(toYm(anchor));
