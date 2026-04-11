@@ -1,23 +1,16 @@
 {
-  "stub": {
-    "title": "Dashboard Page",
-    "body": "This is the dashboard where you'll see campaign summaries, forecasts, and feedback.",
-    "totalCampaigns": "Total Campaigns",
-    "activeForecasts": "Active Forecasts",
-    "feedbackItems": "Feedback Items"
-  },
   "roles": {
     "admin": {
       "title": "Admin Dashboard",
-      "subtitle": "System overview and management"
+      "subtitle": "A clear overview of operations, campaigns, uploads, and forecasting"
     },
     "marketing": {
       "title": "Marketing Dashboard",
-      "subtitle": "Campaigns and feedback performance"
+      "subtitle": "Campaign performance, uploads, products, and forecast readiness"
     },
     "owner": {
       "title": "Business Owner Dashboard",
-      "subtitle": "High-level view of operations and results"
+      "subtitle": "A high-level view of business activity and forecasting progress"
     },
     "default": {
       "title": "Dashboard",
@@ -27,25 +20,48 @@
   "stats": {
     "usersCount": "Total Users",
     "uploadsCount": "Data Uploads",
-    "uploadsCountPeriod": "Data Uploads (Period)",
     "productsCount": "Products",
-    "feedbackCount": "Feedback Items",
     "campaignsCount": "Campaigns",
-    "revenue": "Revenue (Period)",
-    "dataQuality": "Data Quality",
-    "status": "Status"
+    "forecastsReady": "Forecasts Ready"
+  },
+  "helpers": {
+    "uploadsHelper": "All uploaded sales batches",
+    "productsHelper": "Available products in the system",
+    "campaignsHelper": "{{active}} active right now",
+    "forecastsHelper": "{{total}} products tracked in forecasting"
   },
   "charts": {
     "uploadsByStatus": "Uploads by status",
-    "uploadsOverTime": "Uploads over time (last 14 days)",
+    "uploadsOverTime": "Uploads over time",
     "topProductsRevenue": "Top products by revenue",
-    "recentActivity": "Recent activity (from uploads)",
+    "forecastStatus": "Forecasting status overview",
+    "recentActivity": "Recent upload activity",
     "loading": "Loading…",
     "noUploads": "No uploads data yet.",
     "noProducts": "No products data yet.",
+    "noForecasts": "No forecasting data yet.",
     "noRecentUploads": "No recent uploads yet.",
     "uploadsDatasetLabel": "Uploads",
-    "revenueDatasetLabel": "Revenue"
+    "revenueDatasetLabel": "Revenue",
+    "forecastDatasetLabel": "Forecasts",
+    "total": "Total"
+  },
+  "statusLabels": {
+    "processed": "Processed",
+    "mapping": "Mapping",
+    "pending": "Pending",
+    "failed": "Failed",
+    "unknown": "Unknown"
+  },
+  "forecastStatus": {
+    "ready": "Ready",
+    "training": "Training",
+    "failed": "Failed",
+    "idle": "Idle"
+  },
+  "labels": {
+    "unnamedProduct": "Unnamed Product",
+    "uploadFile": "Upload file"
   },
   "errorLoadFailed": "Failed to load dashboard data."
 }

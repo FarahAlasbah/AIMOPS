@@ -504,7 +504,7 @@ const NewCampaign = () => {
           <div className="campaign-created-top">
             <div>
               <h3>{createdResult.campaign_name}</h3>
-              <p>{t("messages.createdCampaignSummary")}</p>
+              {/* <p>{t("messages.createdCampaignSummary")}</p> */}
             </div>
 
             <div className="campaign-created-actions">
