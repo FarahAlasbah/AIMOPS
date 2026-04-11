@@ -13,7 +13,7 @@ const CampaignInsights = ({ result }) => {
         <div className="campaign-insights-card">
           <div className="campaign-insights-header">
             <h3>{t("insights.dateSuggestions")}</h3>
-            <p>{t("insights.dateSuggestionsSubtitle")}</p>
+            {/* <p>{t("insights.dateSuggestionsSubtitle")}</p> */}
           </div>
 
           <div className="campaign-suggestions-grid">

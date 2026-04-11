@@ -1,23 +1,16 @@
 {
-  "stub": {
-    "title": "صفحة لوحة التحكم",
-    "body": "هنا ستجد ملخصات الحملات والتوقعات والتغذية الراجعة.",
-    "totalCampaigns": "إجمالي الحملات",
-    "activeForecasts": "التوقعات النشطة",
-    "feedbackItems": "عناصر التغذية الراجعة"
-  },
   "roles": {
     "admin": {
       "title": "لوحة تحكم المدير",
-      "subtitle": "نظرة عامة على النظام وإدارته"
+      "subtitle": "نظرة واضحة على العمليات والحملات والرفعات والتنبؤات"
     },
     "marketing": {
       "title": "لوحة تحكم التسويق",
-      "subtitle": "أداء الحملات والتغذية الراجعة"
+      "subtitle": "أداء الحملات والرفعات والمنتجات وجاهزية التنبؤ"
     },
     "owner": {
       "title": "لوحة تحكم صاحب العمل",
-      "subtitle": "نظرة شاملة على العمليات والنتائج"
+      "subtitle": "عرض عام للنشاط التجاري وتقدم التنبؤات"
     },
     "default": {
       "title": "لوحة التحكم",
@@ -27,25 +20,48 @@
   "stats": {
     "usersCount": "إجمالي المستخدمين",
     "uploadsCount": "رفعات البيانات",
-    "uploadsCountPeriod": "رفعات البيانات (الفترة)",
     "productsCount": "المنتجات",
-    "feedbackCount": "عناصر التغذية الراجعة",
     "campaignsCount": "الحملات",
-    "revenue": "الإيراد (الفترة)",
-    "dataQuality": "جودة البيانات",
-    "status": "الحالة"
+    "forecastsReady": "التنبؤات الجاهزة"
+  },
+  "helpers": {
+    "uploadsHelper": "جميع دفعات بيانات المبيعات المرفوعة",
+    "productsHelper": "المنتجات المتاحة في النظام",
+    "campaignsHelper": "{{active}} حملة نشطة حالياً",
+    "forecastsHelper": "{{total}} منتجاً ضمن التنبؤ"
   },
   "charts": {
     "uploadsByStatus": "الرفعات حسب الحالة",
-    "uploadsOverTime": "الرفعات عبر الزمن (آخر 14 يوماً)",
+    "uploadsOverTime": "الرفعات عبر الزمن",
     "topProductsRevenue": "أعلى المنتجات إيراداً",
-    "recentActivity": "النشاط الأخير (من الرفعات)",
+    "forecastStatus": "نظرة عامة على حالات التنبؤ",
+    "recentActivity": "النشاط الأخير للرفعات",
     "loading": "جارٍ التحميل…",
     "noUploads": "لا توجد بيانات رفع بعد.",
     "noProducts": "لا توجد بيانات منتجات بعد.",
+    "noForecasts": "لا توجد بيانات تنبؤ بعد.",
     "noRecentUploads": "لا توجد رفعات حديثة بعد.",
     "uploadsDatasetLabel": "الرفعات",
-    "revenueDatasetLabel": "الإيراد"
+    "revenueDatasetLabel": "الإيراد",
+    "forecastDatasetLabel": "التنبؤات",
+    "total": "الإجمالي"
+  },
+  "statusLabels": {
+    "processed": "مُعالجة",
+    "mapping": "مطابقة",
+    "pending": "قيد الانتظار",
+    "failed": "فشلت",
+    "unknown": "غير معروفة"
+  },
+  "forecastStatus": {
+    "ready": "جاهز",
+    "training": "قيد المعالجة",
+    "failed": "فشل",
+    "idle": "غير نشط"
+  },
+  "labels": {
+    "unnamedProduct": "منتج بدون اسم",
+    "uploadFile": "ملف مرفوع"
   },
   "errorLoadFailed": "فشل تحميل بيانات لوحة التحكم."
 }

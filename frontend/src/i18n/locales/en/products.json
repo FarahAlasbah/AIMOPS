@@ -19,7 +19,10 @@
     "removeProduct": "remove",
     "addProductLabel": "Add product to merge",
     "addProductPlaceholder": "Select product...",
-    "tip": "Tip: select products in the table, then click \"Merge selected\"."
+    "tip": "Tip: select products in the table, then click \"Merge selected\".",
+    "mergeCount": "Merge {{count}} products",
+    "primarySearchPlaceholder": "Search products...",
+"addProductSearchPlaceholder": "Search products to add..."
   },
   "pager": {
     "rowsLabel": "Rows",
