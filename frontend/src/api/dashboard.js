@@ -1,12 +1,6 @@
-// frontend/src/api/dashboard.js
 import api from "./api";
+import { getForecastStatuses } from "./forecasts";
 
-/**
- * Tries to extract total count from common backend shapes:
- * - Response header: x-total-count
- * - Body: { total }, { count }, { total_count }
- * - Body: array (fallback to array length)
- */
 function readTotalCount({ data, headers }) {
   const headerVal =
     headers?.["x-total-count"] ??
@@ -19,8 +13,8 @@ function readTotalCount({ data, headers }) {
 
   if (data && typeof data === "object" && !Array.isArray(data)) {
     const candidates = [data.total, data.count, data.total_count];
-    for (const v of candidates) {
-      const n = Number(v);
+    for (const value of candidates) {
+      const n = Number(value);
       if (!Number.isNaN(n) && n >= 0) return n;
     }
   }
@@ -49,8 +43,6 @@ async function safeCountProducts() {
     const res = await api.get("/api/products");
     const data = res.data;
 
-    // Your backend shape:
-    // { success: true, total_products: 87, products: [...] }
     if (data && typeof data === "object") {
       const n = Number(data.total_products);
       if (!Number.isNaN(n) && n >= 0) return n;
@@ -72,10 +64,8 @@ async function safeGetUploadsPage({ limit = 5, offset = 0 } = {}) {
     const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
     const data = res.data;
 
-    // Your backend returns a plain array
     if (Array.isArray(data)) return data;
 
-    // Fallbacks if you ever change backend shape later
     const items = data?.items || data?.results || [];
     return Array.isArray(items) ? items : [];
   } catch {
@@ -84,23 +74,21 @@ async function safeGetUploadsPage({ limit = 5, offset = 0 } = {}) {
 }
 
 async function safeCountUploads() {
-  // Since your backend returns a plain array and doesn't return a total,
-  // we count by paging until the last page.
   const limit = 200;
-  const maxPages = 500; // safety cap
+  const maxPages = 500;
 
   let offset = 0;
   let total = 0;
 
-  for (let page = 0; page < maxPages; page++) {
+  for (let page = 0; page < maxPages; page += 1) {
     try {
       const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
       const data = res.data;
-
       const items = Array.isArray(data) ? data : data?.items || data?.results || [];
+
       total += items.length;
 
-      if (items.length < limit) break; // last page
+      if (items.length < limit) break;
       offset += limit;
     } catch {
       return null;
@@ -110,9 +98,6 @@ async function safeCountUploads() {
   return total;
 }
 
-/**
- * Dashboard summary from endpoints you already have.
- */
 export async function getDashboardSummary() {
   const [usersCount, productsCount, uploadsCount, recentUploads] = await Promise.all([
     safeCountUsers(),
@@ -128,17 +113,74 @@ export async function getDashboardSummary() {
     recentUploads,
   };
 }
+
 export async function getUploadsForCharts({ limit = 500 } = {}) {
-  // Just grab first N uploads; good enough for dashboard charts.
-  // If you want “all”, we can reuse the paging logic later.
   const res = await api.get(`/api/data/uploads?limit=${limit}&offset=0`);
   return Array.isArray(res.data) ? res.data : [];
 }
 
 export async function getProductsForCharts({ limit = 200 } = {}) {
-  // Your products endpoint returns { total_products, products: [...] }
   const res = await api.get("/api/products");
   const data = res.data;
   const products = Array.isArray(data?.products) ? data.products : [];
   return products.slice(0, limit);
+}
+
+export async function getCampaignsForDashboard() {
+  try {
+    const res = await api.get("/api/campaigns");
+    const data = res.data;
+    const campaigns = Array.isArray(data?.campaigns)
+      ? data.campaigns
+      : Array.isArray(data)
+      ? data
+      : [];
+
+    return campaigns;
+  } catch {
+    return [];
+  }
+}
+
+function normalizeForecastStatus(value) {
+  const v = String(value || "").toLowerCase();
+
+  if (["ready", "done", "success", "completed"].includes(v)) return "ready";
+  if (["training", "queued", "pending", "running"].includes(v)) return "training";
+  if (["failed", "error"].includes(v)) return "failed";
+  return "idle";
+}
+
+export async function getForecastSummaryForDashboard() {
+  try {
+    const data = await getForecastStatuses();
+    const list = Array.isArray(data?.products)
+      ? data.products
+      : Array.isArray(data)
+      ? data
+      : [];
+
+    const summary = {
+      total: list.length,
+      ready: 0,
+      training: 0,
+      failed: 0,
+      idle: 0,
+    };
+
+    list.forEach((item) => {
+      const key = normalizeForecastStatus(item?.forecast_status || item?.status);
+      summary[key] += 1;
+    });
+
+    return summary;
+  } catch {
+    return {
+      total: 0,
+      ready: 0,
+      training: 0,
+      failed: 0,
+      idle: 0,
+    };
+  }
 }

@@ -19,7 +19,10 @@
     "removeProduct": "إزالة",
     "addProductLabel": "إضافة منتج للدمج",
     "addProductPlaceholder": "اختر منتجاً...",
-    "tip": "تلميح: اختر منتجات من الجدول، ثم انقر على \"دمج المحدد\"."
+    "tip": "تلميح: اختر منتجات من الجدول، ثم انقر على \"دمج المحدد\".",
+    "mergeCount": "دمج {{count}} منتجات",
+    "primarySearchPlaceholder": "ابحث عن المنتجات...",
+"addProductSearchPlaceholder": "ابحث عن المنتجات لإضافتها..."
   },
   "pager": {
     "rowsLabel": "الصفوف",

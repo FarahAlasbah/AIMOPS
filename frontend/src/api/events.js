@@ -65,8 +65,9 @@ export async function confirmDraftEvent(eventId, payload) {
  * POST /api/events/drafts/{id}/dismiss
  * Dismisses a draft event — it won't affect forecasts.
  */
-export async function dismissDraftEvent(eventId) {
-  const id = encodeURIComponent(String(eventId));
-  const res = await api.post(`/api/events/drafts/${id}/dismiss`);
-  return res.data;
+
+
+export async function dismissDraftEvent(id) {
+  const { data } = await api.post(`/api/events/drafts/${id}/dismiss`, {});
+  return data;
 }

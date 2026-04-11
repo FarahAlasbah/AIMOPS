@@ -32,9 +32,9 @@ export default function ProductsTable({
               />
             </th>
 
-            <th className="click" onClick={() => onToggleSort("product_id")}>
+            {/* <th className="click" onClick={() => onToggleSort("product_id")}>
               {t("table.colId")}
-            </th>
+            </th> */}
             <th className="click" onClick={() => onToggleSort("name")}>
               {t("table.colName")}
             </th>
@@ -93,7 +93,7 @@ export default function ProductsTable({
                     />
                   </td>
 
-                  <td>{id}</td>
+                  {/* <td>{id}</td> */}
 
                   <td title={p.normalized_name || ""}>
                     <div className="name-cell">
