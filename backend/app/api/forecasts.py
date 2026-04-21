@@ -422,6 +422,24 @@ async def get_campaign_impact(
 
 
 # ============================================
+@router.get("/{product_id}/explanation/status")
+async def get_explanation_status(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Check if a cached explanation exists for this product.
+    Returns the explanation if yes, {"exists": false} if no.
+    Never triggers generation — safe to call on every page load.
+    """
+    from app.services.forecast_explanation_service import get_cached_explanation
+
+    result = await get_cached_explanation(db, product_id)
+    return {"success": True, **result}
+
+
+# ============================================
 # ENDPOINT 6: Get Explanation (Claude)
 # ============================================
 
@@ -445,3 +463,26 @@ async def get_forecast_explanation(
         raise HTTPException(status_code=404, detail=result["error"])
 
     return {"success": True, **result}
+
+
+# ============================================
+# ENDPOINT 7: delete Explanation 
+# ============================================
+
+
+@router.delete("/{product_id}/explanation")
+async def delete_explanation_cache(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete cached explanation to force regeneration."""
+    if current_user.role.role_name not in ['admin', 'marketing_user']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    db.query(ForecastExplanation).filter(
+        ForecastExplanation.product_id == product_id
+    ).delete()
+    db.commit()
+
+    return {"success": True, "message": f"Explanation cache cleared for product {product_id}."}
