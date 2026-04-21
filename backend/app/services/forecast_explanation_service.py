@@ -6,9 +6,13 @@ CURRENT VERSION: Hardcoded logic (no Claude API call)
 FUTURE VERSION: Replace _generate_explanation_text() with Claude API call.
 Nothing else in this file needs to change when we make that switch.
 """
+
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
+import httpx
+import json
 
+from app.core.config import settings
 from app.models.forecast import ForecastModel, ForecastResult, ForecastExplanation
 from app.models.event import Event, EventImpactResult
 from app.models.campaign import Product
@@ -135,7 +139,7 @@ async def _generate_explanation(db: Session, product_id: int, model: ForecastMod
     }
 
     # THIS IS THE ONLY FUNCTION THAT CHANGES WHEN WE ADD CLAUDE API
-    explanation_text, key_drivers = _generate_explanation_text(context)
+    explanation_text, key_drivers = await _generate_explanation_text(context)
 
     # Cache it
     db.query(ForecastExplanation).filter(
@@ -171,119 +175,81 @@ async def _generate_explanation(db: Session, product_id: int, model: ForecastMod
 # EXPLANATION TEXT GENERATOR
 # ============================================
 
-def _generate_explanation_text(ctx: dict) -> tuple:
+async def _generate_explanation_text(ctx: dict) -> tuple:
     """
-    Generate explanation from forecast context using if/else logic.
+    Generate explanation using Claude API.
 
-    THIS IS THE ONLY FUNCTION TO REPLACE WITH CLAUDE API LATER.
     Input:  context dict with all forecast stats
     Output: (explanation_text: str, key_drivers: list)
     """
-    product = ctx["product_name"]
-    avg_daily = ctx["avg_daily_qty"]
-    total_30d = ctx["total_30d_qty"]
-    confidence = ctx["confidence"]
-    events = ctx["boosted_event_names"]
-    trend = ctx["trend_direction"]
-    impacts = ctx["historical_impacts"]
-    mae = ctx["mae"]
-    r2 = ctx["r2"]
-    tier = ctx["model_tier"]
-    training_rows = ctx["training_rows"]
-    peak_date = ctx["peak_date"]
-    peak_qty = ctx["peak_qty"]
-    revenue = ctx["total_30d_revenue"]
+    from app.core.config import settings
+    import httpx
+    import json
 
-    sentences = []
-    key_drivers = []
+    prompt = f"""You are an AI analyst for a retail business. 
+Based on the following forecast data, write a clear natural language explanation 
+of what the forecast shows and why.
 
-    # ── Sentence 1: What the forecast predicts ──
-    revenue_text = f", generating an estimated {revenue:,.0f} ILS in revenue" if revenue else ""
-    sentences.append(
-        f"Over the next 30 days, {product} is forecast to sell an average of "
-        f"{avg_daily:.1f} units per day — approximately {total_30d:.0f} units total{revenue_text}."
-    )
+FORECAST DATA:
+- Product: {ctx['product_name']} ({ctx.get('category', 'N/A')})
+- Forecast period: next 30 days
+- Average daily quantity: {ctx['avg_daily_qty']} units/day
+- Total 30-day quantity: {ctx['total_30d_qty']} units
+- Total 30-day revenue: {f"{ctx['total_30d_revenue']:,.0f} ILS" if ctx['total_30d_revenue'] else 'N/A'}
+- Peak date: {ctx['peak_date']} ({ctx['peak_qty']} units)
+- Low date: {ctx['low_date']} ({ctx['low_qty']} units)
+- Confidence level: {ctx['confidence']}
+- Model tier: {ctx['model_tier']}
+- Training rows: {ctx['training_rows']}
+- R² score: {ctx['r2']}
+- MAE: {ctx['mae']} units/day
+- Trend direction: {ctx['trend_direction']}
+- Active event boosts: {', '.join(ctx['boosted_event_names']) if ctx['boosted_event_names'] else 'None'}
+- Historical event impacts: {ctx['historical_impacts'] if ctx['historical_impacts'] else 'None'}
 
-    # ── Sentence 2: Main driver ──
-    if events:
-        event_names = " and ".join(events)
-        matching = [i for i in impacts if any(e in i["event"] for e in events)]
-        if matching:
-            avg_boost = sum(i["change_pct"] for i in matching) / len(matching)
-            sentences.append(
-                f"Sales are expected to peak around {peak_date} ({peak_qty:.0f} units) "
-                f"due to {event_names}, which historically drives a "
-                f"+{avg_boost:.0f}% increase in {product} sales based on last year's data."
-            )
-        else:
-            sentences.append(
-                f"Sales are expected to peak around {peak_date} ({peak_qty:.0f} units) "
-                f"due to the upcoming {event_names} period."
-            )
-        key_drivers.append(f"{event_names} seasonal boost")
+Respond ONLY with a JSON object in this exact format, no markdown, no extra text:
+{{
+    "explanation": "2-4 sentence paragraph explaining the forecast in plain business language",
+    "key_drivers": ["driver 1", "driver 2", "driver 3"]
+}}
 
-    elif trend == "growing":
-        sentences.append(
-            f"Sales show an upward trend over recent months, "
-            f"which is reflected in the forecast as a gradual increase over the period."
+Rules:
+- Explanation must be 2-4 sentences, plain English, no jargon
+- key_drivers must be 2-4 short phrases (max 6 words each)
+- Always mention the revenue figure if available
+- Always mention confidence level and why
+- If there are event boosts, explain their impact
+- If trend is declining, suggest action"""
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": settings.ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-opus-4-5",
+                "max_tokens": 512,
+                "messages": [{"role": "user", "content": prompt}]
+            }
         )
-        key_drivers.append("Upward sales trend")
 
-    elif trend == "declining":
-        sentences.append(
-            f"Sales have been declining in recent months. "
-            f"The forecast reflects this pattern — consider a promotional campaign to reverse the trend."
-        )
-        key_drivers.append("Declining sales trend")
+    if response.status_code != 200:
+        raise Exception(f"Claude API error {response.status_code}: {response.text}")
 
-    else:
-        sentences.append(
-            f"Sales follow a stable pattern with no strong seasonal spikes expected. "
-            f"The forecast is based on the product's consistent historical rhythm."
-        )
-        key_drivers.append("Stable sales pattern")
+    raw = response.json()["content"][0]["text"].strip()
 
-    # ── Sentence 3: Confidence ──
-    if confidence == "high" and r2 is not None:
-        sentences.append(
-            f"Confidence is high — the model was trained on {training_rows} days of data "
-            f"and explains {int(r2 * 100)}% of historical sales variation "
-            f"(average error: ±{mae:.1f} units/day)."
-        )
-        key_drivers.append("Strong historical data")
+    try:
+        parsed = json.loads(raw)
+        explanation_text = parsed.get("explanation", "")
+        key_drivers = parsed.get("key_drivers", [])
+    except json.JSONDecodeError:
+        # Fallback if Claude returns malformed JSON
+        explanation_text = raw
+        key_drivers = ["Forecast generated by AI"]
 
-    elif confidence == "medium":
-        if tier == "xgboost_reduced":
-            sentences.append(
-                f"Confidence is medium — the model has limited history ({training_rows} days). "
-                f"Forecasts will improve as more data is uploaded."
-            )
-        else:
-            sentences.append(
-                f"Confidence is medium — the model captures most patterns "
-                f"but some variation remains unexplained (average error: ±{mae:.1f} units/day)."
-            )
-        key_drivers.append("Moderate data confidence")
-
-    else:
-        sentences.append(
-            f"Confidence is low — this product has limited sales history ({training_rows} records). "
-            f"Treat this as a rough estimate and upload more data to improve accuracy."
-        )
-        key_drivers.append("Limited historical data")
-
-    # ── Sentence 4: Historical event context (only if no current boost) ──
-    if not events and impacts:
-        top_impact = max(impacts, key=lambda x: abs(x["change_pct"]))
-        sign = "+" if top_impact["change_pct"] > 0 else ""
-        sentences.append(
-            f"Note: historically, {product} was significantly affected by "
-            f"{top_impact['event']} ({sign}{top_impact['change_pct']:.0f}%). "
-            f"If a similar event is planned, expect a notable sales change."
-        )
-        key_drivers.append(f"Past {top_impact['event']} impact")
-
-    explanation_text = " ".join(sentences)
     return explanation_text, key_drivers
 
 
@@ -327,3 +293,35 @@ def _detect_trend(db: Session, product_id: int) -> str:
     else:
         return "stable"
     
+    
+async def get_cached_explanation(db: Session, product_id: int) -> dict:
+    """
+    Only checks if a cached explanation exists. Never generates one.
+    Called on page load to decide whether to show explanation or the button.
+    """
+    model = db.query(ForecastModel).filter(
+        ForecastModel.product_id == product_id,
+        ForecastModel.status == 'ready'
+    ).first()
+
+    if not model:
+        return {"exists": False}
+
+    cached = db.query(ForecastExplanation).filter(
+        ForecastExplanation.product_id == product_id,
+        ForecastExplanation.model_id == model.model_id
+    ).first()
+
+    if not cached:
+        return {"exists": False}
+
+    return {
+        "exists": True,
+        "explanation": cached.explanation_text,
+        "key_drivers": cached.key_drivers,
+        "forecast_period": {
+            "start": cached.forecast_start.isoformat(),
+            "end": cached.forecast_end.isoformat()
+        },
+        "generated_at": cached.generated_at.isoformat()
+    }

@@ -18,7 +18,10 @@ from app.api import events
 from app.api import notifications
 from app.api.draft_events import router as draft_events_router
 from app.api.forecasts import router as forecasts_router
+from app.api.consultation import router as consultation_router
 from app.api import campaigns
+from app.api.business_profile import router as business_profile_router
+
 
 
 
@@ -41,7 +44,6 @@ app.add_middleware(
 # Register routers
 app.include_router(auth_router) 
 app.include_router(users.router)
-app.include_router(campaigns.router)
 app.include_router(data_upload.router)
 app.include_router(column_mapping.router)
 app.include_router(product_ingestion.router)
@@ -51,6 +53,8 @@ app.include_router(events.router)
 app.include_router(notifications.router)
 app.include_router(forecasts_router)
 app.include_router(campaigns.router)
+app.include_router(consultation_router)
+app.include_router(business_profile_router)
 
 
 @app.get("/")
