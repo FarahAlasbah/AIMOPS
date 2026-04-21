@@ -55,7 +55,6 @@ const isActive = (path) => {
     <aside className={`admin-sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-header">
         <div className="brand">
-          <div className="brand-icon"></div>
           <span className="brand-text">AIMOPS</span>
         </div>
       </div>
