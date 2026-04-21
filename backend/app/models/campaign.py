@@ -2,6 +2,7 @@
 File: backend/app/models/campaign.py
 Purpose: Campaign, Product, and junction table models
 """
+
 from sqlalchemy import Column, Integer, String, Text, Date, DECIMAL, Enum, TIMESTAMP, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -142,6 +143,7 @@ class Campaign(Base):
     actual_cost = Column(DECIMAL(12, 2), nullable=True)
     actual_uplift_pct = Column(DECIMAL(6, 2), nullable=True)
     roi = Column(DECIMAL(10, 2), nullable=True)
+    
 
     # ── Event Link ──
     # After campaign runs and spike is confirmed as an event,
