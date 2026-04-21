@@ -1,0 +1,451 @@
+/* ============================================================
+   UploadCard  (uc-*)  &  UploadsList  (ul-*)
+   Add this to DataUpload.css, replacing the old
+   .upload-card / .uploads-grid / .pager blocks.
+   ============================================================ */
+
+/* ── Grid ── */
+.ul-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+/* ── Empty state ── */
+.ul-empty {
+  margin-top: 14px;
+  font-size: var(--fs-md);
+  color: var(--c-text-muted);
+  padding: 10px 2px;
+}
+
+/* ── Pager ── */
+.ul-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 2px;
+}
+
+.ul-pager-info {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.ul-pager-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.ul-pager-btn {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-sm);
+  padding: 7px 12px;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  cursor: pointer;
+  font-weight: var(--fw-bold);
+}
+
+.ul-pager-btn:hover {
+  background: var(--c-surface-muted);
+}
+
+.ul-pager-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ============================================================
+   Card shell
+   ============================================================ */
+.uc-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.13s, box-shadow 0.13s;
+}
+
+.uc-card:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: var(--sh-sm);
+}
+
+.uc-card--busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── Row 1: file identity ── */
+.uc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.uc-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+}
+
+.uc-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.uc-name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-extra);
+  color: var(--c-text);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uc-meta {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+/* ── Row 2: status + stats ── */
+.uc-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Status badge */
+.uc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extra);
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.uc-badge--ok {
+  background: var(--c-primary-soft);
+  border-color: var(--c-success-border);
+  color: var(--c-primary);
+}
+
+.uc-badge--warn {
+  background: var(--c-warn-bg);
+  border-color: var(--c-warn-border);
+  color: var(--c-warn-text);
+}
+
+.uc-badge--err {
+  background: var(--c-danger-bg);
+  border-color: var(--c-danger-border);
+  color: var(--c-danger-text);
+}
+
+.uc-badge--gray {
+  background: var(--c-surface-muted);
+  border-color: var(--c-border);
+  color: var(--c-text-subtle);
+}
+
+.uc-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.uc-dot--ok   { background: var(--c-primary); }
+.uc-dot--warn { background: var(--c-warn-text); }
+.uc-dot--err  { background: var(--c-danger-text); }
+.uc-dot--gray { background: var(--c-text-muted); }
+
+/* Row counts */
+.uc-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.uc-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.uc-stat-val {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-extra);
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.uc-stat-val--rejected {
+  color: var(--c-danger-text);
+}
+
+.uc-stat-lbl {
+  font-size: 10px;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Row 3: actions ── */
+.uc-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--c-border);
+}
+
+.uc-btn-cta {
+  flex: 1;
+  border: 1px solid var(--c-primary);
+  background: var(--c-primary-soft);
+  border-radius: var(--r-sm);
+  padding: 7px 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extra);
+  color: var(--c-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.13s;
+}
+
+.uc-btn-cta:hover {
+  background: var(--c-primary);
+  color: #fff;
+}
+
+.uc-btn-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.uc-btn-ghost {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.13s;
+}
+
+.uc-btn-ghost:hover {
+  background: var(--c-surface-muted);
+  color: var(--c-text);
+}
+
+.uc-btn-ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.uc-btn-del {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-sm);
+  padding: 7px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  flex-shrink: 0;
+}
+
+.uc-btn-del:hover {
+  background: var(--c-danger-bg);
+  border-color: var(--c-danger-border);
+  color: var(--c-danger-text);
+}
+
+.uc-btn-del:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ============================================================
+   Card skeleton  (uc-card--skeleton + sk-*)
+   ============================================================ */
+.uc-card--skeleton {
+  pointer-events: none;
+}
+
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: var(--c-border);
+  border-radius: var(--r-sm);
+}
+
+.sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: sk-shimmer 1.2s infinite;
+}
+
+@keyframes sk-shimmer {
+  to { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk::after { animation: none; }
+}
+
+.sk-icon  { width: 34px; height: 34px; border-radius: var(--r-md); flex-shrink: 0; }
+.sk-line  { border-radius: 6px; }
+.sk-pill  { border-radius: var(--r-pill); }
+.sk-btn   { border-radius: var(--r-sm); }
+
+
+/* =========================
+   CLEAN LIST LAYOUT
+   ========================= */
+
+.ul-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.ul-row {
+  display: grid;
+grid-template-columns: 1fr 140px 60px;  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+/* Header row */
+.ul-header {
+  display: grid;
+  grid-template-columns: 1fr 140px 60px;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  border-bottom: 1px solid var(--c-border);
+}
+.ul-row:last-child {
+  border-bottom: none;
+}
+
+.ul-row:hover {
+  background: var(--c-surface-muted);
+}
+
+.ul-row--busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* main */
+.ul-main {
+  min-width: 0;
+}
+
+.ul-title {
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ul-sub {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+/* status */
+.ul-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ul-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ul-dot--ok { background: var(--c-primary); }
+.ul-dot--warn { background: var(--c-warn-text); }
+.ul-dot--err { background: var(--c-danger-text); }
+.ul-dot--gray { background: var(--c-text-muted); }
+
+/* rows */
+.ul-rows {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* actions */
+.ul-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ul-btn-delete {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  font-size: 14px;
+}
+
+.ul-btn-delete:hover {
+  color: var(--c-danger-text);
+}
+
+/* skeleton */
+.ul-row--skeleton {
+  height: 54px;
+  background: var(--c-surface-muted);
+}

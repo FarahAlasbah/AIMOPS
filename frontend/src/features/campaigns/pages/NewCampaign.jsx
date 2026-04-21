@@ -170,9 +170,16 @@ const NewCampaign = () => {
       }
     }
 
-    if (!formData.budget || Number(formData.budget) <= 0) {
-      nextErrors.budget = t("validation.budgetRequired");
-    }
+    if (
+  formData.budget !== "" &&
+  formData.budget !== null &&
+  formData.budget !== undefined &&
+  Number(formData.budget) < 0
+) {
+  nextErrors.budget = t("validation.budgetInvalid", {
+    defaultValue: "Budget cannot be negative",
+  });
+}
 
     if (
       formData.campaignType === "other" &&
@@ -332,13 +339,17 @@ const NewCampaign = () => {
               <div className="field">
                 <label>{t("fields.budget")}</label>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.budget}
-                  onChange={(e) => updateField("budget", e.target.value)}
-                  placeholder={t("fields.budgetPlaceholder")}
-                />
+  type="number"
+  min="0"
+  step="0.01"
+  value={formData.budget}
+onChange={(e) => {
+  const value = e.target.value;
+  updateField("budget", value === "" ? 0 : value);
+}}  placeholder={t("fields.budgetPlaceholder", {
+    defaultValue: "0 (optional)",
+  })}
+/>
                 {errors.budget ? (
                   <p className="field-error">{errors.budget}</p>
                 ) : null}

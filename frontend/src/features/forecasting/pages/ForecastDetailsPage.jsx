@@ -222,8 +222,8 @@ export default function ForecastDetailsPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [info, setInfo] = useState(null);
   const [explanationData, setExplanationData] = useState(null);
-const [explanationLoading, setExplanationLoading] = useState(false);
-const [explanationErr, setExplanationErr] = useState("");
+  const [explanationLoading, setExplanationLoading] = useState(false);
+  const [explanationErr, setExplanationErr] = useState("");
 
   const loadStatus = useCallback(async () => {
     setStatusErr("");
@@ -242,28 +242,28 @@ const [explanationErr, setExplanationErr] = useState("");
       setStatusLoading(false);
     }
   }, [productId, t]);
-const loadExplanation = useCallback(async () => {
-  setExplanationLoading(true);
-  setExplanationErr("");
+  const loadExplanation = useCallback(async () => {
+    setExplanationLoading(true);
+    setExplanationErr("");
 
-  try {
-    const res = await getForecastExplanation(productId);
-    setExplanationData(res);
-    return res;
-  } catch (e) {
-    setExplanationData(null);
+    try {
+      const res = await getForecastExplanation(productId);
+      setExplanationData(res);
+      return res;
+    } catch (e) {
+      setExplanationData(null);
 
-    const message =
-      e?.response?.data?.detail ||
-      e?.message ||
-      t("messages.explanationFailed");
+      const message =
+        e?.response?.data?.detail ||
+        e?.message ||
+        t("messages.explanationFailed");
 
-    setExplanationErr(String(message));
-    return null;
-  } finally {
-    setExplanationLoading(false);
-  }
-}, [productId, t]);
+      setExplanationErr(String(message));
+      return null;
+    } finally {
+      setExplanationLoading(false);
+    }
+  }, [productId, t]);
 
   const loadForecast = useCallback(async () => {
     setDetailsLoading(true);
@@ -289,14 +289,14 @@ const loadExplanation = useCallback(async () => {
   }, [loadStatus]);
 
   useEffect(() => {
-  if (status?.status === "ready") {
-    loadForecast();
-    loadExplanation();
-  } else {
-    setForecast(null);
-    setExplanationData(null);
-  }
-}, [status?.status, loadForecast, loadExplanation]);
+    if (status?.status === "ready") {
+      loadForecast();
+      loadExplanation();
+    } else {
+      setForecast(null);
+      setExplanationData(null);
+    }
+  }, [status?.status, loadForecast, loadExplanation]);
 
   useEffect(() => {
     if (status?.status !== "training") return;
@@ -369,15 +369,14 @@ const loadExplanation = useCallback(async () => {
     }
   };
 
-  
   const handleRefresh = async () => {
-  setInfo(null);
-  const nextStatus = await loadStatus();
+    setInfo(null);
+    const nextStatus = await loadStatus();
 
-  if (normalizeStatus(nextStatus?.status) === "ready") {
-    await Promise.all([loadForecast(), loadExplanation()]);
-  }
-};
+    if (normalizeStatus(nextStatus?.status) === "ready") {
+      await Promise.all([loadForecast(), loadExplanation()]);
+    }
+  };
 
   const daily = Array.isArray(forecast?.daily) ? forecast.daily : [];
   const forecastStart = forecast?.forecast_period?.start || toLocalDateKey();
@@ -918,118 +917,122 @@ const loadExplanation = useCallback(async () => {
                     { value: "30", label: t("details.days30") },
                     { value: "60", label: t("details.days60") },
                     { value: "90", label: t("details.days90") },
-                    { value: "custom", label: t("details.daysCustom") },
                   ]}
                   value={windowPreset}
                   onChange={handlePresetChange}
                 />
               </div>
-
-              <div className="forecast-range-field">
-                {/* <label className="forecast-range-label">
-                  {t("details.endDateLabel")}
-                </label>
-                <FormCalendar
-                  label={t("details.endDateLabel")}
-                  value={safeEndDate}
-                  onChange={handleEndDateChange}
-                  min={forecastStart}
-                  max={forecastEnd}
-                /> */}
-              </div>
+              <div className="forecast-range-field" />
             </div>
 
-            <div className="forecast-range-meta">
-              <span className="forecast-badge">
-                {t("details.rangeSummary", {
-                  start: fmtDate(forecastStart, locale),
-                  end: fmtDate(safeEndDate, locale),
-                  days: visibleDaily.length,
-                })}
-              </span>
-
-              <span className="forecast-badge">
-                {t("details.metaPeriod")}: {fmtDate(forecastStart, locale)} →{" "}
-                {fmtDate(forecastEnd, locale)}
-              </span>
-
-              {selectedSummary.hasEventBoosts ? (
-                <span className="forecast-badge accent">
-                  {t("details.eventBoostsActive")}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="forecast-meta-grid" style={{ marginTop: 16 }}>
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaProduct")}
+            <div
+              style={{
+                marginTop: 14,
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                  background: "#fff",
+                  minWidth: 200,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#9ca3af",
+                    marginBottom: 6,
+                  }}
+                >
+                  {t("details.metaPeriod")}
                 </div>
-                <div className="forecast-meta-value">
-                  {forecast?.product_name || "—"}
-                </div>
-              </div>
-
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaCategory")}
-                </div>
-                <div className="forecast-meta-value">
-                  {forecast?.category || "—"}
+                <div
+                  style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}
+                >
+                  {fmtDate(forecastStart, locale)}
+                  <span style={{ margin: "0 8px", color: "#d1d5db" }}>→</span>
+                  {fmtDate(forecastEnd, locale)}
                 </div>
               </div>
 
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaModel")}
+              <div
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                  background: "#fff",
+                  minWidth: 200,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#9ca3af",
+                    marginBottom: 6,
+                  }}
+                >
+                  {t("details.visibleWindowLabel")}
                 </div>
-                <div className="forecast-meta-value">
-                  {forecast?.model?.tier || "—"}
+                <div
+                  style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}
+                >
+                  {fmtDate(forecastStart, locale)}
+                  <span style={{ margin: "0 8px", color: "#d1d5db" }}>→</span>
+                  {fmtDate(safeEndDate, locale)}
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#6b7280",
+                    }}
+                  >
+                    ({visibleDaily.length}{" "}
+                    {t("details.days14").replace("14 ", "").toLowerCase()})
+                  </span>
                 </div>
               </div>
 
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaTrained")}
+              {selectedSummary.hasEventBoosts && (
+                <div
+                  style={{
+                    border: "1px solid #bfdbfe",
+                    borderRadius: 12,
+                    padding: "10px 16px",
+                    background: "#eff6ff",
+                    minWidth: 160,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "#93c5fd",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {t("details.eventBoostsActive")}
+                  </div>
+                  <span className="forecast-badge accent">
+                    {t("details.eventBoostsActive")}
+                  </span>
                 </div>
-                <div className="forecast-meta-value">
-                  {fmtDateTime(forecast?.model?.trained_at, locale)}
-                </div>
-              </div>
-
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaTrainingPeriod")}
-                </div>
-                <div className="forecast-meta-value">
-                  {forecast?.model?.training_period || "—"}
-                </div>
-              </div>
-
-              <div className="forecast-meta-item">
-                <div className="forecast-meta-label">
-                  {t("details.metaGenerated")}
-                </div>
-                <div className="forecast-meta-value">
-                  {fmtDateTime(
-                    forecast?.generated_at || forecast?.model?.trained_at,
-                    locale,
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="forecast-range-meta" style={{ marginTop: 14 }}>
-              <span className="forecast-badge">
-                {t("details.metaCached")}:{" "}
-                {forecast?.cached ? t("details.metaYes") : t("details.metaNo")}
-              </span>
-              <span className="forecast-badge">
-                R²: {fmtNumber(forecast?.model?.r2, locale)}
-              </span>
-              <span className="forecast-badge">
-                MAE: {fmtNumber(forecast?.model?.mae, locale)}
-              </span>
+              )}
             </div>
           </Card>
 
@@ -1086,56 +1089,36 @@ const loadExplanation = useCallback(async () => {
           </Card>
 
           <div className="forecast-explanation">
-  <div className="forecast-explanation-title">
-    {t("details.explanationTitle")}
-  </div>
+            <div className="forecast-explanation-title">
+              {t("details.explanationTitle")}
+            </div>
 
-  <div className="forecast-explanation-text">
-    {explanationLoading
-      ? t("details.explanationLoading")
-      : explanationData?.explanation || fallbackExplanation}
-  </div>
+            <div className="forecast-explanation-text">
+              {explanationLoading
+                ? t("details.explanationLoading")
+                : explanationData?.explanation || fallbackExplanation}
+            </div>
 
-  {Array.isArray(explanationData?.key_drivers) &&
-  explanationData.key_drivers.length > 0 ? (
-    <>
-      <div className="forecast-drivers-title">
-        {t("details.keyDriversTitle")}
-      </div>
-      <ul className="forecast-explanation-list">
-        {explanationData.key_drivers.map((driver, index) => (
-          <li key={`${driver}-${index}`}>{driver}</li>
-        ))}
-      </ul>
-    </>
-  ) : null}
-
-  {explanationData ? (
-    <div className="forecast-range-meta" style={{ marginTop: 14 }}>
-      <span className="forecast-badge">
-        {fmtDate(explanationData?.forecast_period?.start, locale)} →{" "}
-        {fmtDate(explanationData?.forecast_period?.end, locale)}
-      </span>
-
-      <span className="forecast-badge">
-        {t("details.metaGenerated")}:{" "}
-        {fmtDateTime(explanationData?.generated_at, locale)}
-      </span>
-
-      <span className="forecast-badge">
-        {t("details.metaCached")}:{" "}
-        {explanationData?.cached ? t("details.metaYes") : t("details.metaNo")}
-      </span>
-    </div>
-  ) : null}
-
-  {explanationErr &&
-  explanationErr !== "No forecast data available" ? (
-    <div className="forecast-note" style={{ marginTop: 10 }}>
-      {explanationErr}
-    </div>
-  ) : null}
-</div>
+            {Array.isArray(explanationData?.key_drivers) &&
+            explanationData.key_drivers.length > 0 ? (
+              <>
+                <div className="forecast-drivers-title">
+                  {t("details.keyDriversTitle")}
+                </div>
+                <ul className="forecast-explanation-list">
+                  {explanationData.key_drivers.map((driver, index) => (
+                    <li key={`${driver}-${index}`}>{driver}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            {explanationErr &&
+            explanationErr !== "No forecast data available" ? (
+              <div className="forecast-note" style={{ marginTop: 10 }}>
+                {explanationErr}
+              </div>
+            ) : null}
+          </div>
         </>
       )}
     </div>
