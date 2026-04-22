@@ -20,6 +20,8 @@ import enForecasting from "./locales/en/forecasting.json";
 import arForecasting from "./locales/ar/forecasting.json";
 import enCampaigns from "./locales/en/campaigns.json";
 import arCampaigns from "./locales/ar/campaigns.json";
+import enConsultation from "./locales/en/consultation.json";
+import arConsultation from "./locales/ar/consultation.json";
 
 const resources = {
   en: {
@@ -32,6 +34,7 @@ const resources = {
     dashboard: enDashboard,
     forecasting: enForecasting,
     campaigns: enCampaigns,
+    consultation: enConsultation,
   },
   ar: {
     common: arCommon,
@@ -43,6 +46,7 @@ const resources = {
     dashboard: arDashboard,
     forecasting: arForecasting,
     campaigns: arCampaigns,
+    consultation: arConsultation,
   },
 };
 

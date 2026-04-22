@@ -14,7 +14,9 @@
     "reports": "التقارير",
     "settings": "الإعدادات",
     "userManagement": "إدارة المستخدمين",
-    "support": "الدعم"
+    "support": "الدعم",
+    "consultation": "الاستشارة الذكية",
+    "businessProfile": "الملف التجاري"
   },
   "actions": {
     "save": "حفظ",
