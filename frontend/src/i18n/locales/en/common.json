@@ -14,7 +14,9 @@
     "reports": "Reports",
     "settings": "Settings",
     "userManagement": "User Management",
-    "support": "Support"
+    "support": "Support",
+    "consultation": "AI Consultation",
+    "businessProfile": "Business Profile"
   },
   "actions": {
     "save": "Save",

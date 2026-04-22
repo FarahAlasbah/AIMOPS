@@ -8,7 +8,6 @@ import {
   Card,
   FormSelect,
   PageHeader,
-  FormCalendar,
 } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
@@ -17,6 +16,7 @@ import {
   getForecastStatus,
   getProductForecast,
   getForecastExplanation,
+  deleteForecastExplanation,
 } from "../../../api/forecasts";
 
 import "./ForecastDetailsPage.css";
@@ -36,12 +36,47 @@ const NO_DATA_HINTS = [
   "empty",
 ];
 
+const EXPLANATION_CACHE_PREFIX = "aimops_forecast_explanation_v1";
+
+const getExplanationCacheKey = (productId) =>
+  `${EXPLANATION_CACHE_PREFIX}:${String(productId)}`;
+
+const readExplanationCache = (productId) => {
+  try {
+    const raw = localStorage.getItem(getExplanationCacheKey(productId));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeExplanationCache = (productId, value) => {
+  try {
+    localStorage.setItem(
+      getExplanationCacheKey(productId),
+      JSON.stringify(value ?? null)
+    );
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const clearExplanationCache = (productId) => {
+  try {
+    localStorage.removeItem(getExplanationCacheKey(productId));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 const normalizeStatus = (value) => {
   const v = String(value || "").toLowerCase();
 
   if (["ready", "done", "success", "completed"].includes(v)) return "ready";
-  if (["training", "queued", "pending", "running"].includes(v))
-    return "training";
+  if (["training", "queued", "pending", "running"].includes(v)) return "training";
   if (["failed", "error"].includes(v)) return "failed";
   return "idle";
 };
@@ -206,9 +241,7 @@ export default function ForecastDetailsPage() {
   const navigate = useNavigate();
   const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
 
-  const [windowPreset, setWindowPreset] = useState(
-    String(DEFAULT_VISIBLE_DAYS),
-  );
+  const [windowPreset, setWindowPreset] = useState(String(DEFAULT_VISIBLE_DAYS));
   const [selectedEndDate, setSelectedEndDate] = useState("");
 
   const [statusLoading, setStatusLoading] = useState(true);
@@ -221,12 +254,15 @@ export default function ForecastDetailsPage() {
 
   const [actionBusy, setActionBusy] = useState(false);
   const [info, setInfo] = useState(null);
+
   const [explanationData, setExplanationData] = useState(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationErr, setExplanationErr] = useState("");
+  const [hasFetchedExplanation, setHasFetchedExplanation] = useState(false);
 
   const loadStatus = useCallback(async () => {
     setStatusErr("");
+
     try {
       const res = await getForecastStatus(productId);
       const nextStatus = {
@@ -240,28 +276,6 @@ export default function ForecastDetailsPage() {
       return null;
     } finally {
       setStatusLoading(false);
-    }
-  }, [productId, t]);
-  const loadExplanation = useCallback(async () => {
-    setExplanationLoading(true);
-    setExplanationErr("");
-
-    try {
-      const res = await getForecastExplanation(productId);
-      setExplanationData(res);
-      return res;
-    } catch (e) {
-      setExplanationData(null);
-
-      const message =
-        e?.response?.data?.detail ||
-        e?.message ||
-        t("messages.explanationFailed");
-
-      setExplanationErr(String(message));
-      return null;
-    } finally {
-      setExplanationLoading(false);
     }
   }, [productId, t]);
 
@@ -284,19 +298,91 @@ export default function ForecastDetailsPage() {
     }
   }, [productId, t]);
 
+  const loadExplanation = useCallback(async () => {
+    setExplanationLoading(true);
+    setExplanationErr("");
+
+    try {
+      const res = await getForecastExplanation(productId);
+      setExplanationData(res);
+      writeExplanationCache(productId, res);
+      return res;
+    } catch (e) {
+      setExplanationData(null);
+
+      const message =
+        e?.response?.data?.detail ||
+        e?.message ||
+        t("messages.explanationFailed");
+
+      setExplanationErr(String(message));
+      return null;
+    } finally {
+      setExplanationLoading(false);
+    }
+  }, [productId, t]);
+
+  const handleExplainWithAi = async () => {
+    setHasFetchedExplanation(true);
+    await loadExplanation();
+  };
+
+  const handleReExplainWithAi = async () => {
+    setHasFetchedExplanation(true);
+    setExplanationLoading(true);
+    setExplanationErr("");
+
+    try {
+      await deleteForecastExplanation(productId);
+      clearExplanationCache(productId);
+
+      const res = await getForecastExplanation(productId);
+      setExplanationData(res);
+      writeExplanationCache(productId, res);
+    } catch (e) {
+      const message =
+        e?.response?.data?.detail ||
+        e?.message ||
+        t("messages.explanationFailed");
+
+      setExplanationErr(String(message));
+      setExplanationData(null);
+    } finally {
+      setExplanationLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadStatus();
   }, [loadStatus]);
 
   useEffect(() => {
+    const cached = readExplanationCache(productId);
+
+    if (cached?.explanation) {
+      setExplanationData(cached);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(true);
+    } else {
+      setExplanationData(null);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
     if (status?.status === "ready") {
       loadForecast();
-      loadExplanation();
     } else {
       setForecast(null);
       setExplanationData(null);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(false);
     }
-  }, [status?.status, loadForecast, loadExplanation]);
+  }, [status?.status, loadForecast]);
 
   useEffect(() => {
     if (status?.status !== "training") return;
@@ -317,7 +403,7 @@ export default function ForecastDetailsPage() {
     const defaultEnd = clampDateKey(
       addDaysToKey(start, DEFAULT_VISIBLE_DAYS - 1),
       start,
-      end,
+      end
     );
 
     const visibleLength = getRangeLength(start, defaultEnd);
@@ -325,8 +411,8 @@ export default function ForecastDetailsPage() {
       String(
         WINDOW_PRESETS.includes(visibleLength)
           ? visibleLength
-          : DEFAULT_VISIBLE_DAYS,
-      ),
+          : DEFAULT_VISIBLE_DAYS
+      )
     );
     setSelectedEndDate(defaultEnd);
   }, [
@@ -356,13 +442,19 @@ export default function ForecastDetailsPage() {
           }),
       });
 
+      setExplanationData(null);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(false);
+      clearExplanationCache(productId);
+
       await loadStatus();
     } catch (e) {
       setStatusErr(
         e?.message ||
           t("messages.generateFailed", {
             name: status?.product_name || `#${productId}`,
-          }),
+          })
       );
     } finally {
       setActionBusy(false);
@@ -374,7 +466,7 @@ export default function ForecastDetailsPage() {
     const nextStatus = await loadStatus();
 
     if (normalizeStatus(nextStatus?.status) === "ready") {
-      await Promise.all([loadForecast(), loadExplanation()]);
+      await loadForecast();
     }
   };
 
@@ -388,7 +480,7 @@ export default function ForecastDetailsPage() {
   const safeEndDate = clampDateKey(
     selectedEndDate || forecastEnd,
     forecastStart,
-    forecastEnd,
+    forecastEnd
   );
 
   const visibleDaily = useMemo(() => {
@@ -400,7 +492,7 @@ export default function ForecastDetailsPage() {
 
   const hasBounds = useMemo(() => {
     return visibleDaily.some(
-      (item) => item?.quantity_lower != null || item?.quantity_upper != null,
+      (item) => item?.quantity_lower != null || item?.quantity_upper != null
     );
   }, [visibleDaily]);
 
@@ -427,7 +519,7 @@ export default function ForecastDetailsPage() {
       const qty = Number(item?.predicted_quantity || 0);
       const revenue = Number(item?.predicted_revenue || 0);
       const confidence = String(
-        item?.confidence || forecast?.summary?.confidence || "medium",
+        item?.confidence || forecast?.summary?.confidence || "medium"
       );
 
       totalQuantity += qty;
@@ -477,7 +569,7 @@ export default function ForecastDetailsPage() {
     }
 
     return Array.from(map.values()).sort((a, b) =>
-      a.weekStart.localeCompare(b.weekStart),
+      a.weekStart.localeCompare(b.weekStart)
     );
   }, [visibleDaily]);
 
@@ -695,40 +787,40 @@ export default function ForecastDetailsPage() {
     };
   }, [locale, t]);
 
-  const fallbackExplanation = useMemo(() => {
-    return t("details.explanationFallback", {
-      start: fmtDate(forecastStart, locale),
-      end: fmtDate(safeEndDate, locale),
-      quantity: fmtNumber(selectedSummary.totalQuantity, locale),
-      avg: fmtNumber(selectedSummary.avgDailyQuantity, locale),
-      revenue: fmtMoney(selectedSummary.totalRevenue, locale),
-      peakDate: fmtDate(selectedSummary.peakDate, locale),
-    });
-  }, [forecastStart, locale, safeEndDate, selectedSummary, t]);
+  const explanationText = useMemo(() => {
+    if (!explanationData) return "";
+    return String(explanationData?.explanation || "").trim();
+  }, [explanationData]);
+
+  const hasExplanation = Boolean(explanationText);
+
+  const isExplanationStale = useMemo(() => {
+    if (!hasExplanation) return false;
+
+    const explanationTime = new Date(explanationData?.generated_at).getTime();
+    const forecastTime = new Date(
+      forecast?.model?.trained_at || status?.trained_at || ""
+    ).getTime();
+
+    if (Number.isNaN(explanationTime) || Number.isNaN(forecastTime)) {
+      return false;
+    }
+
+    return forecastTime > explanationTime;
+  }, [explanationData, forecast, status, hasExplanation]);
 
   const handlePresetChange = (e) => {
     const nextValue = String(e.target.value || DEFAULT_VISIBLE_DAYS);
     setWindowPreset(nextValue);
 
-    if (nextValue === "custom") return;
-
     const days = Number(nextValue) || DEFAULT_VISIBLE_DAYS;
     const nextEnd = clampDateKey(
       addDaysToKey(forecastStart, days - 1),
       forecastStart,
-      forecastEnd,
+      forecastEnd
     );
 
     setSelectedEndDate(nextEnd);
-  };
-
-  const handleEndDateChange = (e) => {
-    const next = clampDateKey(e.target.value, forecastStart, forecastEnd);
-    setSelectedEndDate(next);
-
-    const length = getRangeLength(forecastStart, next);
-    const preset = WINDOW_PRESETS.find((value) => value === length);
-    setWindowPreset(preset ? String(preset) : "custom");
   };
 
   const statusLikelyNoData = isLikelyNoDataMessage(status?.error);
@@ -736,10 +828,20 @@ export default function ForecastDetailsPage() {
   const likelyNoData = statusLikelyNoData || detailsLikelyNoData;
   const noForecastInRange = visibleDaily.length === 0;
 
+  const productDisplayName =
+    status?.product_name ||
+    forecast?.product_name ||
+    `Product #${productId}`;
+
+  const productCategory =
+    forecast?.category ||
+    status?.category ||
+    "—";
+
   return (
     <div className="forecast-details-page">
       <PageHeader
-        title={status?.product_name || t("details.pageTitle")}
+        title={productDisplayName}
         subtitle={t("details.pageSubtitle")}
         actions={
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -757,6 +859,55 @@ export default function ForecastDetailsPage() {
           </div>
         }
       />
+
+      <Card className="forecast-details-card">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "#6b7280",
+                marginBottom: 6,
+              }}
+            >
+              Product
+            </div>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#111827",
+                lineHeight: 1.2,
+              }}
+            >
+              {productDisplayName}
+            </div>
+            <div style={{ marginTop: 6, fontSize: 14, color: "#6b7280" }}>
+              Category: {productCategory}
+            </div>
+          </div>
+
+          {/* <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <span className="forecast-badge">Product ID: {productId}</span>
+            {forecast?.model?.trained_at ? (
+              <span className="forecast-badge accent">
+                Trained: {fmtDateTime(forecast.model.trained_at, locale)}
+              </span>
+            ) : null}
+          </div> */}
+        </div>
+      </Card>
 
       {statusErr ? <InfoMessage type="error">{statusErr}</InfoMessage> : null}
       {detailsErr ? <InfoMessage type="error">{detailsErr}</InfoMessage> : null}
@@ -1089,22 +1240,81 @@ export default function ForecastDetailsPage() {
           </Card>
 
           <div className="forecast-explanation">
-            <div className="forecast-explanation-title">
-              {t("details.explanationTitle")}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div className="forecast-explanation-title">
+                AI Explanation
+              </div>
+
+              {!hasFetchedExplanation ? (
+                <Button
+                  type="button"
+                  onClick={handleExplainWithAi}
+                  disabled={explanationLoading}
+                >
+                  {explanationLoading ? "Generating..." : "Explain with AI"}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleReExplainWithAi}
+                  disabled={explanationLoading}
+                >
+                  {explanationLoading ? "Regenerating..." : "Re-explain with AI"}
+                </Button>
+              )}
             </div>
 
-            <div className="forecast-explanation-text">
-              {explanationLoading
-                ? t("details.explanationLoading")
-                : explanationData?.explanation || fallbackExplanation}
-            </div>
+            {!hasFetchedExplanation && !explanationLoading ? (
+              <div className="forecast-explanation-text">
+                AI explanation is generated only when requested.
+              </div>
+            ) : null}
 
-            {Array.isArray(explanationData?.key_drivers) &&
+            {explanationLoading ? (
+              <div className="forecast-explanation-text">
+                Generating explanation...
+              </div>
+            ) : null}
+
+            {hasFetchedExplanation && hasExplanation ? (
+              <>
+                {isExplanationStale ? (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: "1px solid #fed7aa",
+                      background: "#fff7ed",
+                      color: "#9a3412",
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    This explanation is older than the current forecast. Re-explain to refresh it.
+                  </div>
+                ) : null}
+
+                <div className="forecast-explanation-text">
+                  {explanationText}
+                </div>
+              </>
+            ) : null}
+
+            {hasFetchedExplanation &&
+            Array.isArray(explanationData?.key_drivers) &&
             explanationData.key_drivers.length > 0 ? (
               <>
-                <div className="forecast-drivers-title">
-                  {t("details.keyDriversTitle")}
-                </div>
+                <div className="forecast-drivers-title">Key Drivers</div>
                 <ul className="forecast-explanation-list">
                   {explanationData.key_drivers.map((driver, index) => (
                     <li key={`${driver}-${index}`}>{driver}</li>
@@ -1112,8 +1322,15 @@ export default function ForecastDetailsPage() {
                 </ul>
               </>
             ) : null}
-            {explanationErr &&
-            explanationErr !== "No forecast data available" ? (
+
+            {hasFetchedExplanation && explanationData?.generated_at ? (
+              <div className="forecast-note" style={{ marginTop: 10 }}>
+                Generated at: {fmtDateTime(explanationData.generated_at, locale)}
+                {explanationData?.cached ? " • Cached" : ""}
+              </div>
+            ) : null}
+
+            {hasFetchedExplanation && explanationErr ? (
               <div className="forecast-note" style={{ marginTop: 10 }}>
                 {explanationErr}
               </div>
