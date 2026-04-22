@@ -24,7 +24,7 @@ export const DEFAULT_FORM_DATA = {
   customCampaignTypeName: "",
   startDate: "",
   endDate: "",
-  budget: "",
+  budget: 0,
   notes: "",
   channels: [],
 };
