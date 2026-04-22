@@ -1,21 +1,33 @@
-// frontend/src/layouts/MainLayout.jsx
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import AdminSidebar from "./components/AdminSidebar";
 import { Menu } from "lucide-react";
-import "./MainLayout.css";
 import { useTranslation } from "react-i18next";
+
+import AdminSidebar from "./components/AdminSidebar";
 import NotificationBell from "./components/NotificationBell";
 import LangToggle from "../shared/components/LangToggle";
 
-const MainLayout = ({ userRole = "Admin" }) => {
+import { ConsultationProvider } from "../features/consultation/context/ConsultationProvider";
+import { useConsultation } from "../features/consultation/hooks/useConsultation";
+import ConsultationFloatingButton from "../features/consultation/components/ConsultationFloatingButton";
+import ConsultationDrawer from "../features/consultation/components/ConsultationDrawer";
+
+import "./MainLayout.css";
+
+function MainLayoutFrame() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { t } = useTranslation();
+  const { isDrawerOpen, isDrawerExpanded } = useConsultation();
 
   return (
     <div className="main-layout">
       <AdminSidebar isOpen={sidebarOpen} />
-      <div className={`main-content ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+
+      <div
+        className={`main-content ${sidebarOpen ? "sidebar-open" : "sidebar-closed"} ${
+          isDrawerOpen ? "consultation-drawer-open" : ""
+        } ${isDrawerOpen && isDrawerExpanded ? "consultation-drawer-expanded" : ""}`}
+      >
         <header className="app-header">
           <button
             type="button"
@@ -25,19 +37,33 @@ const MainLayout = ({ userRole = "Admin" }) => {
           >
             <Menu size={24} />
           </button>
+
           <h1 className="page-title">
             {t("layout.welcomeTitle", { defaultValue: "Welcome to AIMOPS" })}
           </h1>
+
           <div className="header-actions">
             <LangToggle />
             <NotificationBell />
           </div>
         </header>
+
         <main className="content-area">
           <Outlet />
         </main>
       </div>
+
+      <ConsultationFloatingButton />
+      <ConsultationDrawer />
     </div>
+  );
+}
+
+const MainLayout = () => {
+  return (
+    <ConsultationProvider>
+      <MainLayoutFrame />
+    </ConsultationProvider>
   );
 };
 
