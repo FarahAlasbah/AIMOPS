@@ -1,0 +1,330 @@
+.business-profile-page {
+  display: grid;
+  gap: 24px;
+}
+
+.business-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 20px;
+}
+
+.business-profile-loading {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.business-profile-form {
+  display: grid;
+  gap: 16px;
+}
+
+.business-profile-field {
+  display: grid;
+  gap: 8px;
+}
+
+.business-profile-field span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.business-profile-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.business-profile-input-wrap:focus-within {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+.business-profile-input-wrap svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.business-profile-input-wrap input {
+  border: 0;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  color: #111827;
+  font-size: 14px;
+}
+
+.business-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.business-profile-actions button,
+.business-profile-overview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #03045e;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 10px 24px rgba(3, 4, 94, 0.16);
+}
+
+.business-profile-actions button:hover,
+.business-profile-overview-link:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.business-profile-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
+.business-profile-message {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.business-profile-message.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.business-profile-message.success {
+  background: #ecfdf3;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.business-profile-side {
+  display: grid;
+  gap: 18px;
+}
+
+.business-profile-note-list {
+  display: grid;
+  gap: 12px;
+}
+
+.business-profile-note-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e8edf4;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.business-profile-note-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #e8f0ff;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.business-profile-note-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 14px;
+}
+
+.business-profile-note-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.business-profile-meta {
+  border-top: 1px solid #eef2f7;
+  padding-top: 18px;
+}
+
+.business-profile-meta h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.business-profile-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.business-profile-meta-grid span {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.business-profile-meta-grid strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+}
+
+.business-profile-created-at {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.business-profile-overview-panel {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.business-profile-overview-panel.is-empty {
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+  border-color: #dbeafe;
+}
+
+.business-profile-overview-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.business-profile-overview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.business-profile-overview-head h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #111827;
+}
+
+.business-profile-overview-head p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.business-profile-overview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.business-profile-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.business-profile-overview-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  background: #fbfcfe;
+}
+
+.business-profile-overview-item-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.business-profile-overview-item span {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.business-profile-overview-item strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+@media (max-width: 1080px) {
+  .business-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-profile-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .business-profile-overview-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .business-profile-actions {
+    justify-content: stretch;
+  }
+
+  .business-profile-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

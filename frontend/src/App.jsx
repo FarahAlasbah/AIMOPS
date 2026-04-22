@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./features/auth/pages/Login";
 import RequirePermission from "./routes/RequirePermission";
-
 import Profile from "./features/profile/pages/Profile";
 import Overview from "./features/dashboard/pages/Overview";
 import CampaignList from "./features/campaigns/pages/CampaignList";
@@ -15,17 +16,15 @@ import FeedbackList from "./features/feedback/pages/FeedbackList";
 import FeedbackUpload from "./features/feedback/pages/FeedbackUpload";
 import UserManagement from "./features/admin/pages/UserManagement";
 import Denied from "./shared/pages/Denied";
-
 import ProductsPage from "./features/products/pages/ProductsPage";
 import ForecastingPage from "./features/forecasting/pages/ForecastingPage";
 import ForecastDetailsPage from "./features/forecasting/pages/ForecastDetailsPage";
-
 import EventsPage from "./features/events/pages/EventsPage";
 import EventDetailsPage from "./features/events/pages/EventDetailsPage";
 import CalendarPage from "./features/events/pages/CalendarPage";
-
-import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import ConsultationPage from "./features/consultation/pages/ConsultationPage";
+import BusinessProfilePage from "./features/business-profile/pages/BusinessProfilePage";
+import { BusinessProfileProvider } from "./features/business-profile/context/BusinessProfileContext";
 import { applyTheme } from "./shared/theme/themeToCssVars";
 
 const RTL_LANGS = new Set(["ar"]);
@@ -65,7 +64,9 @@ function App() {
             path="/app"
             element={
               <RequirePermission anyOf={["dashboard.view"]} redirectTo="/login">
-                <MainLayout />
+                <BusinessProfileProvider>
+                  <MainLayout />
+                </BusinessProfileProvider>
               </RequirePermission>
             }
           >
@@ -85,6 +86,15 @@ function App() {
               element={
                 <RequirePermission anyOf={["dashboard.view"]}>
                   <Profile />
+                </RequirePermission>
+              }
+            />
+
+            <Route
+              path="business-profile"
+              element={
+                <RequirePermission anyOf={["dashboard.view"]}>
+                  <BusinessProfilePage />
                 </RequirePermission>
               }
             />
@@ -171,6 +181,15 @@ function App() {
               element={
                 <RequirePermission anyOf={["products.view"]}>
                   <ProductsPage />
+                </RequirePermission>
+              }
+            />
+
+            <Route
+              path="consultation"
+              element={
+                <RequirePermission anyOf={["dashboard.view"]}>
+                  <ConsultationPage />
                 </RequirePermission>
               }
             />

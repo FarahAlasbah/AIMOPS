@@ -12,6 +12,7 @@ import {
   getForecastSummaryForDashboard,
 } from "../../../api/dashboard";
 import "./Overview.css";
+import BusinessProfileOverviewPanel from "../../business-profile/components/BusinessProfileOverviewPanel";
 
 const pickDashboard = ({ user, hasPermission }) => {
   const roleName = user?.role?.display_name || user?.role_name || "";
@@ -465,12 +466,14 @@ export default function Overview() {
   }, [summary, locale, t]);
 
   return (
-    <div className="overview-page">
-      <PageHeader title={t(`roles.${dashboardKey}.title`)} subtitle={t(`roles.${dashboardKey}.subtitle`)} />
+  <div className="overview-page">
+    <PageHeader title={t(`roles.${dashboardKey}.title`)} subtitle={t(`roles.${dashboardKey}.subtitle`)} />
 
-      {error ? <div className="overview-error">{error}</div> : null}
+    {error ? <div className="overview-error">{error}</div> : null}
 
-      <div className="overview-top-grid">
+    <BusinessProfileOverviewPanel />
+
+    <div className="overview-top-grid">
         {topStats.map((item) => {
           const Icon = item.icon;
 
