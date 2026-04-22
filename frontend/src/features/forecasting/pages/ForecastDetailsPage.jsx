@@ -57,7 +57,7 @@ const writeExplanationCache = (productId, value) => {
   try {
     localStorage.setItem(
       getExplanationCacheKey(productId),
-      JSON.stringify(value ?? null)
+      JSON.stringify(value ?? null),
     );
   } catch {
     // ignore storage errors
@@ -76,7 +76,8 @@ const normalizeStatus = (value) => {
   const v = String(value || "").toLowerCase();
 
   if (["ready", "done", "success", "completed"].includes(v)) return "ready";
-  if (["training", "queued", "pending", "running"].includes(v)) return "training";
+  if (["training", "queued", "pending", "running"].includes(v))
+    return "training";
   if (["failed", "error"].includes(v)) return "failed";
   return "idle";
 };
@@ -241,7 +242,9 @@ export default function ForecastDetailsPage() {
   const navigate = useNavigate();
   const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
 
-  const [windowPreset, setWindowPreset] = useState(String(DEFAULT_VISIBLE_DAYS));
+  const [windowPreset, setWindowPreset] = useState(
+    String(DEFAULT_VISIBLE_DAYS),
+  );
   const [selectedEndDate, setSelectedEndDate] = useState("");
 
   const [statusLoading, setStatusLoading] = useState(true);
@@ -403,7 +406,7 @@ export default function ForecastDetailsPage() {
     const defaultEnd = clampDateKey(
       addDaysToKey(start, DEFAULT_VISIBLE_DAYS - 1),
       start,
-      end
+      end,
     );
 
     const visibleLength = getRangeLength(start, defaultEnd);
@@ -411,8 +414,8 @@ export default function ForecastDetailsPage() {
       String(
         WINDOW_PRESETS.includes(visibleLength)
           ? visibleLength
-          : DEFAULT_VISIBLE_DAYS
-      )
+          : DEFAULT_VISIBLE_DAYS,
+      ),
     );
     setSelectedEndDate(defaultEnd);
   }, [
@@ -454,7 +457,7 @@ export default function ForecastDetailsPage() {
         e?.message ||
           t("messages.generateFailed", {
             name: status?.product_name || `#${productId}`,
-          })
+          }),
       );
     } finally {
       setActionBusy(false);
@@ -480,7 +483,7 @@ export default function ForecastDetailsPage() {
   const safeEndDate = clampDateKey(
     selectedEndDate || forecastEnd,
     forecastStart,
-    forecastEnd
+    forecastEnd,
   );
 
   const visibleDaily = useMemo(() => {
@@ -492,7 +495,7 @@ export default function ForecastDetailsPage() {
 
   const hasBounds = useMemo(() => {
     return visibleDaily.some(
-      (item) => item?.quantity_lower != null || item?.quantity_upper != null
+      (item) => item?.quantity_lower != null || item?.quantity_upper != null,
     );
   }, [visibleDaily]);
 
@@ -519,7 +522,7 @@ export default function ForecastDetailsPage() {
       const qty = Number(item?.predicted_quantity || 0);
       const revenue = Number(item?.predicted_revenue || 0);
       const confidence = String(
-        item?.confidence || forecast?.summary?.confidence || "medium"
+        item?.confidence || forecast?.summary?.confidence || "medium",
       );
 
       totalQuantity += qty;
@@ -569,7 +572,7 @@ export default function ForecastDetailsPage() {
     }
 
     return Array.from(map.values()).sort((a, b) =>
-      a.weekStart.localeCompare(b.weekStart)
+      a.weekStart.localeCompare(b.weekStart),
     );
   }, [visibleDaily]);
 
@@ -799,7 +802,7 @@ export default function ForecastDetailsPage() {
 
     const explanationTime = new Date(explanationData?.generated_at).getTime();
     const forecastTime = new Date(
-      forecast?.model?.trained_at || status?.trained_at || ""
+      forecast?.model?.trained_at || status?.trained_at || "",
     ).getTime();
 
     if (Number.isNaN(explanationTime) || Number.isNaN(forecastTime)) {
@@ -817,7 +820,7 @@ export default function ForecastDetailsPage() {
     const nextEnd = clampDateKey(
       addDaysToKey(forecastStart, days - 1),
       forecastStart,
-      forecastEnd
+      forecastEnd,
     );
 
     setSelectedEndDate(nextEnd);
@@ -829,14 +832,9 @@ export default function ForecastDetailsPage() {
   const noForecastInRange = visibleDaily.length === 0;
 
   const productDisplayName =
-    status?.product_name ||
-    forecast?.product_name ||
-    `Product #${productId}`;
+    status?.product_name || forecast?.product_name || `Product #${productId}`;
 
-  const productCategory =
-    forecast?.category ||
-    status?.category ||
-    "—";
+  const productCategory = forecast?.category || status?.category || "—";
 
   return (
     <div className="forecast-details-page">
@@ -897,15 +895,6 @@ export default function ForecastDetailsPage() {
               Category: {productCategory}
             </div>
           </div>
-
-          {/* <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <span className="forecast-badge">Product ID: {productId}</span>
-            {forecast?.model?.trained_at ? (
-              <span className="forecast-badge accent">
-                Trained: {fmtDateTime(forecast.model.trained_at, locale)}
-              </span>
-            ) : null}
-          </div> */}
         </div>
       </Card>
 
@@ -1058,8 +1047,62 @@ export default function ForecastDetailsPage() {
           </div>
 
           <Card className="forecast-details-card">
-            <div className="forecast-range-toolbar">
-              <div className="forecast-range-field">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 24,
+              }}
+            >
+              <div
+                style={{
+                  padding: "4px 0",
+                  background: "transparent",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#9ca3af",
+                    marginBottom: 8,
+                  }}
+                >
+                  {t("details.metaPeriod")}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "#111827",
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {fmtDate(forecastStart, locale)}
+                  <span style={{ margin: "0 10px", color: "#d1d5db" }}>→</span>
+                  {fmtDate(forecastEnd, locale)}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 24,
+                paddingTop: 20,
+                borderTop: "1px solid #e5e7eb",
+                display: "grid",
+                gridTemplateColumns: selectedSummary.hasEventBoosts
+                  ? "220px minmax(280px, 1fr) auto"
+                  : "220px minmax(280px, 1fr)",
+                gap: 20,
+                alignItems: "start",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
                 <FormSelect
                   label={t("details.visibleWindowLabel")}
                   options={[
@@ -1073,24 +1116,12 @@ export default function ForecastDetailsPage() {
                   onChange={handlePresetChange}
                 />
               </div>
-              <div className="forecast-range-field" />
-            </div>
 
-            <div
-              style={{
-                marginTop: 14,
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
-              }}
-            >
               <div
                 style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "10px 16px",
-                  background: "#fff",
-                  minWidth: 200,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
                 }}
               >
                 <div
@@ -1100,53 +1131,44 @@ export default function ForecastDetailsPage() {
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                     color: "#9ca3af",
-                    marginBottom: 6,
+                    marginBottom: 10,
                   }}
                 >
-                  {t("details.metaPeriod")}
+                  Selected Range
                 </div>
-                <div
-                  style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}
-                >
-                  {fmtDate(forecastStart, locale)}
-                  <span style={{ margin: "0 8px", color: "#d1d5db" }}>→</span>
-                  {fmtDate(forecastEnd, locale)}
-                </div>
-              </div>
 
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "10px 16px",
-                  background: "#fff",
-                  minWidth: 200,
-                }}
-              >
                 <div
                   style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    color: "#9ca3af",
-                    marginBottom: 6,
+                    height: 42,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: "#111827",
+                    lineHeight: 1.4,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
-                  {t("details.visibleWindowLabel")}
-                </div>
-                <div
-                  style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}
-                >
-                  {fmtDate(forecastStart, locale)}
-                  <span style={{ margin: "0 8px", color: "#d1d5db" }}>→</span>
-                  {fmtDate(safeEndDate, locale)}
+                  <span>{fmtDate(forecastStart, locale)}</span>
+                  <span
+                    style={{
+                      margin: "0 8px",
+                      color: "#d1d5db",
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    →
+                  </span>
+                  <span>{fmtDate(safeEndDate, locale)}</span>
                   <span
                     style={{
                       marginLeft: 8,
                       fontSize: 12,
                       fontWeight: 600,
                       color: "#6b7280",
+                      flex: "0 0 auto",
                     }}
                   >
                     ({visibleDaily.length}{" "}
@@ -1155,39 +1177,21 @@ export default function ForecastDetailsPage() {
                 </div>
               </div>
 
-              {selectedSummary.hasEventBoosts && (
+              {selectedSummary.hasEventBoosts ? (
                 <div
                   style={{
-                    border: "1px solid #bfdbfe",
-                    borderRadius: 12,
-                    padding: "10px 16px",
-                    background: "#eff6ff",
-                    minWidth: 160,
+                    minHeight: 42,
                     display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      color: "#93c5fd",
-                      marginBottom: 6,
-                    }}
-                  >
-                    {t("details.eventBoostsActive")}
-                  </div>
                   <span className="forecast-badge accent">
                     {t("details.eventBoostsActive")}
                   </span>
                 </div>
-              )}
+              ) : null}
             </div>
-          </Card>
 
-          <Card className="forecast-details-card">
             <div className="forecast-chart-grid">
               <div className="forecast-chart-card">
                 <div className="forecast-chart-title">
@@ -1249,9 +1253,7 @@ export default function ForecastDetailsPage() {
                 flexWrap: "wrap",
               }}
             >
-              <div className="forecast-explanation-title">
-                AI Explanation
-              </div>
+              <div className="forecast-explanation-title">AI Explanation</div>
 
               {!hasFetchedExplanation ? (
                 <Button
@@ -1268,7 +1270,9 @@ export default function ForecastDetailsPage() {
                   onClick={handleReExplainWithAi}
                   disabled={explanationLoading}
                 >
-                  {explanationLoading ? "Regenerating..." : "Re-explain with AI"}
+                  {explanationLoading
+                    ? "Regenerating..."
+                    : "Re-explain with AI"}
                 </Button>
               )}
             </div>
@@ -1300,7 +1304,8 @@ export default function ForecastDetailsPage() {
                       fontWeight: 600,
                     }}
                   >
-                    This explanation is older than the current forecast. Re-explain to refresh it.
+                    This explanation is older than the current forecast.
+                    Re-explain to refresh it.
                   </div>
                 ) : null}
 
@@ -1325,7 +1330,8 @@ export default function ForecastDetailsPage() {
 
             {hasFetchedExplanation && explanationData?.generated_at ? (
               <div className="forecast-note" style={{ marginTop: 10 }}>
-                Generated at: {fmtDateTime(explanationData.generated_at, locale)}
+                Generated at:{" "}
+                {fmtDateTime(explanationData.generated_at, locale)}
                 {explanationData?.cached ? " • Cached" : ""}
               </div>
             ) : null}
