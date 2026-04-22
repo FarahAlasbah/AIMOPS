@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Card, PageHeader, Button } from "../../../shared/components";
 import FormCalendar from "../../../shared/components/FormCalendar";
 import InfoMessage from "../../../shared/components/InfoMessage";
+import "../components/UploadCard.css";
 
 import {
   uploadSalesData,
@@ -339,7 +340,7 @@ export default function UploadsPage() {
     }
 
     try {
-      setUploading(true);
+      
       setProgress(0);
 
       const uploadRes = await uploadSalesData({

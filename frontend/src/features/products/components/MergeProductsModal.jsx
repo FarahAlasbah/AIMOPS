@@ -161,12 +161,22 @@ export default function MergeProductsModal({
 
           {/* ── Arrow divider ── */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 70 }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M3 9h12M11 5l4 4-4 4"
-                stroke="var(--color-text-secondary, #9ca3af)"
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    style={{ transform: "scaleX(-1)" }}
+  >
+    <path
+      d="M3 9h12M11 5l4 4-4 4"
+      stroke="var(--color-text-secondary, #9ca3af)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+</div>
 
           {/* ── Right: Merge targets ── */}
           <PanelBox label={t("mergeModal.mergeIntoLabel")}>

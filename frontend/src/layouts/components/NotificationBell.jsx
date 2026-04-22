@@ -45,19 +45,60 @@ const fmtDateTime = (iso, locale = undefined) => {
 };
 
 const normalizeNotif = (n) => {
+  const type = n?.type ?? "";
+  const relatedId = n?.related_id ?? n?.entity_id ?? n?.entityId ?? null;
+  const relatedType = n?.related_type ?? null;
+
+  let link = null;
+
+  switch (type) {
+    case "event_detection":
+      link = `/app/events`;
+      break;
+
+    case "event_reminder":
+      if (relatedId && relatedType === "event") link = `/app/events/${relatedId}`;
+      else link = `/app/events`;
+      break;
+
+    case "forecast_ready":
+    case "forecast-ready":
+    case "forecast":
+      if (relatedId) link = `/app/forecasts/${relatedId}`;
+      else link = `/app/forecasts`;
+      break;
+
+    case "forecast-failed":
+      if (relatedId) link = `/app/forecasts/${relatedId}`;
+      else link = `/app/forecasts`;
+      break;
+
+    case "campaign":
+      if (relatedId) link = `/app/campaigns/${relatedId}`;
+      break;
+
+    case "product":
+      if (relatedId) link = `/app/products/${relatedId}`;
+      else link = `/app/products`;
+      break;
+
+    default:
+      // Fallback: infer from title keywords for blank-type notifications
+      if (n?.title?.toLowerCase().includes("product")) link = `/app/products`;
+      else if (n?.title?.toLowerCase().includes("event")) link = `/app/events`;
+      else if (n?.title?.toLowerCase().includes("forecast")) link = `/app/forecasts`;
+      else link = null;
+  }
+
   return {
-    id:
-      n?.notification_id ??
-      n?.id ??
-      n?._id ??
-      `${n?.created_at || ""}:${n?.title || ""}`,
+    id: n?.notification_id ?? n?.id ?? n?._id ?? `${n?.created_at || ""}:${n?.title || ""}`,
     title: n?.title ?? "",
     message: n?.message ?? "",
-    type: n?.type ?? "info",
+    type,
     createdAt: n?.created_at ?? n?.createdAt ?? "",
+    link,
   };
 };
-
 const normalizeLocalForecastNotification = (item, t) => {
   const isReady = String(item?.status || "").toLowerCase() === "ready";
   const productName = item?.product_name || t("notifications.forecastUnknownProduct");
@@ -72,9 +113,13 @@ const normalizeLocalForecastNotification = (item, t) => {
       : t("notifications.forecastFailedBody", { name: productName }),
     type: isReady ? "forecast-ready" : "forecast-failed",
     createdAt: item?.created_at || item?.createdAt || "",
+
+    // ✅ ADD THIS
+    link: item?.product_id
+      ? `/app/forecasts/${item.product_id}`
+      : null,
   };
 };
-
 const dedupeById = (items) => {
   const seen = new Set();
   const out = [];
@@ -530,34 +575,68 @@ export default function NotificationBell() {
             ) : visibleInbox.length === 0 ? (
               <div className="notif-empty">{t("notifications.empty")}</div>
             ) : (
-              <div className="notif-list">
-                {visibleInbox.map((n) => (
-                  <div key={String(n.id)} className="notif-item static">
-                    <div className="notif-item-top">
-                      <div className="notif-item-title">
-                        {n.title || t("notifications.untitled")}
-                      </div>
+<div className="notif-list">
+  {visibleInbox.map((n) => {
+      console.log("NOTIF DEBUG:", JSON.stringify(n, null, 2)); // ← add this
 
-                      <div className="notif-item-right">
-                        <div className="notif-chip">{String(n.type || "info")}</div>
+    const link = n.link;
 
-                        <button
-                          type="button"
-                          className="notif-item-x"
-                          aria-label={t("notifications.clearOne", { defaultValue: "Clear item" })}
-                          title={t("notifications.clearOne", { defaultValue: "Clear item" })}
-                          onClick={() => hideOneInbox(n.id)}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="notif-item-body">{n.message}</div>
-                    <div className="notif-item-meta">{fmtDateTime(n.createdAt, locale)}</div>
-                  </div>
-                ))}
-              </div>
+    return link ? (
+      <Link
+        key={String(n.id)}
+        to={link}
+        className="notif-item"
+        onClick={() => setOpen(false)}
+      >
+        <div className="notif-item-top">
+          <div className="notif-item-title">
+            {n.title || t("notifications.untitled")}
+          </div>
+          <div className="notif-item-right">
+            <div className="notif-chip">{String(n.type || "info")}</div>
+            <button
+              type="button"
+              className="notif-item-x"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideOneInbox(n.id);
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="notif-item-body">{n.message}</div>
+        <div className="notif-item-meta">{fmtDateTime(n.createdAt, locale)}</div>
+      </Link>
+    ) : (
+      <div key={String(n.id)} className="notif-item static">
+        <div className="notif-item-top">
+          <div className="notif-item-title">
+            {n.title || t("notifications.untitled")}
+          </div>
+          <div className="notif-item-right">
+            <div className="notif-chip">{String(n.type || "info")}</div>
+            <button
+              type="button"
+              className="notif-item-x"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideOneInbox(n.id);
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="notif-item-body">{n.message}</div>
+        <div className="notif-item-meta">{fmtDateTime(n.createdAt, locale)}</div>
+      </div>
+    );
+  })}
+</div>
             )}
           </div>
         </div>

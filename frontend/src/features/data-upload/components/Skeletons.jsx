@@ -6,10 +6,7 @@ function S({ className = "", style = {} }) {
   return <div className={`skeleton ${className}`} style={style} />;
 }
 
-export function AnalyzeProgress({
-  percent = 0,
-  label,
-}) {
+export function AnalyzeProgress({ percent = 0, label }) {
   const { t } = useTranslation("upload");
   const p = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
   const resolvedLabel = label ?? t("analyzeProgress.defaultLabel");
@@ -23,7 +20,6 @@ export function AnalyzeProgress({
             <div className="analyze-sub">{t("analyzeProgress.loading")}</div>
           </div>
         </div>
-
         <div className="analyze-label">{resolvedLabel}</div>
         <div className="analyze-hint">{t("analyzeProgress.hint")}</div>
       </div>
@@ -31,74 +27,9 @@ export function AnalyzeProgress({
   );
 }
 
-export function UploadCardSkeleton() {
-  return (
-    <div className="upload-card">
-      <div className="upload-card-head">
-        <div className="upload-card-title-row">
-          <S className="skeleton-line" style={{ height: 16, width: "65%" }} />
-          <S className="skeleton-pill" style={{ height: 28, width: 90 }} />
-        </div>
-        <div style={{ marginTop: 10 }}>
-          <S className="skeleton-line" style={{ height: 12, width: "40%" }} />
-        </div>
-      </div>
-
-      <div className="upload-kv-grid">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="upload-kv">
-            <S className="skeleton-line" style={{ height: 10, width: "45%" }} />
-            <div style={{ marginTop: 8 }}>
-              <S className="skeleton-line" style={{ height: 14, width: "70%" }} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="upload-flags">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <S className="skeleton-pill" style={{ height: 26, width: 120 }} />
-          <S className="skeleton-pill" style={{ height: 26, width: 120 }} />
-        </div>
-      </div>
-
-      <div className="upload-actions-row">
-        <div className="upload-actions-main">
-          <S className="skeleton-btn" style={{ height: 36, width: 120 }} />
-          <S className="skeleton-btn" style={{ height: 36, width: 96 }} />
-        </div>
-
-        <div className="upload-actions-aux">
-          <S className="skeleton-btn" style={{ height: 34, width: 130 }} />
-          <S className="skeleton-btn" style={{ height: 34, width: 96 }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function UploadsListSkeleton({ count = 6 }) {
-  return (
-    <>
-      <div className="uploads-grid">
-        {Array.from({ length: count }).map((_, i) => (
-          <UploadCardSkeleton key={i} />
-        ))}
-      </div>
-
-      <div className="pager">
-        <div className="pager-info">
-          <S className="skeleton-line" style={{ height: 12, width: 160 }} />
-        </div>
-        <div className="pager-actions">
-          <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
-          <S className="skeleton-line" style={{ height: 12, width: 160 }} />
-          <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
-        </div>
-      </div>
-    </>
-  );
-}
+// NOTE: UploadCardSkeleton and UploadsListSkeleton have been removed.
+// The card skeleton now lives inline inside UploadsList.jsx so it
+// perfectly matches the new card layout without a separate export.
 
 function MappingCardSkeleton({ rows = 3 }) {
   return (
@@ -112,10 +43,7 @@ function MappingCardSkeleton({ rows = 3 }) {
         {Array.from({ length: rows }).map((_, i) => (
           <div
             key={i}
-            style={{
-              borderTop: "1px solid var(--c-border)",
-              paddingTop: 12,
-            }}
+            style={{ borderTop: "1px solid var(--c-border)", paddingTop: 12 }}
           >
             <S className="skeleton-line" style={{ height: 14, width: "55%" }} />
             <div style={{ marginTop: 10 }}>
@@ -158,7 +86,6 @@ export function ProductCardSkeleton() {
           <div style={{ marginTop: 8 }}>
             <S className="skeleton-line" style={{ height: 12, width: "35%" }} />
           </div>
-
           <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
             <S className="skeleton-pill" style={{ height: 26, width: 80 }} />
             <S className="skeleton-pill" style={{ height: 26, width: 80 }} />
@@ -166,7 +93,6 @@ export function ProductCardSkeleton() {
             <S className="skeleton-pill" style={{ height: 26, width: 110 }} />
           </div>
         </div>
-
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <S className="skeleton-btn" style={{ height: 34, width: 80 }} />
         </div>
@@ -183,28 +109,17 @@ export function ProductsListSkeleton({ count = 6 }) {
         <div style={{ marginTop: 10 }}>
           <S className="skeleton-line" style={{ height: 12, width: "70%" }} />
         </div>
-
         <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <S className="skeleton-line" style={{ height: 38, width: "45%" }} />
           <S className="skeleton-line" style={{ height: 38, width: 220 }} />
           <S className="skeleton-line" style={{ height: 38, width: 140 }} />
         </div>
-
-        <div
-          style={{
-            marginTop: 12,
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
           <S className="skeleton-line" style={{ height: 12, width: 160 }} />
           <S className="skeleton-btn" style={{ height: 34, width: 70 }} />
         </div>
       </div>
-
       <div style={{ marginTop: 10 }}>
         {Array.from({ length: count }).map((_, i) => (
           <ProductCardSkeleton key={i} />
@@ -221,7 +136,6 @@ export function ConfirmProductsSkeleton() {
       <div style={{ marginTop: 10 }}>
         <S className="skeleton-line" style={{ height: 12, width: "75%" }} />
       </div>
-
       <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <S className="skeleton-btn" style={{ height: 38, width: 160 }} />
         <S className="skeleton-line" style={{ height: 12, width: 180 }} />
@@ -237,7 +151,6 @@ export function ReviewPageSkeleton() {
       <div style={{ marginTop: 10 }}>
         <S className="skeleton-line" style={{ height: 12, width: 220 }} />
       </div>
-
       <div className="mapping-card" style={{ marginTop: 12 }}>
         <S className="skeleton-line" style={{ height: 14, width: 220 }} />
         <div style={{ marginTop: 10 }}>
@@ -247,7 +160,6 @@ export function ReviewPageSkeleton() {
           <S className="skeleton-btn" style={{ height: 36, width: 140 }} />
         </div>
       </div>
-
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="mapping-card">
@@ -263,7 +175,6 @@ export function ReviewPageSkeleton() {
           </div>
         ))}
       </div>
-
       <div style={{ marginTop: 16, display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <S className="skeleton-btn" style={{ height: 38, width: 90 }} />
         <S className="skeleton-btn" style={{ height: 38, width: 120 }} />
