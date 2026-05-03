@@ -39,22 +39,60 @@ export default function UploadRow({
   onReview,
   onDelete,
   deleting,
+  selected = false,
+  onSelectChange,
+  selectionDisabled = false,
 }) {
   const { t } = useTranslation("upload");
 
+  const batchId = upload?.batchId;
+  const fileName = upload?.fileName || "-";
+
   const handleClick = () => {
+    if (deleting) return;
+
     if (hasLocalMapping) {
-      onReview?.(upload.batchId);
+      onReview?.(batchId);
     } else {
-      onOpenMapping?.(upload.batchId);
+      onOpenMapping?.(batchId);
     }
   };
 
+  const handleSelectChange = (e) => {
+    e.stopPropagation();
+    onSelectChange?.(batchId, e.target.checked);
+  };
+
   return (
-    <div className={`ul-row ${deleting ? "ul-row--busy" : ""}`} onClick={handleClick}>
-      
+    <div
+      className={`ul-row ${deleting ? "ul-row--busy" : ""} ${
+        selected ? "ul-row--selected" : ""
+      }`}
+      onClick={handleClick}
+      aria-selected={selected}
+    >
+      <div
+        className="ul-select-cell"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          className="ul-checkbox"
+          checked={selected}
+          onChange={handleSelectChange}
+          disabled={selectionDisabled || deleting}
+          aria-label={t("uploadsList.selectFile", {
+            fileName,
+            defaultValue: `Select ${fileName}`,
+          })}
+        />
+      </div>
+
       <div className="ul-main">
-        <div className="ul-title">{upload?.fileName}</div>
+        <div className="ul-title" title={fileName}>
+          {fileName}
+        </div>
         <div className="ul-sub">
           {fmtDate(upload?.uploadedAt)} · {kbToMb(upload?.fileSizeKb)}
         </div>
@@ -63,24 +101,28 @@ export default function UploadRow({
       <div className="ul-status">
         <StatusDot status={upload?.status} />
         <span style={{ textTransform: "capitalize" }}>
-  {upload?.status}
-</span>
+          {upload?.status || "-"}
+        </span>
       </div>
 
-      
-
-      
-<div className="ul-actions">
-  <button
-    className="ul-btn-delete"
-    onClick={(e) => {
-      e.stopPropagation();
-      onDelete?.(upload);
-    }}
-  >
-    <Trash2 size={16} />
-  </button>
-</div>
+      <div className="ul-actions">
+        <button
+          type="button"
+          className="ul-btn-delete"
+          disabled={deleting}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(upload);
+          }}
+          title={t("uploadsList.delete", { defaultValue: "Delete" })}
+          aria-label={t("uploadsList.deleteFile", {
+            fileName,
+            defaultValue: `Delete ${fileName}`,
+          })}
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
     </div>
   );
 }

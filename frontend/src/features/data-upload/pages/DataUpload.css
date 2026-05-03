@@ -1,5 +1,290 @@
 /* frontend/src/features/data-upload/pages/DataUpload.css */
+/* ============================================================
+   Uploads page tools fallback styling
+   Put this at the END of UploadCard.css
+   ============================================================ */
+/* ============================================================
+   FINAL Uploads list alignment fix
+   Put this at the VERY END of UploadCard.css
+   ============================================================ */
 
+.ul-table {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--c-surface);
+}
+
+.ul-header,
+.ul-row {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) 140px 60px !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.ul-header {
+  padding: 10px 14px !important;
+  background: var(--c-surface-muted);
+  border-bottom: 1px solid var(--c-border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.ul-row {
+  min-height: 58px;
+  padding: 12px 14px !important;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  border-radius: 0 !important;
+  cursor: pointer;
+}
+
+.ul-row:last-child {
+  border-bottom: 0;
+}
+
+.ul-select-cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ul-main {
+  min-width: 0 !important;
+  text-align: left !important;
+  justify-self: stretch !important;
+}
+
+.ul-title {
+  display: block;
+  width: 100%;
+  font-weight: 700;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left !important;
+}
+
+.ul-sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  text-align: left !important;
+}
+
+.ul-status {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  font-size: 13px;
+  text-align: left !important;
+  white-space: nowrap;
+}
+
+.ul-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+
+/* RTL support */
+html[dir="rtl"] .ul-main,
+html[dir="rtl"] .ul-title,
+html[dir="rtl"] .ul-sub,
+html[dir="rtl"] .ul-status {
+  text-align: right !important;
+}
+
+html[dir="rtl"] .ul-status {
+  justify-content: flex-start !important;
+}
+
+@media (max-width: 640px) {
+  .ul-header,
+  .ul-row {
+    grid-template-columns: 30px minmax(0, 1fr) 96px 44px !important;
+    gap: 8px !important;
+    padding-inline: 10px !important;
+  }
+}
+.uploads-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.uploads-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.uploads-tools {
+  margin: 12px 0 8px;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(160px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.uploads-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.uploads-field-search {
+  min-width: 0;
+}
+
+.uploads-label {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  font-weight: var(--fw-bold);
+}
+
+.uploads-input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  font-size: var(--fs-md);
+  color: var(--c-text);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.uploads-input:focus {
+  border-color: var(--c-focus);
+  box-shadow: var(--sh-focus);
+}
+
+.uploads-sort-select {
+  cursor: pointer;
+  appearance: none;
+  padding-inline-end: 36px;
+  text-align: start;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+html[dir="rtl"] .uploads-sort-select {
+  background-position: left 12px center;
+}
+
+.uploads-tools-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ghost-btn {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-extra);
+  color: var(--c-text);
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.ghost-btn:hover {
+  background: var(--c-surface-muted);
+}
+
+.ghost-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ghost-btn.danger {
+  border-color: var(--c-danger-border);
+  color: var(--c-danger-text);
+}
+
+.ghost-btn.danger:hover {
+  background: var(--c-danger-bg);
+}
+
+/* FormCalendar inside uploads tools */
+.uploads-tools .form-group {
+  margin-bottom: 0;
+}
+
+.uploads-tools .form-calendar {
+  width: 100%;
+}
+
+.uploads-tools .fc-field,
+.uploads-tools .form-input,
+.uploads-tools .fc-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Better selected toolbar */
+.uploads-selection-bar {
+  margin: 12px 0 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-primary-soft);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.uploads-selection-text {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-extra);
+  color: var(--c-primary);
+}
+
+.uploads-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Responsive filters */
+@media (max-width: 980px) {
+  .uploads-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .uploads-tools-actions {
+    justify-content: stretch;
+  }
+
+  .uploads-tools-actions .ghost-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .uploads-tools {
+    grid-template-columns: 1fr;
+  }
+}
 .data-upload-page {
   max-width: 1000px;
   margin: 0 auto;

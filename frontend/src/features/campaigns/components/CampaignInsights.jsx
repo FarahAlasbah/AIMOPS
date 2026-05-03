@@ -7,17 +7,54 @@ const CampaignInsights = ({ result }) => {
 
   if (!result) return null;
 
+  const dateSuggestions =
+    Array.isArray(result.date_suggestions) && result.date_suggestions.length
+      ? result.date_suggestions
+      : result.start_date && result.end_date
+      ? [
+          {
+            label: t("insights.yourProposedDates", {
+              defaultValue: "Your proposed dates",
+            }),
+            start_date: result.start_date,
+            end_date: result.end_date,
+            forecast_quantity: result.forecast_quantity ?? null,
+            forecast_uplift_pct: result.forecast_uplift_pct ?? null,
+            note: t("insights.noForecastData", {
+              defaultValue:
+                "No forecast data available — generate forecasts first",
+            }),
+          },
+        ]
+      : [];
+
+  const forecastImpact =
+    result.forecast_impact ||
+    (dateSuggestions.length
+      ? {
+          confidence: result.forecast_confidence || "medium",
+          multiplier_source: result.multiplier_source || "default",
+          totals: {
+            additional_units: result.forecast_additional_units ?? 0,
+            base_revenue: result.forecast_base_revenue ?? null,
+            additional_revenue: result.forecast_additional_revenue ?? null,
+            estimated_roi: result.predicted_roi ?? null,
+          },
+          products: [],
+        }
+      : null);
+
   return (
     <div className="campaign-insights-stack">
-      {result.date_suggestions?.length ? (
-        <div className="campaign-insights-card">
+{dateSuggestions.length ? (
+          <div className="campaign-insights-card">
           <div className="campaign-insights-header">
             <h3>{t("insights.dateSuggestions")}</h3>
             {/* <p>{t("insights.dateSuggestionsSubtitle")}</p> */}
           </div>
 
           <div className="campaign-suggestions-grid">
-            {result.date_suggestions.map((item, index) => (
+            {dateSuggestions.map((item, index) => (
               <div key={`${item.label}-${index}`} className="campaign-suggestion-card">
                 <h4>{item.label}</h4>
                 <p>
@@ -42,13 +79,13 @@ const CampaignInsights = ({ result }) => {
         </div>
       ) : null}
 
-      {result.forecast_impact ? (
+      {forecastImpact ? (
         <div className="campaign-insights-card">
           <div className="campaign-insights-header">
             <h3>{t("insights.forecastImpact")}</h3>
             <p>
-              {t("insights.confidence")}: {result.forecast_impact.confidence} ·{" "}
-              {t("insights.source")}: {result.forecast_impact.multiplier_source}
+              {t("insights.confidence")}: {forecastImpact.confidence} ·{" "}
+              {t("insights.source")}: {forecastImpact.multiplier_source}
             </p>
           </div>
 
@@ -56,32 +93,32 @@ const CampaignInsights = ({ result }) => {
             <div className="campaign-stat-card">
               <span>{t("insights.additionalUnits")}</span>
               <strong>
-                {formatNumber(result.forecast_impact.totals?.additional_units)}
+                {formatNumber(forecastImpact.totals?.additional_units)}
               </strong>
             </div>
 
             <div className="campaign-stat-card">
               <span>{t("insights.baseRevenue")}</span>
               <strong>
-                {formatCurrency(result.forecast_impact.totals?.base_revenue)}
+                {formatCurrency(forecastImpact.totals?.base_revenue)}
               </strong>
             </div>
 
             <div className="campaign-stat-card">
               <span>{t("insights.additionalRevenue")}</span>
               <strong>
-                {formatCurrency(result.forecast_impact.totals?.additional_revenue)}
+                {formatCurrency(forecastImpact.totals?.additional_revenue)}
               </strong>
             </div>
 
             <div className="campaign-stat-card">
               <span>{t("insights.estimatedRoi")}</span>
-              <strong>{result.forecast_impact.totals?.estimated_roi ?? "-"}</strong>
+              <strong>{forecastImpact.totals?.estimated_roi ?? "-"}</strong>
             </div>
           </div>
 
           <div className="campaign-impact-products">
-            {result.forecast_impact.products?.map((product) => (
+            {forecastImpact.products?.map((product) => (
               <div key={product.product_id} className="campaign-impact-product">
                 <div className="campaign-impact-product-top">
                   <div>

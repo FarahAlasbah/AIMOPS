@@ -192,3 +192,20 @@
     width: 100%;
   }
 }
+
+.calendar-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-day-group + .calendar-day-group {
+  margin-top: 22px;
+}
+
+.calendar-day-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #03045e;
+  padding: 0 2px;
+}
