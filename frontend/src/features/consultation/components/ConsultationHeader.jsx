@@ -1,3 +1,4 @@
+// frontend/src/features/consultation/components/ConsultationHeader.jsx
 import { Expand, Shrink, Trash2, FileText, ExternalLink, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -10,17 +11,14 @@ export default function ConsultationHeader({
 }) {
   const { t } = useTranslation("consultation");
   const navigate = useNavigate();
-  const {
-    isDrawerExpanded,
-    toggleDrawerExpanded,
-    closeDrawer,
-  } = useConsultation();
+  const { isDrawerExpanded, toggleDrawerExpanded, closeDrawer } =
+    useConsultation();
 
   const isDrawer = mode === "drawer";
 
   return (
     <div className="consultation-header">
-      <div>
+      <div className="consultation-header-copy">
         <h2 className="consultation-title">{t("title")}</h2>
         <p className="consultation-subtitle">{t("subtitle")}</p>
       </div>
@@ -28,10 +26,12 @@ export default function ConsultationHeader({
       <div className="consultation-header-actions">
         <button
           type="button"
-          className="consultation-text-button"
+          className={isDrawer ? "consultation-icon-button" : "consultation-text-button"}
           onClick={onSaveSummaryRequest}
+          aria-label={t("saveSummary")}
+          title={t("saveSummary")}
         >
-          {t("saveSummary")}
+          {isDrawer ? <FileText size={18} /> : t("saveSummary")}
         </button>
 
         <button
@@ -71,7 +71,7 @@ export default function ConsultationHeader({
 
             <button
               type="button"
-              className="consultation-icon-button"
+              className="consultation-icon-button consultation-close-button"
               onClick={closeDrawer}
               aria-label={t("close")}
               title={t("close")}

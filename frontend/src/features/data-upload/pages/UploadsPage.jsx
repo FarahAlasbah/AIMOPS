@@ -6,7 +6,7 @@ import { Card, PageHeader, Button } from "../../../shared/components";
 import FormCalendar from "../../../shared/components/FormCalendar";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import "../components/UploadCard.css";
-
+import "../components/UploadCard.css";
 import {
   uploadSalesData,
   getAllUploads,
@@ -128,9 +128,11 @@ export default function UploadsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const [deletingId, setDeletingId] = useState(null);
+  const [deletingIds, setDeletingIds] = useState(() => new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+
+  const [selectedBatchIds, setSelectedBatchIds] = useState([]);
 
   const campaignOptions = useMemo(
     () => [
@@ -297,12 +299,85 @@ export default function UploadsPage() {
     }
   }, [offset, sortedUploads.length, limit]);
 
+  useEffect(() => {
+    const existingIds = new Set(
+      sortedUploads
+        .map((u) => String(u?.batchId ?? "").trim())
+        .filter(Boolean),
+    );
+
+    setSelectedBatchIds((prev) => {
+      const next = prev.filter((id) => existingIds.has(String(id)));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [sortedUploads]);
+
   const visibleUploads = useMemo(
     () => sortedUploads.slice(offset, offset + limit),
     [sortedUploads, offset, limit],
   );
 
   const hasNext = offset + limit < sortedUploads.length;
+
+  const selectedBatchIdSet = useMemo(
+    () => new Set(selectedBatchIds.map(String)),
+    [selectedBatchIds],
+  );
+
+  const selectedUploads = useMemo(
+    () =>
+      sortedUploads.filter((u) =>
+        selectedBatchIdSet.has(String(u?.batchId ?? "")),
+      ),
+    [sortedUploads, selectedBatchIdSet],
+  );
+
+  const selectedCount = selectedUploads.length;
+  const isDeleting = deletingIds.size > 0;
+
+  const toggleSelectUpload = (batchId, checked) => {
+    const id = String(batchId ?? "").trim();
+    if (!id || isDeleting) return;
+
+    setSelectedBatchIds((prev) => {
+      const set = new Set(prev.map(String));
+
+      if (checked) {
+        set.add(id);
+      } else {
+        set.delete(id);
+      }
+
+      return Array.from(set);
+    });
+  };
+
+  const toggleSelectVisible = (checked) => {
+    if (isDeleting) return;
+
+    const visibleIds = visibleUploads
+      .map((u) => String(u?.batchId ?? "").trim())
+      .filter(Boolean);
+
+    setSelectedBatchIds((prev) => {
+      const set = new Set(prev.map(String));
+
+      visibleIds.forEach((id) => {
+        if (checked) {
+          set.add(id);
+        } else {
+          set.delete(id);
+        }
+      });
+
+      return Array.from(set);
+    });
+  };
+
+  const clearSelection = () => {
+    if (isDeleting) return;
+    setSelectedBatchIds([]);
+  };
 
   const handleFileSelect = (file) => {
     setError("");
@@ -340,7 +415,7 @@ export default function UploadsPage() {
     }
 
     try {
-      
+      setUploading(true);
       setProgress(0);
 
       const uploadRes = await uploadSalesData({
@@ -422,9 +497,23 @@ export default function UploadsPage() {
   };
 
   const requestDelete = (upload) => {
-    if (!upload?.batchId) return;
+    if (!upload?.batchId || isDeleting) return;
     setError("");
-    setConfirmTarget(upload);
+    setConfirmTarget({
+      mode: "single",
+      uploads: [upload],
+    });
+    setConfirmOpen(true);
+  };
+
+  const requestBulkDelete = () => {
+    if (selectedUploads.length === 0 || isDeleting) return;
+
+    setError("");
+    setConfirmTarget({
+      mode: "bulk",
+      uploads: selectedUploads,
+    });
     setConfirmOpen(true);
   };
 
@@ -434,27 +523,69 @@ export default function UploadsPage() {
   };
 
   const confirmDelete = async () => {
-    const upload = confirmTarget;
-    const id = upload?.batchId;
-    if (id == null) return;
+    const targets = Array.isArray(confirmTarget?.uploads)
+      ? confirmTarget.uploads
+          .map((u) => ({
+            ...u,
+            batchId: u?.batchId,
+            fileName: u?.fileName,
+          }))
+          .filter((u) => u.batchId != null)
+      : [];
+
+    if (targets.length === 0) return;
+
+    const targetIds = targets.map((u) => String(u.batchId));
+    const deletedIds = [];
+    const failures = [];
 
     setError("");
+    setDeletingIds(new Set(targetIds));
 
     try {
-      setDeletingId(id);
+      for (const upload of targets) {
+        try {
+          await deleteUploadBatch(upload.batchId);
 
-      await deleteUploadBatch(id);
+          clearLocalForBatch(upload.batchId);
+          removeDedupeKeysForFileName(upload?.fileName);
 
-      clearLocalForBatch(id);
-      removeDedupeKeysForFileName(upload?.fileName);
+          deletedIds.push(String(upload.batchId));
+        } catch (err) {
+          failures.push({ upload, err });
+        }
+      }
+
+      setSelectedBatchIds((prev) =>
+        prev.filter((id) => !deletedIds.includes(String(id))),
+      );
 
       closeConfirm();
       setOffset(0);
       await fetchUploads();
-    } catch (err) {
-      setError(extractApiError(err, t("uploadsPage.errorDeleteFailed")));
+
+      if (failures.length > 0) {
+        const baseMessage = extractApiError(
+          failures[0]?.err,
+          t("uploadsPage.errorDeleteFailed"),
+        );
+
+        const prefix =
+          failures.length === targets.length
+            ? t("uploadsPage.bulkDeleteFailed", {
+                count: failures.length,
+                defaultValue: `Could not delete ${failures.length} selected upload(s).`,
+              })
+            : t("uploadsPage.bulkDeletePartialFailed", {
+                failed: failures.length,
+                total: targets.length,
+                defaultValue: `${failures.length} of ${targets.length} selected upload(s) could not be deleted.`,
+              });
+
+        setError(`${prefix} ${baseMessage}`);
+      }
     } finally {
-      setDeletingId(null);
+      setDeletingIds(new Set());
     }
   };
 
@@ -468,9 +599,31 @@ export default function UploadsPage() {
   const hasActiveFilters =
     !!searchQuery.trim() || !!dateFrom || !!dateTo || sortBy !== "newest";
 
-  const confirmMsg = confirmTarget
+  const isBulkConfirm = confirmTarget?.mode === "bulk";
+  const confirmCount = Array.isArray(confirmTarget?.uploads)
+    ? confirmTarget.uploads.length
+    : 0;
+
+  const confirmTitle = isBulkConfirm
+    ? t("uploadsPage.bulkDeleteDialogTitle", {
+        defaultValue: "Delete selected uploads?",
+      })
+    : t("uploadsPage.deleteDialogTitle");
+
+  const confirmText = isBulkConfirm
+    ? t("uploadsPage.bulkDeleteDialogConfirm", {
+        defaultValue: "Delete selected",
+      })
+    : t("uploadsPage.deleteDialogConfirm");
+
+  const confirmMsg = isBulkConfirm
+    ? t("uploadsPage.bulkDeleteDialogMessage", {
+        count: confirmCount,
+        defaultValue: `Delete ${confirmCount} selected upload(s)? This will also remove their saved mapping and review cache.`,
+      })
+    : confirmTarget?.uploads?.[0]
     ? t("uploadsPage.deleteDialogMessage", {
-        fileName: confirmTarget.fileName || "file",
+        fileName: confirmTarget.uploads[0].fileName || "file",
       })
     : "";
 
@@ -543,7 +696,7 @@ export default function UploadsPage() {
               <Button
                 variant="secondary"
                 onClick={fetchUploads}
-                disabled={uploadsLoading || deletingId != null}
+                disabled={uploadsLoading || isDeleting}
               >
                 {uploadsLoading
                   ? t("uploadsPage.refreshing")
@@ -573,26 +726,26 @@ export default function UploadsPage() {
             </div>
 
             <div className="uploads-field">
-  <FormCalendar
-    label={t("uploadsPage.dateFrom", { defaultValue: "From" })}
-    value={dateFrom}
-    onChange={(e) => setDateFrom(e.target.value)}
-    max={dateTo || undefined}
-    disabled={uploadsLoading}
-    placeholder="YYYY-MM-DD"
-  />
-</div>
+              <FormCalendar
+                label={t("uploadsPage.dateFrom", { defaultValue: "From" })}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                max={dateTo || undefined}
+                disabled={uploadsLoading}
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
 
-<div className="uploads-field">
-  <FormCalendar
-    label={t("uploadsPage.dateTo", { defaultValue: "To" })}
-    value={dateTo}
-    onChange={(e) => setDateTo(e.target.value)}
-    min={dateFrom || undefined}
-    disabled={uploadsLoading}
-    placeholder="YYYY-MM-DD"
-  />
-</div>
+            <div className="uploads-field">
+              <FormCalendar
+                label={t("uploadsPage.dateTo", { defaultValue: "To" })}
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+                disabled={uploadsLoading}
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
 
             <div className="uploads-field">
               <label htmlFor="uploads-sort" className="uploads-label">
@@ -603,7 +756,7 @@ export default function UploadsPage() {
                 className="uploads-input uploads-sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                disabled={uploadsLoading || deletingId != null}
+                disabled={uploadsLoading || isDeleting}
               >
                 <option value="newest">
                   {t("uploadsPage.sortNewest", {
@@ -645,6 +798,42 @@ export default function UploadsPage() {
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className="uploads-selection-bar">
+              <div className="uploads-selection-text">
+                {t("uploadsPage.selectedUploads", {
+                  count: selectedCount,
+                  defaultValue: `${selectedCount} selected`,
+                })}
+              </div>
+
+              <div className="uploads-selection-actions">
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  onClick={clearSelection}
+                  disabled={isDeleting}
+                >
+                  {t("uploadsPage.clearSelection", {
+                    defaultValue: "Clear selection",
+                  })}
+                </button>
+
+                <button
+                  type="button"
+                  className="ghost-btn danger"
+                  onClick={requestBulkDelete}
+                  disabled={isDeleting}
+                >
+                  {t("uploadsPage.deleteSelected", {
+                    count: selectedCount,
+                    defaultValue: `Delete selected (${selectedCount})`,
+                  })}
+                </button>
+              </div>
+            </div>
+          )}
+
           <UploadsList
             uploads={visibleUploads}
             loading={uploadsLoading}
@@ -660,20 +849,24 @@ export default function UploadsPage() {
             onReview={(id) => navigate(`/app/data-upload/review/${id}`)}
             onClearLocal={clearLocalForBatch}
             onDelete={requestDelete}
-            deletingId={deletingId}
+            deletingIds={deletingIds}
+            selectedIds={selectedBatchIdSet}
+            onToggleSelect={toggleSelectUpload}
+            onToggleSelectVisible={toggleSelectVisible}
+            selectionDisabled={isDeleting}
           />
         </div>
       </Card>
 
       <ConfirmDialog
         open={confirmOpen}
-        title={t("uploadsPage.deleteDialogTitle")}
+        title={confirmTitle}
         message={confirmMsg}
         cancelText={t("uploadsPage.deleteDialogCancel")}
-        confirmText={t("uploadsPage.deleteDialogConfirm")}
-        busy={deletingId != null}
+        confirmText={confirmText}
+        busy={isDeleting}
         onCancel={() => {
-          if (deletingId != null) return;
+          if (isDeleting) return;
           closeConfirm();
         }}
         onConfirm={confirmDelete}

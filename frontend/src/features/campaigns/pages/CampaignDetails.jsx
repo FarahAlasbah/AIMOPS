@@ -14,7 +14,11 @@ import {
   formatPercent,
   normalizeCampaignResponse,
 } from "../utils";
-import { CampaignStatusBadge, ConfirmActionModal } from "../components";
+import {
+  CampaignInsights,
+  CampaignStatusBadge,
+  ConfirmActionModal,
+} from "../components";
 import "./CampaignDetails.css";
 
 const CampaignDetails = () => {
@@ -215,6 +219,7 @@ const CampaignDetails = () => {
               </div>
             </div>
           </Card>
+<CampaignInsights result={campaign} />
 
           <div className="campaign-details-grid">
             <Card>

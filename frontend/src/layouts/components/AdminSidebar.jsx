@@ -42,8 +42,7 @@ const AdminSidebar = ({ isOpen }) => {
   { key: "consultation", path: "/app/consultation", icon: MessageSquare, perm: "dashboard.view" },
   { key: "events", path: "/app/events", icon: CalendarDays, perm: "events.view" },
   { key: "calendar", path: "/app/calendar", icon: Calendar, perm: "calendar.view" },
-  { key: "reports", path: "/app/reports", icon: FileText, perm: "reports.view" },
-  { key: "userManagement", path: "/app/user-management", icon: Users, perm: "users.view" },
+{ key: "reports", path: "/app/reports", icon: FileText, perm: "dashboard.view" },  { key: "userManagement", path: "/app/user-management", icon: Users, perm: "users.view" },
 ].filter((item) => hasPermission(item.perm));
 
   return (
