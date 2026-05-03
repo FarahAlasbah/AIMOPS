@@ -2,39 +2,106 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Button, Card, PageHeader, InfoMessage } from "../../../shared/components";
+import {
+  Button,
+  Card,
+  PageHeader,
+  InfoMessage,
+} from "../../../shared/components";
 import { getEvents } from "../../../api/events";
+import { getCampaignCalendar } from "../../../api/campaigns";
 import CalendarMonth from "../components/CalendarMonth";
 import { startOfMonth, addMonths, monthLabel } from "../utils/eventUtils";
 import { CalendarSkeleton } from "../components/Skeletons";
 import "./Calendar.css";
 
-const toYm = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
+const getYearOptions = (selectedYear) => {
+  const currentYear = new Date().getFullYear();
+  const minYear = Math.min(currentYear, selectedYear) - 4;
+  const maxYear = Math.max(currentYear, selectedYear) + 6;
+
+  return Array.from(
+    { length: maxYear - minYear + 1 },
+    (_, index) => minYear + index
+  );
 };
 
-const parseYm = (s) => {
-  const v = String(s || "").trim();
-  const m = v.match(/^(\d{4})-(\d{2})$/);
-  if (!m) return null;
-  const yy = Number(m[1]);
-  const mm = Number(m[2]);
-  if (Number.isNaN(yy) || Number.isNaN(mm)) return null;
-  if (mm < 1 || mm > 12) return null;
-  return new Date(yy, mm - 1, 1);
+const toDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const getCalendarRange = (date) => {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+  // small buffer so campaigns/events crossing month edges still load
+  start.setDate(start.getDate() - 7);
+  end.setDate(end.getDate() + 7);
+
+  return {
+    startDate: toDateKey(start),
+    endDate: toDateKey(end),
+  };
+};
+
+const normalizeCampaignAsCalendarEvent = (campaign) => {
+  const campaignId = campaign?.campaign_id ?? campaign?.id;
+
+  return {
+    ...campaign,
+
+    // Make campaign look like an event for CalendarMonth
+    event_id: `campaign-${campaignId}`,
+    event_name: campaign?.campaign_name || campaign?.name || "Campaign",
+    title: campaign?.campaign_name || campaign?.name || "Campaign",
+
+    start_date: campaign?.start_date,
+    end_date: campaign?.end_date,
+
+    // Helpful flags
+    calendar_type: "campaign",
+    source: "campaign",
+    campaign_id: campaignId,
+
+    // Avoid draft/detected event filtering
+    status: campaign?.status || "active",
+  };
 };
 
 export default function CalendarPage() {
-  const { t } = useTranslation("events");
+  const { t, i18n } = useTranslation("events");
   const navigate = useNavigate();
+
   const [anchor, setAnchor] = useState(() => startOfMonth(new Date()));
-  const [jumpYm, setJumpYm] = useState(() => toYm(startOfMonth(new Date())));
+  const [jumpMonth, setJumpMonth] = useState(() => new Date().getMonth());
+  const [jumpYear, setJumpYear] = useState(() => new Date().getFullYear());
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [events, setEvents] = useState([]);
+
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, index) => {
+      const date = new Date(2026, index, 1);
+
+      return {
+        value: index,
+        label: date.toLocaleDateString(locale === "ar" ? "ar" : "en", {
+          month: "long",
+        }),
+      };
+    });
+  }, [locale]);
+
+  const yearOptions = useMemo(() => {
+    return getYearOptions(jumpYear);
+  }, [jumpYear]);
 
   useEffect(() => {
     let alive = true;
@@ -42,17 +109,47 @@ export default function CalendarPage() {
     async function load() {
       setLoading(true);
       setError("");
+
       try {
-        const data = await getEvents({ upcoming: false });
+        const { startDate, endDate } = getCalendarRange(anchor);
+
+        const [eventsResult, campaignsResult] = await Promise.allSettled([
+          getEvents({ upcoming: false }),
+          getCampaignCalendar({ startDate, endDate }),
+        ]);
+
         if (!alive) return;
 
-        const allEvents = Array.isArray(data?.events) ? data.events : [];
-        const readyEvents = allEvents.filter((event) => {
-          const status = String(event?.status || "").toLowerCase();
-          return status !== "detected" && status !== "draft";
-        });
+        let nextEvents = [];
+        let nextCampaigns = [];
 
-        setEvents(readyEvents);
+        if (eventsResult.status === "fulfilled") {
+          const allEvents = Array.isArray(eventsResult.value?.events)
+            ? eventsResult.value.events
+            : [];
+
+          nextEvents = allEvents.filter((event) => {
+            const status = String(event?.status || "").toLowerCase();
+            return status !== "detected" && status !== "draft";
+          });
+        }
+
+        if (campaignsResult.status === "fulfilled") {
+          const campaigns = Array.isArray(campaignsResult.value?.campaigns)
+            ? campaignsResult.value.campaigns
+            : [];
+
+          nextCampaigns = campaigns.map(normalizeCampaignAsCalendarEvent);
+        }
+
+        setEvents([...nextEvents, ...nextCampaigns]);
+
+        if (
+          eventsResult.status === "rejected" &&
+          campaignsResult.status === "rejected"
+        ) {
+          setError(t("calendarPage.errorLoadFailed"));
+        }
       } catch (e) {
         if (!alive) return;
         setEvents([]);
@@ -63,19 +160,34 @@ export default function CalendarPage() {
     }
 
     load();
-    return () => { alive = false; };
-  }, [t]);
+
+    return () => {
+      alive = false;
+    };
+  }, [anchor, t]);
 
   useEffect(() => {
-    setJumpYm(toYm(anchor));
+    setJumpMonth(anchor.getMonth());
+    setJumpYear(anchor.getFullYear());
   }, [anchor]);
 
   const title = useMemo(() => monthLabel(anchor), [anchor]);
 
   const applyJump = () => {
-    const d = parseYm(jumpYm);
-    if (!d) return;
-    setAnchor(startOfMonth(d));
+    const nextDate = new Date(Number(jumpYear), Number(jumpMonth), 1);
+    setAnchor(startOfMonth(nextDate));
+  };
+
+  const handleOpenCalendarItem = (id) => {
+    const value = String(id || "");
+
+    if (value.startsWith("campaign-")) {
+      const campaignId = value.replace("campaign-", "");
+      navigate(`/app/campaigns/${campaignId}`);
+      return;
+    }
+
+    navigate(`/app/events/${value}`);
   };
 
   return (
@@ -85,32 +197,69 @@ export default function CalendarPage() {
         subtitle={t("calendarPage.subtitle")}
         actions={
           <div className="calendar-actions">
-            <Button type="button" variant="secondary" onClick={() => navigate("/app/events")}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate("/app/events")}
+            >
               {t("calendarPage.btnEventsList")}
             </Button>
 
-            <Button type="button" variant="secondary" onClick={() => setAnchor(startOfMonth(new Date()))}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setAnchor(startOfMonth(new Date()))}
+            >
               {t("calendarPage.btnToday")}
             </Button>
 
-            <Button type="button" variant="secondary" onClick={() => setAnchor((d) => addMonths(d, -1))}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setAnchor((date) => addMonths(date, -1))}
+            >
               {t("calendarPage.btnPrev")}
             </Button>
 
-            <Button type="button" variant="secondary" onClick={() => setAnchor((d) => addMonths(d, 1))}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setAnchor((date) => addMonths(date, 1))}
+            >
               {t("calendarPage.btnNext")}
             </Button>
 
             <div className="calendar-jump">
-              <span className="calendar-jump-label">{t("calendarPage.jumpLabel")}</span>
-              <input
-                className="calendar-jump-input"
-                type="month"
-                value={jumpYm}
-                onChange={(e) => setJumpYm(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") applyJump(); }}
+              <span className="calendar-jump-label">
+                {t("calendarPage.jumpLabel")}
+              </span>
+
+              <select
+                className="calendar-jump-select"
+                value={jumpMonth}
+                onChange={(e) => setJumpMonth(Number(e.target.value))}
                 aria-label={t("calendarPage.jumpAriaLabel")}
-              />
+              >
+                {monthOptions.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="calendar-jump-select calendar-jump-year"
+                value={jumpYear}
+                onChange={(e) => setJumpYear(Number(e.target.value))}
+                aria-label="Year"
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+
               <Button type="button" variant="secondary" onClick={applyJump}>
                 {t("calendarPage.btnGo")}
               </Button>
@@ -119,7 +268,7 @@ export default function CalendarPage() {
         }
       />
 
-      {error && <InfoMessage type="error">{error}</InfoMessage>}
+      {error ? <InfoMessage type="error">{error}</InfoMessage> : null}
 
       <Card title={title} subtitle={t("calendarPage.cardSubtitle")}>
         {loading ? (
@@ -128,7 +277,7 @@ export default function CalendarPage() {
           <CalendarMonth
             monthDate={anchor}
             events={events}
-            onOpenEvent={(id) => navigate(`/app/events/${id}`)}
+            onOpenEvent={handleOpenCalendarItem}
           />
         )}
       </Card>

@@ -54,8 +54,40 @@ export const normalizeProductsResponse = (response) => {
 };
 
 export const normalizeCampaignResponse = (response) => {
-  if (response?.campaign) return response.campaign;
-  return response;
+  if (!response) return null;
+
+  const campaign =
+    response?.campaign && typeof response.campaign === "object"
+      ? response.campaign
+      : response;
+
+  const insightSource =
+    response?.insights ||
+    response?.analysis ||
+    response?.result ||
+    {};
+
+  return {
+    ...campaign,
+
+    date_suggestions:
+      campaign.date_suggestions ??
+      response?.date_suggestions ??
+      insightSource?.date_suggestions ??
+      [],
+
+    forecast_impact:
+      campaign.forecast_impact ??
+      response?.forecast_impact ??
+      insightSource?.forecast_impact ??
+      null,
+
+    consultation:
+      campaign.consultation ??
+      response?.consultation ??
+      insightSource?.consultation ??
+      null,
+  };
 };
 
 export const buildCampaignPayload = ({ formData, selectedProducts }) => {

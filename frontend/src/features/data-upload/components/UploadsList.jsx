@@ -1,7 +1,36 @@
 // frontend/src/features/data-upload/components/UploadsList.jsx
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import UploadRow from "./UploadCard";
+
+function SelectAllCheckbox({
+  checked,
+  indeterminate,
+  disabled,
+  onChange,
+  label,
+}) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = !!indeterminate && !checked;
+    }
+  }, [checked, indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      className="ul-checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={(e) => onChange?.(e.target.checked)}
+      aria-label={label}
+    />
+  );
+}
+
 export default function UploadsList({
   uploads,
   loading,
@@ -18,6 +47,11 @@ export default function UploadsList({
   onClearLocal,
   onDelete,
   deletingId,
+  deletingIds,
+  selectedIds = [],
+  onToggleSelect,
+  onToggleSelectVisible,
+  selectionDisabled = false,
 }) {
   const { t } = useTranslation("upload");
 
@@ -31,6 +65,39 @@ export default function UploadsList({
       onPrev?.();
     }
   }, [loading, uploads, offset, onPrev]);
+
+  const selectedSet = useMemo(() => {
+    if (selectedIds instanceof Set) return selectedIds;
+    return new Set((Array.isArray(selectedIds) ? selectedIds : []).map(String));
+  }, [selectedIds]);
+
+  const deletingSet = useMemo(() => {
+    if (deletingIds instanceof Set) return deletingIds;
+    return new Set();
+  }, [deletingIds]);
+
+  const visibleIds = useMemo(
+    () =>
+      (Array.isArray(uploads) ? uploads : [])
+        .map((u) => String(u?.batchId ?? "").trim())
+        .filter(Boolean),
+    [uploads],
+  );
+
+  const selectedVisibleCount = visibleIds.filter((id) =>
+    selectedSet.has(id),
+  ).length;
+
+  const allVisibleSelected =
+    visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+
+  const someVisibleSelected =
+    selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+
+  const isDeletingUpload = (id) => {
+    const sid = String(id ?? "");
+    return deletingSet.has(sid) || String(deletingId ?? "") === sid;
+  };
 
   if (loading) {
     return <UploadsGridSkeleton />;
@@ -46,29 +113,48 @@ export default function UploadsList({
     );
   }
 
-  const page = Math.floor(offset / limit) + 1;
   const from = totalCount > 0 ? offset + 1 : 0;
   const to = offset + uploads.length;
 
   return (
     <>
-    <div className="ul-header">
-  <div>{t("uploadsList.fileName", { defaultValue: "File name" })}</div>
-  <div>{t("uploadsList.status", { defaultValue: "Status" })}</div>
-  <div></div>
-</div>
-      <div className="ul-list">
-        {uploads.map((u) => (
-          <UploadRow
-            key={u.batchId}
-            upload={u}
-            hasLocalMapping={hasLocalMapping(u.batchId)}
-            onOpenMapping={onOpenMapping}
-            onReview={onReview}
-            onDelete={onDelete}
-            deleting={String(deletingId) === String(u.batchId)}
-          />
-        ))}
+      <div className="ul-table">
+        <div className="ul-header">
+          <div className="ul-select-cell">
+            <SelectAllCheckbox
+              checked={allVisibleSelected}
+              indeterminate={someVisibleSelected}
+              disabled={selectionDisabled || visibleIds.length === 0}
+              onChange={onToggleSelectVisible}
+              label={t("uploadsList.selectVisible", {
+                defaultValue: "Select visible uploads",
+              })}
+            />
+          </div>
+
+          <div>{t("uploadsList.fileName", { defaultValue: "File name" })}</div>
+          <div>{t("uploadsList.status", { defaultValue: "Status" })}</div>
+          <div></div>
+        </div>
+
+        <div className="ul-list">
+          {uploads.map((u) => (
+            <UploadRow
+              key={u.batchId}
+              upload={u}
+              hasLocalMapping={hasLocalMapping(u.batchId)}
+              hasCachedAnalysis={hasCachedAnalysis?.(u.batchId)}
+              onOpenMapping={onOpenMapping}
+              onReview={onReview}
+              onClearLocal={onClearLocal}
+              onDelete={onDelete}
+              deleting={isDeletingUpload(u.batchId)}
+              selected={selectedSet.has(String(u.batchId))}
+              onSelectChange={onToggleSelect}
+              selectionDisabled={selectionDisabled}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="ul-pager">
@@ -80,15 +166,23 @@ export default function UploadsList({
             defaultValue: `Showing ${from}–${to} of ${totalCount}`,
           })}
         </span>
+
         <div className="ul-pager-btns">
           <button
+            type="button"
             className="ul-pager-btn"
             onClick={onPrev}
             disabled={offset === 0}
           >
             {t("uploadsList.prev")}
           </button>
-          <button className="ul-pager-btn" onClick={onNext} disabled={!hasNext}>
+
+          <button
+            type="button"
+            className="ul-pager-btn"
+            onClick={onNext}
+            disabled={!hasNext}
+          >
             {t("uploadsList.next")}
           </button>
         </div>
@@ -98,40 +192,14 @@ export default function UploadsList({
 }
 
 /* ── Skeleton ── */
-function CardSkeleton() {
-  return (
-    <div className="uc-card uc-card--skeleton">
-      <div className="uc-top">
-        <div className="sk sk-icon" />
-        <div className="uc-identity">
-          <div className="sk sk-line" style={{ width: "65%", height: 13 }} />
-          <div
-            className="sk sk-line"
-            style={{ width: "40%", height: 11, marginTop: 5 }}
-          />
-        </div>
-      </div>
-      <div className="uc-mid">
-        <div className="sk sk-pill" style={{ width: 80, height: 22 }} />
-        <div style={{ display: "flex", gap: 16 }}>
-          <div className="sk sk-line" style={{ width: 48, height: 13 }} />
-          <div className="sk sk-line" style={{ width: 48, height: 13 }} />
-        </div>
-      </div>
-      <div className="uc-actions">
-        <div className="sk sk-btn" style={{ width: 90, height: 30 }} />
-        <div className="sk sk-btn" style={{ width: 72, height: 30 }} />
-      </div>
-    </div>
-  );
-}
-
 function UploadsGridSkeleton({ count = 6 }) {
   return (
-    <div className="ul-list">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="ul-row ul-row--skeleton" />
-      ))}
+    <div className="ul-table">
+      <div className="ul-list">
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="ul-row ul-row--skeleton" />
+        ))}
+      </div>
     </div>
   );
 }

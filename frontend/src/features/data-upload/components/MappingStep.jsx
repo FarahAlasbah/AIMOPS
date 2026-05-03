@@ -379,8 +379,15 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
   );
 }
 
-function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled }) {
+function SuggestedSkipCard({
+  suggestedSkip,
+  columnMap,
+  onToggleInclude,
+  onSetRole,
+  disabled,
+}) {
   const { t } = useTranslation("upload");
+  const [pendingMap, setPendingMap] = useState({});
 
   if (!Array.isArray(suggestedSkip) || suggestedSkip.length === 0) return null;
 
@@ -391,6 +398,9 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
 
       {suggestedSkip.map((c) => {
         const current = columnMap?.[c.index] || {};
+        const isIncluded = !!current.include;
+        const currentRole = normalizeRole(current.role || "skip");
+
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
             <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
@@ -401,7 +411,7 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
               </div>
             )}
 
-            <div className="mapping-row" style={{ marginTop: 10 }}>
+            <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
               <Button
                 type="button"
                 variant="secondary"
@@ -409,14 +419,35 @@ function SuggestedSkipCard({ suggestedSkip, columnMap, onToggleInclude, disabled
                 disabled={!!disabled}
                 title={disabled ? t("mapping.lockedBatch") : ""}
               >
-                {current.include
+                {isIncluded
                   ? t("mapping.suggestedSkip.included")
                   : t("mapping.suggestedSkip.skipped")}
               </Button>
 
-              <div style={{ fontSize: 13, color: "var(--c-text-muted)" }}>
-                {t("mapping.suggestedSkip.currentRole")} {roleLabel(current.role || "skip")}
-              </div>
+              {!isIncluded && (
+                <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 10 }}>
+                  {t("mapping.suggestedSkip.currentRole")} {roleLabel("skip")}
+                </div>
+              )}
+
+              {isIncluded && (
+                <div style={{ flex: "1 1 auto", minWidth: 260 }}>
+                  <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 8 }}>
+                    {t("mapping.suggestedSkip.currentRole")}{" "}
+                    {currentRole === "skip" ? "Choose a role" : roleLabel(currentRole)}
+                  </div>
+
+                  <RolePickerWithConfirm
+                    colIndex={c.index}
+                    value={currentRole}
+                    suggested="skip"
+                    pendingMap={pendingMap}
+                    setPendingMap={setPendingMap}
+                    onCommitRole={(idx, role) => onSetRole(idx, role)}
+                    disabled={disabled}
+                  />
+                </div>
+              )}
             </div>
 
             <ColumnMeta column={c} />
@@ -497,11 +528,12 @@ export default function MappingStep({
         />
 
         <SuggestedSkipCard
-          suggestedSkip={suggestedSkip}
-          columnMap={columnMap}
-          onToggleInclude={onToggleInclude}
-          disabled={alreadyConfirmed}
-        />
+  suggestedSkip={suggestedSkip}
+  columnMap={columnMap}
+  onToggleInclude={onToggleInclude}
+  onSetRole={onSetRole}
+  disabled={alreadyConfirmed}
+/>
       </div>
 
       <FormActions>
