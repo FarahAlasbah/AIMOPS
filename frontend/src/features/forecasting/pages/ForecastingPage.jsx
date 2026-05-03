@@ -116,7 +116,6 @@ export default function ForecastingPage() {
 
   const [products, setProducts] = useState([]);
   const [statusMap, setStatusMap] = useState({});
-  const [summary, setSummary] = useState(null);
 
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("all");
@@ -126,36 +125,67 @@ export default function ForecastingPage() {
 
   const [rowBusy, setRowBusy] = useState({});
 
-  const loadData = useCallback(async () => {
-    setErr("");
-    try {
-      const [productsRes, statusRes] = await Promise.all([
-        getProducts(),
-        getForecastStatuses().catch(() => null),
-      ]);
+  
+const loadData = useCallback(async () => {
+  setErr("");
 
-      const list = Array.isArray(productsRes?.products) ? productsRes.products : [];
-      setProducts(list);
+  try {
+    const [productsRes, statusRes] = await Promise.all([
+      getProducts(),
+      getForecastStatuses().catch(() => null),
+    ]);
 
-      if (statusRes) {
-        const models = Array.isArray(statusRes?.models) ? statusRes.models : [];
-        const nextMap = {};
-        for (const model of models) {
-          if (model?.product_id == null) continue;
-          nextMap[model.product_id] = {
-            ...model,
-            status: normalizeStatus(model?.status),
-          };
-        }
-        setStatusMap(nextMap);
-        setSummary(statusRes?.summary || null);
+    const list = Array.isArray(productsRes?.products)
+      ? productsRes.products
+      : Array.isArray(productsRes)
+      ? productsRes
+      : [];
+
+    setProducts(list);
+
+    const existingProductIds = new Set(
+      list
+        .map((product) => Number(product?.product_id ?? product?.id))
+        .filter((id) => Number.isFinite(id))
+    );
+
+    if (statusRes) {
+      const models = Array.isArray(statusRes?.models)
+        ? statusRes.models
+        : Array.isArray(statusRes?.products)
+        ? statusRes.products
+        : Array.isArray(statusRes)
+        ? statusRes
+        : [];
+
+      const nextMap = {};
+
+      for (const model of models) {
+        const productId = Number(model?.product_id);
+
+        if (!Number.isFinite(productId)) continue;
+
+        // Important:
+        // Ignore forecast statuses for products that were deleted.
+        if (!existingProductIds.has(productId)) continue;
+
+        nextMap[productId] = {
+          ...model,
+          status: normalizeStatus(model?.status || model?.forecast_status),
+        };
       }
-    } catch (e) {
-      setErr(e?.message || t("messages.loadFailed"));
-    } finally {
-      setLoading(false);
+
+      setStatusMap(nextMap);
+    } else {
+      setStatusMap({});
     }
-  }, [t]);
+  } catch (e) {
+    setErr(e?.message || t("messages.loadFailed"));
+  } finally {
+    setLoading(false);
+  }
+}, [t]);
+
 
   useEffect(() => {
     loadData();
@@ -166,6 +196,25 @@ export default function ForecastingPage() {
     return () => window.clearInterval(id);
   }, [loadData]);
 
+
+  const summary = useMemo(() => {
+  const nextSummary = {
+    total_products: products.length,
+    ready: 0,
+    training: 0,
+    failed: 0,
+    idle: 0,
+  };
+
+  for (const product of products) {
+    const productId = Number(product?.product_id ?? product?.id);
+    const status = normalizeStatus(statusMap?.[productId]?.status);
+
+    nextSummary[status] += 1;
+  }
+
+  return nextSummary;
+}, [products, statusMap]);
   const categories = useMemo(() => {
     const set = new Set();
     for (const p of products) {

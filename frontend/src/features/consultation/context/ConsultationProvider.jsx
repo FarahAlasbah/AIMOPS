@@ -131,11 +131,16 @@ function getConsultationErrorMessage(error, t) {
   const sendMessage = useCallback(
   async (rawMessage) => {
     const message = String(rawMessage || "").trim();
-    if (!message || isSending) return false;
 
+    if (!message || sendingRef.current) return false;
+
+    sendingRef.current = true;
     setIsSending(true);
     setHistoryError("");
     setNotice(null);
+
+    // Clear the input immediately after sending
+    setDraft("");
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -187,10 +192,11 @@ function getConsultationErrorMessage(error, t) {
 
       return false;
     } finally {
+      sendingRef.current = false;
       setIsSending(false);
     }
   },
-  [isSending, t]
+  [t]
 );
 const deleteSummary = useCallback(
   async (summaryId) => {

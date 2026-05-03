@@ -687,3 +687,424 @@
 .drafts-sk-mid   { width: 60%; }
 .drafts-sk-short { width: 50%; height: 20px; border-radius: 999px; }
 .drafts-sk-btn   { width: 70%; height: 28px; border-radius: 8px; }
+
+/* ============================================================
+   Detected Events select + dismiss feature
+   Put this at the END of Events.css
+   ============================================================ */
+
+.drafts-selection-bar {
+  margin-bottom: 14px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 14px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.drafts-selection-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.drafts-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.drafts-secondary-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drafts-secondary-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.drafts-dismiss-selected-btn {
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.drafts-dismiss-selected-btn:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.drafts-secondary-btn:disabled,
+.drafts-dismiss-selected-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Make detected table support checkbox column */
+.drafts-table {
+  min-width: 720px;
+}
+
+.drafts-table th,
+.drafts-table td {
+  vertical-align: middle;
+}
+
+.drafts-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #03045e;
+}
+
+.drafts-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.drafts-row {
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.drafts-row-selected td {
+  background: #eff6ff;
+}
+
+.drafts-row-busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.drafts-review-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Updated skeleton with checkbox column */
+.drafts-sk-row {
+  grid-template-columns: 34px 2fr 1.6fr 1fr 1fr 0.9fr;
+}
+
+.drafts-sk-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* Better tab labels when using confirmed/detected tabs */
+.ev-tab {
+  user-select: none;
+}
+
+.ev-tabs-right {
+  margin-left: auto;
+  padding-bottom: 8px;
+}
+
+@media (max-width: 760px) {
+  .drafts-selection-bar {
+    align-items: stretch;
+  }
+
+  .drafts-selection-actions {
+    width: 100%;
+  }
+
+  .drafts-secondary-btn,
+  .drafts-dismiss-selected-btn {
+    flex: 1;
+  }
+
+  .ev-tabs {
+    flex-wrap: wrap;
+  }
+
+  .ev-tabs-right {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* ============================================================
+   Confirmed Events select + delete feature
+   Put this at the END of Events.css
+   ============================================================ */
+
+.confirmed-selection-bar {
+  margin-bottom: 14px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 14px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.confirmed-selection-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+.confirmed-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.confirmed-secondary-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmed-secondary-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.confirmed-delete-selected-btn {
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.confirmed-delete-selected-btn:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.confirmed-secondary-btn:disabled,
+.confirmed-delete-selected-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Confirmed table checkbox/delete styles */
+.events-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #03045e;
+}
+
+.events-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.events-row-selected td {
+  background: #eff6ff;
+}
+
+.events-row-busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.events-delete-btn {
+  border: 1px solid #fecaca;
+  background: #ffffff;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.events-delete-btn:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.events-delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .confirmed-selection-bar {
+    align-items: stretch;
+  }
+
+  .confirmed-selection-actions {
+    width: 100%;
+  }
+
+  .confirmed-secondary-btn,
+  .confirmed-delete-selected-btn {
+    flex: 1;
+  }
+}
+
+/* ============================================================
+   Custom confirmation modal
+   Replaces browser window.confirm popup
+   ============================================================ */
+
+.ev-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: ev-confirm-fade 0.16s ease;
+}
+
+.ev-confirm-modal {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.22),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  text-align: center;
+  animation: ev-confirm-pop 0.18s ease;
+}
+
+.ev-confirm-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 14px auto;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.ev-confirm-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.ev-confirm-message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.ev-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.ev-confirm-cancel-btn,
+.ev-confirm-primary-btn {
+  min-width: 110px;
+  height: 40px;
+  border-radius: 11px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.ev-confirm-cancel-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.ev-confirm-cancel-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.ev-confirm-primary-btn {
+  border: 1px solid #03045e;
+  background: #03045e;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(3, 4, 94, 0.18);
+}
+
+.ev-confirm-primary-btn:hover {
+  background: #080a8a;
+  border-color: #080a8a;
+  transform: translateY(-1px);
+}
+
+@keyframes ev-confirm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ev-confirm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .ev-confirm-modal {
+    padding: 20px;
+  }
+
+  .ev-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .ev-confirm-cancel-btn,
+  .ev-confirm-primary-btn {
+    width: 100%;
+  }
+}

@@ -26,7 +26,7 @@ import ConsultationPage from "./features/consultation/pages/ConsultationPage";
 import BusinessProfilePage from "./features/business-profile/pages/BusinessProfilePage";
 import { BusinessProfileProvider } from "./features/business-profile/context/BusinessProfileContext";
 import { applyTheme } from "./shared/theme/themeToCssVars";
-
+import ReportsPage from "./features/reports/pages/ReportsPage";
 const RTL_LANGS = new Set(["ar"]);
 
 function useDirection() {
@@ -218,6 +218,14 @@ function App() {
                 </RequirePermission>
               }
             />
+            <Route
+  path="reports"
+  element={
+    <RequirePermission anyOf={["dashboard.view"]}>
+      <ReportsPage />
+    </RequirePermission>
+  }
+/>
 
             <Route
               path="user-management"

@@ -47,7 +47,7 @@ const readExplanationCache = (productId) => {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : null;
+    return normalizeExplanationResponse(parsed);
   } catch {
     return null;
   }
@@ -55,9 +55,17 @@ const readExplanationCache = (productId) => {
 
 const writeExplanationCache = (productId, value) => {
   try {
+    const normalized = normalizeExplanationResponse(value);
+
+    if (!normalized?.explanation) return;
+
     localStorage.setItem(
       getExplanationCacheKey(productId),
-      JSON.stringify(value ?? null),
+      JSON.stringify({
+        ...normalized,
+        cached: true,
+        saved_at: new Date().toISOString(),
+      }),
     );
   } catch {
     // ignore storage errors
@@ -86,7 +94,91 @@ const isLikelyNoDataMessage = (value) => {
   const text = String(value || "").toLowerCase();
   return NO_DATA_HINTS.some((token) => text.includes(token));
 };
+const getApiStatus = (error) => error?.response?.status;
 
+const extractApiMessage = (error, fallback) => {
+  const data = error?.response?.data;
+
+  if (typeof data?.detail === "string") return data.detail;
+
+  if (data?.detail && typeof data.detail === "object") {
+    if (typeof data.detail.message === "string") return data.detail.message;
+
+    try {
+      return JSON.stringify(data.detail);
+    } catch {
+      return fallback;
+    }
+  }
+
+  if (typeof data?.message === "string") return data.message;
+  if (typeof error?.message === "string") return error.message;
+
+  return fallback;
+};
+const stripCodeFence = (value) => {
+  const text = String(value ?? "").trim();
+
+  return text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+};
+
+const tryParseJsonString = (value) => {
+  if (typeof value !== "string") return null;
+
+  const cleaned = stripCodeFence(value);
+
+  if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeExplanationResponse = (raw) => {
+  if (!raw) return null;
+
+  const base =
+    typeof raw === "string"
+      ? { explanation: raw }
+      : raw && typeof raw === "object"
+      ? { ...raw }
+      : null;
+
+  if (!base) return null;
+
+  const parsedFromExplanation = tryParseJsonString(base.explanation);
+
+  if (parsedFromExplanation && typeof parsedFromExplanation === "object") {
+    return {
+      ...base,
+      ...parsedFromExplanation,
+      explanation: String(parsedFromExplanation.explanation || "").trim(),
+      key_drivers: Array.isArray(parsedFromExplanation.key_drivers)
+        ? parsedFromExplanation.key_drivers
+        : Array.isArray(base.key_drivers)
+        ? base.key_drivers
+        : [],
+      generated_at: base.generated_at || parsedFromExplanation.generated_at || new Date().toISOString(),
+      cached: base.cached ?? parsedFromExplanation.cached ?? false,
+    };
+  }
+
+  return {
+    ...base,
+    explanation: stripCodeFence(base.explanation),
+    key_drivers: Array.isArray(base.key_drivers) ? base.key_drivers : [],
+    generated_at: base.generated_at || new Date().toISOString(),
+    cached: base.cached ?? false,
+  };
+};
 const toLocalDateKey = (value = new Date()) => {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "";
@@ -251,9 +343,10 @@ export default function ForecastDetailsPage() {
   const [status, setStatus] = useState(null);
   const [statusErr, setStatusErr] = useState("");
 
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [forecast, setForecast] = useState(null);
-  const [detailsErr, setDetailsErr] = useState("");
+const [detailsLoading, setDetailsLoading] = useState(false);
+const [forecast, setForecast] = useState(null);
+const [detailsErr, setDetailsErr] = useState("");
+const [detailsWarn, setDetailsWarn] = useState("");
 
   const [actionBusy, setActionBusy] = useState(false);
   const [info, setInfo] = useState(null);
@@ -283,47 +376,63 @@ export default function ForecastDetailsPage() {
   }, [productId, t]);
 
   const loadForecast = useCallback(async () => {
-    setDetailsLoading(true);
-    setDetailsErr("");
+  setDetailsLoading(true);
+  setDetailsErr("");
+  setDetailsWarn("");
 
-    try {
-      const res = await getProductForecast(productId, {
-        days: MAX_FORECAST_DAYS,
-      });
-      setForecast(res);
-      return res;
-    } catch (e) {
-      setForecast(null);
-      setDetailsErr(e?.message || t("messages.detailsFailed"));
+  try {
+    const res = await getProductForecast(productId, {
+      days: MAX_FORECAST_DAYS,
+    });
+
+    setForecast(res);
+    return res;
+  } catch (e) {
+    setForecast(null);
+
+    if (getApiStatus(e) === 404) {
+      setDetailsWarn(
+        t("messages.forecastNotFound", {
+          defaultValue:
+            "No forecast is available for this product yet. Generate a forecast first.",
+        }),
+      );
       return null;
-    } finally {
-      setDetailsLoading(false);
     }
-  }, [productId, t]);
+
+    setDetailsErr(extractApiMessage(e, t("messages.detailsFailed")));
+    return null;
+  } finally {
+    setDetailsLoading(false);
+  }
+}, [productId, t]);
 
   const loadExplanation = useCallback(async () => {
-    setExplanationLoading(true);
-    setExplanationErr("");
+  setExplanationLoading(true);
+  setExplanationErr("");
 
-    try {
-      const res = await getForecastExplanation(productId);
-      setExplanationData(res);
-      writeExplanationCache(productId, res);
-      return res;
-    } catch (e) {
-      setExplanationData(null);
+  try {
+    const res = await getForecastExplanation(productId);
+    const normalized = normalizeExplanationResponse(res);
 
-      const message =
-        e?.response?.data?.detail ||
-        e?.message ||
-        t("messages.explanationFailed");
+    setExplanationData(normalized);
+    writeExplanationCache(productId, normalized);
 
-      setExplanationErr(String(message));
-      return null;
-    } finally {
-      setExplanationLoading(false);
-    }
-  }, [productId, t]);
+    return normalized;
+  } catch (e) {
+    setExplanationData(null);
+
+    const message =
+      e?.response?.data?.detail ||
+      e?.message ||
+      t("messages.explanationFailed");
+
+    setExplanationErr(String(message));
+    return null;
+  } finally {
+    setExplanationLoading(false);
+  }
+}, [productId, t]);
 
   const handleExplainWithAi = async () => {
     setHasFetchedExplanation(true);
@@ -331,61 +440,81 @@ export default function ForecastDetailsPage() {
   };
 
   const handleReExplainWithAi = async () => {
-    setHasFetchedExplanation(true);
-    setExplanationLoading(true);
-    setExplanationErr("");
+  setHasFetchedExplanation(true);
+  setExplanationLoading(true);
+  setExplanationErr("");
 
-    try {
-      await deleteForecastExplanation(productId);
-      clearExplanationCache(productId);
+  try {
+    await deleteForecastExplanation(productId);
+    clearExplanationCache(productId);
 
-      const res = await getForecastExplanation(productId);
-      setExplanationData(res);
-      writeExplanationCache(productId, res);
-    } catch (e) {
-      const message =
-        e?.response?.data?.detail ||
-        e?.message ||
-        t("messages.explanationFailed");
+    const res = await getForecastExplanation(productId);
+    const normalized = normalizeExplanationResponse(res);
 
-      setExplanationErr(String(message));
-      setExplanationData(null);
-    } finally {
-      setExplanationLoading(false);
-    }
-  };
+    setExplanationData(normalized);
+    writeExplanationCache(productId, normalized);
+  } catch (e) {
+    const message =
+      e?.response?.data?.detail ||
+      e?.message ||
+      t("messages.explanationFailed");
+
+    setExplanationErr(String(message));
+    setExplanationData(null);
+  } finally {
+    setExplanationLoading(false);
+  }
+};
 
   useEffect(() => {
     loadStatus();
   }, [loadStatus]);
 
   useEffect(() => {
-    const cached = readExplanationCache(productId);
+  const cached = readExplanationCache(productId);
 
+  if (cached?.explanation) {
+    setExplanationData(cached);
+    setExplanationErr("");
+    setExplanationLoading(false);
+    setHasFetchedExplanation(true);
+    return;
+  }
+
+  setExplanationData(null);
+  setExplanationErr("");
+  setExplanationLoading(false);
+  setHasFetchedExplanation(false);
+}, [productId]);
+
+  useEffect(() => {
+  if (!status?.status) return;
+
+  if (status.status === "ready") {
+    loadForecast();
+
+    const cached = readExplanationCache(productId);
     if (cached?.explanation) {
       setExplanationData(cached);
       setExplanationErr("");
       setExplanationLoading(false);
       setHasFetchedExplanation(true);
-    } else {
-      setExplanationData(null);
-      setExplanationErr("");
-      setExplanationLoading(false);
-      setHasFetchedExplanation(false);
     }
-  }, [productId]);
 
-  useEffect(() => {
-    if (status?.status === "ready") {
-      loadForecast();
-    } else {
-      setForecast(null);
-      setExplanationData(null);
-      setExplanationErr("");
-      setExplanationLoading(false);
-      setHasFetchedExplanation(false);
-    }
-  }, [status?.status, loadForecast]);
+    return;
+  }
+
+  setForecast(null);
+  setDetailsErr("");
+  setDetailsWarn("");
+
+  if (status.status === "training" || status.status === "failed") {
+    setExplanationData(null);
+    setExplanationErr("");
+    setExplanationLoading(false);
+    setHasFetchedExplanation(false);
+  }
+}, [status?.status, loadForecast, productId]);
 
   useEffect(() => {
     if (status?.status !== "training") return;
@@ -429,6 +558,7 @@ export default function ForecastDetailsPage() {
     setInfo(null);
     setStatusErr("");
     setDetailsErr("");
+    setDetailsWarn("");
 
     try {
       const res = await generateForecast({
@@ -791,12 +921,17 @@ export default function ForecastDetailsPage() {
   }, [locale, t]);
 
   const explanationText = useMemo(() => {
-    if (!explanationData) return "";
-    return String(explanationData?.explanation || "").trim();
-  }, [explanationData]);
+  const normalized = normalizeExplanationResponse(explanationData);
+  return String(normalized?.explanation || "").trim();
+}, [explanationData]);
 
   const hasExplanation = Boolean(explanationText);
-
+const explanationDrivers = useMemo(() => {
+  const normalized = normalizeExplanationResponse(explanationData);
+  return Array.isArray(normalized?.key_drivers)
+    ? normalized.key_drivers.filter(Boolean)
+    : [];
+}, [explanationData]);
   const isExplanationStale = useMemo(() => {
     if (!hasExplanation) return false;
 
@@ -899,8 +1034,8 @@ export default function ForecastDetailsPage() {
       </Card>
 
       {statusErr ? <InfoMessage type="error">{statusErr}</InfoMessage> : null}
-      {detailsErr ? <InfoMessage type="error">{detailsErr}</InfoMessage> : null}
-      {info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
+{detailsErr ? <InfoMessage type="error">{detailsErr}</InfoMessage> : null}
+{info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
 
       {statusLoading ? (
         <ForecastDetailsSkeleton />
@@ -967,15 +1102,16 @@ export default function ForecastDetailsPage() {
         </Card>
       ) : detailsLoading && !forecast ? (
         <ForecastDetailsSkeleton />
-      ) : !forecast ? (
-        <Card>
-          <InfoMessage type={likelyNoData ? "warning" : "error"}>
-            {likelyNoData
-              ? t("messages.noDataDetected")
-              : t("messages.detailsFailed")}
-          </InfoMessage>
+     ) : !forecast ? (
+  <Card>
+    <InfoMessage type={detailsWarn || likelyNoData ? "warning" : "error"}>
+      {detailsWarn ||
+        (likelyNoData
+          ? t("messages.noDataDetected")
+          : t("messages.detailsFailed"))}
+    </InfoMessage>
 
-          <div className="forecast-state-actions">
+    <div className="forecast-state-actions">
             <Button
               type="button"
               variant="secondary"
@@ -1289,44 +1425,34 @@ export default function ForecastDetailsPage() {
               </div>
             ) : null}
 
-            {hasFetchedExplanation && hasExplanation ? (
-              <>
-                {isExplanationStale ? (
-                  <div
-                    style={{
-                      marginTop: 10,
-                      padding: "10px 12px",
-                      borderRadius: 12,
-                      border: "1px solid #fed7aa",
-                      background: "#fff7ed",
-                      color: "#9a3412",
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
-                    This explanation is older than the current forecast.
-                    Re-explain to refresh it.
-                  </div>
-                ) : null}
+           {hasFetchedExplanation && hasExplanation ? (
+  <div className="forecast-ai-body">
+    {isExplanationStale ? (
+      <div className="forecast-ai-stale">
+        This explanation is older than the current forecast. Re-explain to refresh it.
+      </div>
+    ) : null}
 
-                <div className="forecast-explanation-text">
-                  {explanationText}
-                </div>
-              </>
-            ) : null}
+    <div className="forecast-ai-summary">
+      {explanationText}
+    </div>
 
-            {hasFetchedExplanation &&
-            Array.isArray(explanationData?.key_drivers) &&
-            explanationData.key_drivers.length > 0 ? (
-              <>
-                <div className="forecast-drivers-title">Key Drivers</div>
-                <ul className="forecast-explanation-list">
-                  {explanationData.key_drivers.map((driver, index) => (
-                    <li key={`${driver}-${index}`}>{driver}</li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
+    {explanationDrivers.length > 0 ? (
+      <div className="forecast-ai-drivers-card">
+        <div className="forecast-drivers-title">Key Drivers</div>
+
+        <div className="forecast-ai-drivers">
+          {explanationDrivers.map((driver, index) => (
+            <div className="forecast-ai-driver" key={`${driver}-${index}`}>
+              <span className="forecast-ai-driver-dot" />
+              <span>{driver}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null}
+  </div>
+) : null}
 
             {hasFetchedExplanation && explanationData?.generated_at ? (
               <div className="forecast-note" style={{ marginTop: 10 }}>
