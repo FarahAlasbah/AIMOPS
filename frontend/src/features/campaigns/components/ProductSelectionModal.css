@@ -66,16 +66,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
-.product-selection-modal__field label {
+.product-selection-modal__field label,
+.product-selection-modal__field .form-label {
   font-size: 13px;
   font-weight: 600;
   color: #111827;
 }
 
-.product-selection-modal__field input,
-.product-selection-modal__field select {
+.product-selection-modal__field input {
   height: 46px;
   border: 1px solid #d1d5db;
   border-radius: 14px;
@@ -86,10 +87,18 @@
   outline: none;
 }
 
-.product-selection-modal__field input:focus,
-.product-selection-modal__field select:focus {
+.product-selection-modal__field input:focus {
   border-color: #03045e;
   box-shadow: 0 0 0 3px rgba(3, 4, 94, 0.08);
+}
+
+.product-selection-modal__field .form-group {
+  margin: 0;
+}
+
+.product-selection-modal__field .fs-trigger {
+  height: 46px;
+  border-radius: 14px;
 }
 
 .product-selection-modal__body {

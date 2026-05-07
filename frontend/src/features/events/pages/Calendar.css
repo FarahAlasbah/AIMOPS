@@ -11,6 +11,7 @@
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
 /* Jump controls */
@@ -32,26 +33,25 @@
 }
 
 .calendar-jump-select {
+  margin: 0;
+}
+
+.calendar-jump-select .form-label {
+  display: none;
+}
+
+.calendar-jump-select .fs-trigger {
   height: 42px;
-  min-width: 132px;
-  border: 1px solid #d1d5db;
   border-radius: 12px;
-  background: #ffffff;
-  color: #111827;
-  padding: 0 12px;
-  font-size: 14px;
   font-weight: 600;
-  outline: none;
-  cursor: pointer;
+}
+
+.calendar-jump-month {
+  width: 170px;
 }
 
 .calendar-jump-year {
-  min-width: 96px;
-}
-
-.calendar-jump-select:focus {
-  border-color: #03045e;
-  box-shadow: 0 0 0 3px rgba(3, 4, 94, 0.08);
+  width: 125px;
 }
 
 @media (max-width: 760px) {
@@ -66,19 +66,20 @@
 
   .calendar-jump {
     width: 100%;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .calendar-jump-label {
     width: 100%;
   }
 
-  .calendar-jump-select {
-    flex: 1;
-    min-width: 130px;
+  .calendar-jump-month,
+  .calendar-jump-year {
+    width: 100%;
   }
 
   .calendar-jump button {
-    flex: 1;
+    width: 100%;
   }
 }

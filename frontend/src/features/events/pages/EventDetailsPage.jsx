@@ -133,10 +133,7 @@ export default function EventDetailsPage() {
 
   return (
     <div className="events-page">
-      <PageHeader
-        title={t("eventDetailsPage.title")}
-        subtitle={t("eventDetailsPage.subtitle")}
-        actions={
+     
           <div className="events-actions">
             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
               {t("eventDetailsPage.btnBack")}
@@ -152,9 +149,6 @@ export default function EventDetailsPage() {
               </Button>
             )}
           </div>
-        }
-      />
-
       {notice && <InfoMessage type="success">{notice}</InfoMessage>}
       {error && <InfoMessage type="error">{error}</InfoMessage>}
 

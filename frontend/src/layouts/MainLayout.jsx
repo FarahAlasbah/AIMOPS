@@ -38,9 +38,7 @@ function MainLayoutFrame() {
             <Menu size={24} />
           </button>
 
-          <h1 className="page-title">
-            {t("layout.welcomeTitle", { defaultValue: "Welcome to AIMOPS" })}
-          </h1>
+          
 
           <div className="header-actions">
             <LangToggle />

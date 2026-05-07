@@ -12,33 +12,73 @@ const cleanStr = (v) => String(v ?? "").trim();
 const getSelectedMerges = (productsDraft, normalized_name) => {
   const key = cleanStr(normalized_name);
   if (!key) return [];
-  const found = safeArr(productsDraft).find((x) => cleanStr(x?.normalized_name) === key);
+
+  const found = safeArr(productsDraft).find(
+    (x) => cleanStr(x?.normalized_name) === key,
+  );
+
   return uniq(safeArr(found?.merge_with).map(cleanStr).filter(Boolean));
 };
 
-function MergeModal({ open, product, candidates, selected, locked, onToggle, onClose }) {
+function MergeModal({
+  open,
+  product,
+  candidates,
+  selected,
+  locked,
+  onSave,
+  onClose,
+}) {
   const { t } = useTranslation("upload");
   const [q, setQ] = useState("");
+  const [localSelected, setLocalSelected] = useState([]);
 
   useEffect(() => {
     if (!open) return;
     setQ("");
+    setLocalSelected(selected || []);
+
     const onKey = (e) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape") {
+        onClose?.(); // close without saving
+      }
     };
+
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open, selected, onClose]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? candidates.filter((c) => c.toLowerCase().includes(s)) : candidates;
+    return s
+      ? candidates.filter((c) => c.toLowerCase().includes(s))
+      : candidates;
   }, [q, candidates]);
+
+  const toggleLocal = (name) => {
+    if (locked) return;
+
+    setLocalSelected((prev) =>
+      prev.includes(name)
+        ? prev.filter((item) => item !== name)
+        : [...prev, name],
+    );
+  };
+
+  const handleDone = () => {
+    if (locked) {
+      onClose?.();
+      return;
+    }
+
+    onSave?.(localSelected);
+  };
 
   if (!open || !product) return null;
 
@@ -55,32 +95,54 @@ function MergeModal({ open, product, candidates, selected, locked, onToggle, onC
       <div className="merge-modal">
         <div className="merge-modal-head">
           <div className="merge-modal-title">{t("review.modal.title")}</div>
-          <button type="button" className="merge-close" onClick={onClose}>
-            {t("review.modal.close")}
-          </button>
+
+          <div className="merge-modal-head-actions">
+            <button
+              type="button"
+              className="merge-head-btn secondary"
+              onClick={onClose}
+            >
+              {t("review.modal.close")}
+            </button>
+
+            <button
+              type="button"
+              className="merge-head-btn primary"
+              onClick={handleDone}
+              disabled={locked}
+            >
+              {t("review.modal.done")}
+            </button>
+          </div>
         </div>
 
-        <div className="merge-modal-sub">
-          <div className="merge-product-name">{product.primary_name}</div>
-          <div className="merge-product-meta" title={product.normalized_name}>
-            {t("review.modal.normalizedLabel")} {product.normalized_name}
+        <div className="merge-product-highlight">
+          <div className="merge-product-highlight-label">
+            {t("review.product", { defaultValue: "Product" })}
+          </div>
+          <div className="merge-product-highlight-name">
+            {product.primary_name}
           </div>
         </div>
 
         <div className="merge-section">
           <div className="merge-section-title">
-            {t("review.modal.selectedMerges")} <span className="muted">({selected.length})</span>
+            {t("review.modal.selectedMerges")}{" "}
+            <span className="muted">({localSelected.length})</span>
           </div>
-          {selected.length === 0 ? (
-            <div className="merge-empty">{t("review.modal.noMergesSelected")}</div>
+
+          {localSelected.length === 0 ? (
+            <div className="merge-empty">
+              {t("review.modal.noMergesSelected")}
+            </div>
           ) : (
             <div className="merge-selected">
-              {selected.map((name) => (
+              {localSelected.map((name) => (
                 <button
                   key={name}
                   type="button"
                   className="selected-chip"
-                  onClick={() => onToggle(name)}
+                  onClick={() => toggleLocal(name)}
                   disabled={locked}
                   title={t("review.modal.remove")}
                 >
@@ -94,8 +156,10 @@ function MergeModal({ open, product, candidates, selected, locked, onToggle, onC
 
         <div className="merge-section">
           <div className="merge-section-title">
-            {t("review.modal.candidates")} <span className="muted">({candidates.length})</span>
+            {t("review.modal.candidates")}{" "}
+            <span className="muted">({candidates.length})</span>
           </div>
+
           <div className="merge-search-row">
             <input
               className="merge-search"
@@ -104,7 +168,10 @@ function MergeModal({ open, product, candidates, selected, locked, onToggle, onC
               placeholder={t("review.modal.searchPlaceholder")}
               disabled={locked}
             />
-            <div className="merge-count">{t("review.modal.shown", { count: filtered.length })}</div>
+
+            <div className="merge-count">
+              {t("review.modal.shown", { count: filtered.length })}
+            </div>
           </div>
 
           {candidates.length === 0 ? (
@@ -114,32 +181,32 @@ function MergeModal({ open, product, candidates, selected, locked, onToggle, onC
           ) : (
             <div className="merge-list">
               {filtered.map((name) => {
-                const active = selected.includes(name);
+                const active = localSelected.includes(name);
+
                 return (
                   <button
                     key={name}
                     type="button"
                     className={`merge-item ${active ? "active" : ""}`}
-                    onClick={() => onToggle(name)}
+                    onClick={() => toggleLocal(name)}
                     disabled={locked}
                     aria-pressed={active}
-                    title={active ? t("review.modal.remove") : t("review.modal.add")}
+                    title={
+                      active ? t("review.modal.remove") : t("review.modal.add")
+                    }
                   >
                     <span className="merge-item-text">{name}</span>
+
                     <span className="merge-item-action">
-                      {active ? t("review.modal.remove") : t("review.modal.add")}
+                      {active
+                        ? t("review.modal.remove")
+                        : t("review.modal.add")}
                     </span>
                   </button>
                 );
               })}
             </div>
           )}
-        </div>
-
-        <div className="merge-modal-foot">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            {t("review.modal.done")}
-          </Button>
         </div>
       </div>
     </div>
@@ -165,7 +232,7 @@ export default function ReviewStep({
 
   const allPrimaryNames = useMemo(
     () => uniq(safeArr(products).map((p) => p.primary_name)).filter(Boolean),
-    [products]
+    [products],
   );
 
   const byNorm = useMemo(() => {
@@ -175,54 +242,96 @@ export default function ReviewStep({
   }, [products]);
 
   const mergedTotal = useMemo(
-    () => safeArr(productsDraft).reduce((acc, p) => acc + safeArr(p?.merge_with).filter(Boolean).length, 0),
-    [productsDraft]
+    () =>
+      safeArr(productsDraft).reduce(
+        (acc, p) => acc + safeArr(p?.merge_with).filter(Boolean).length,
+        0,
+      ),
+    [productsDraft],
   );
 
+  const confirmedCount = safeArr(
+    confirmMappingsResult?.confirmed_mappings,
+  ).length;
+
   const activeProduct = activeNorm ? byNorm.get(activeNorm) : null;
+
   const activeSelected = useMemo(
-    () => (activeProduct ? getSelectedMerges(productsDraft, activeProduct.normalized_name) : []),
-    [productsDraft, activeProduct]
+    () =>
+      activeProduct
+        ? getSelectedMerges(productsDraft, activeProduct.normalized_name)
+        : [],
+    [productsDraft, activeProduct],
   );
+
   const activeCandidates = useMemo(
-    () => (activeProduct ? allPrimaryNames.filter((n) => n !== activeProduct.primary_name) : []),
-    [allPrimaryNames, activeProduct]
+    () =>
+      activeProduct
+        ? allPrimaryNames.filter((n) => n !== activeProduct.primary_name)
+        : [],
+    [allPrimaryNames, activeProduct],
   );
 
   const productCount = safeArr(products).length;
   const hasProducts = productCount > 0;
+
+  const handleSaveMerges = (nextSelected) => {
+    if (!activeProduct) return;
+
+    const normalizedName = activeProduct.normalized_name;
+    const currentSelected = getSelectedMerges(productsDraft, normalizedName);
+
+    const currentSet = new Set(currentSelected);
+    const nextSet = new Set(nextSelected);
+
+    const allNames = uniq([...currentSelected, ...nextSelected]);
+
+    allNames.forEach((name) => {
+      const wasSelected = currentSet.has(name);
+      const isSelected = nextSet.has(name);
+
+      if (wasSelected !== isSelected) {
+        onToggleMerge(normalizedName, name);
+      }
+    });
+
+    setActiveNorm("");
+  };
 
   return (
     <div className="review-step">
       <div className="review-header">
         <div>
           <div className="review-title">{t("review.title")}</div>
+
           <div className="review-sub">
             {hasProducts
-              ? t("review.subExtracted", { count: productCount, merges: mergedTotal })
+              ? t("review.subExtracted", {
+                  count: productCount,
+                  merges: mergedTotal,
+                })
               : t("review.subNotExtracted")}
           </div>
         </div>
 
         <div className="review-header-right">
           {confirmMappingsResult?.success ? (
-            <span className="badge ok">
-              {t("review.mappingsConfirmed", {
-                count: safeArr(confirmMappingsResult?.confirmed_mappings).length,
+            <span className="badge confirmed-badge">
+              {t("review.confirmedOnly", {
+                count: confirmedCount,
+                defaultValue: `Confirmed (${confirmedCount})`,
               })}
             </span>
           ) : (
             <span className="badge warn">{t("review.mappingsNotFound")}</span>
           )}
-
-          <span className={`badge ${hasProducts ? "ok" : "muted"}`}>
-            {hasProducts ? t("review.badgeExtracted") : t("review.badgeNotExtracted")}
-          </span>
         </div>
       </div>
 
       {confirmProductsResult?.success && (
-        <InfoMessage type="success">{t("review.productsConfirmedSuccess")}</InfoMessage>
+        <InfoMessage type="success">
+          {t("review.productsConfirmedSuccess")}
+        </InfoMessage>
       )}
 
       {!hasProducts && (
@@ -230,7 +339,13 @@ export default function ReviewStep({
           <Button type="button" variant="secondary" onClick={onBack}>
             {t("review.back")}
           </Button>
-          <Button type="button" variant="secondary" onClick={onFinish} disabled={!locked}>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onFinish}
+            disabled={!locked}
+          >
             {t("review.finish")}
           </Button>
         </FormActions>
@@ -240,25 +355,37 @@ export default function ReviewStep({
         <>
           <div className="products-list">
             {safeArr(products).map((p) => {
-              const selected = getSelectedMerges(productsDraft, p.normalized_name);
+              const selected = getSelectedMerges(
+                productsDraft,
+                p.normalized_name,
+              );
 
               return (
                 <div className="product-row" key={p.normalized_name}>
                   <div className="product-main">
                     <div className="product-name">{p.primary_name}</div>
 
-                    <div className="product-meta">
-                      <span>{t("review.category")} {p.category || "—"}</span>
-                      <span className="sep">•</span>
-                      <span title={p.normalized_name}>
-                        {t("review.normalized")} {p.normalized_name}
+                    <div className="product-category-simple">
+                      <span className="product-category-simple-label">
+                        {t("review.category", { defaultValue: "Category" })}
+                      </span>
+
+                      <span className="product-category-simple-value">
+                        {p.category ||
+                          t("review.uncategorized", {
+                            defaultValue: "Uncategorized",
+                          })}
                       </span>
                     </div>
 
                     {safeArr(p.possible_typos).length > 0 && (
                       <div className="product-typos">
                         {p.possible_typos.map((typo) => (
-                          <span key={typo.product} className="typo-chip" title={typo.suggestion}>
+                          <span
+                            key={typo.product}
+                            className="typo-chip"
+                            title={typo.suggestion}
+                          >
                             ⚠ {typo.product}
                           </span>
                         ))}
@@ -268,16 +395,25 @@ export default function ReviewStep({
                     {selected.length > 0 ? (
                       <div className="selected-wrap">
                         {selected.slice(0, 4).map((v) => (
-                          <span key={v} className="selected-chip readonly" title={v}>
+                          <span
+                            key={v}
+                            className="selected-chip readonly"
+                            title={v}
+                          >
                             {v}
                           </span>
                         ))}
+
                         {selected.length > 4 && (
-                          <span className="more-chip">+{selected.length - 4} more</span>
+                          <span className="more-chip">
+                            +{selected.length - 4} more
+                          </span>
                         )}
                       </div>
                     ) : (
-                      <div className="selected-empty">{t("review.noMergesSelected")}</div>
+                      <div className="selected-empty">
+                        {t("review.noMergesSelected")}
+                      </div>
                     )}
                   </div>
 
@@ -303,17 +439,28 @@ export default function ReviewStep({
             </Button>
 
             <div className="right-actions">
-              <Button type="button" onClick={onConfirmProducts} disabled={confirmingProducts || locked}>
+              <Button
+                type="button"
+                onClick={onConfirmProducts}
+                disabled={confirmingProducts || locked}
+              >
                 {locked
                   ? alreadyProcessed && !confirmProductsResult?.success
-                    ? t("review.alreadyProcessed", { defaultValue: "Already processed" })
+                    ? t("review.alreadyProcessed", {
+                        defaultValue: "Already processed",
+                      })
                     : t("review.confirmed")
                   : confirmingProducts
-                  ? t("review.confirmingProducts")
-                  : t("review.confirmProducts")}
+                    ? t("review.confirmingProducts")
+                    : t("review.confirmProducts")}
               </Button>
 
-              <Button type="button" variant="secondary" onClick={onFinish} disabled={!locked}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onFinish}
+                disabled={!locked}
+              >
                 {t("review.finish")}
               </Button>
             </div>
@@ -325,7 +472,7 @@ export default function ReviewStep({
             candidates={activeCandidates}
             selected={activeSelected}
             locked={locked}
-            onToggle={(name) => onToggleMerge(activeProduct?.normalized_name, name)}
+            onSave={handleSaveMerges}
             onClose={() => setActiveNorm("")}
           />
         </>

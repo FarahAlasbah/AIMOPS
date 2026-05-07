@@ -629,17 +629,7 @@ export default function UploadsPage() {
 
   return (
     <div className="data-upload-page">
-      <PageHeader
-        title={t("uploadsPage.title")}
-        breadcrumbs={[
-          {
-            label: t("uploadsPage.breadcrumbRoot"),
-            link: true,
-            onClick: () => navigate("/app/campaigns"),
-          },
-          { label: t("uploadsPage.breadcrumbCurrent"), link: false },
-        ]}
-      />
+      
 
       <Card>
         {error && (

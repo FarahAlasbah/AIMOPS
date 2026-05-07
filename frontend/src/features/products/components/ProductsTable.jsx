@@ -26,36 +26,39 @@ export default function ProductsTable({
             <th style={{ width: 42 }}>
               <input
                 type="checkbox"
-                checked={pageItems.length > 0 && pageItems.every((p) => selected.has(p.product_id))}
+                checked={
+                  pageItems.length > 0 &&
+                  pageItems.every((p) => selected.has(p.product_id))
+                }
                 onChange={onTogglePageAll}
                 disabled={loading || pageItems.length === 0}
               />
             </th>
 
-            {/* <th className="click" onClick={() => onToggleSort("product_id")}>
-              {t("table.colId")}
-            </th> */}
             <th className="click" onClick={() => onToggleSort("name")}>
               {t("table.colName")}
             </th>
+
             <th className="click" onClick={() => onToggleSort("category")}>
               {t("table.colCategory")}
             </th>
-            <th className="click" onClick={() => onToggleSort("active")}>
-              {t("table.colActive")}
-            </th>
+
             <th className="click" onClick={() => onToggleSort("suspicious")}>
-              {t("table.colSuspicious")}
+              {t("table.colNeedsReview", { defaultValue: "Needs review" })}
             </th>
+
             <th className="click" onClick={() => onToggleSort("sales")}>
               {t("table.colSales")}
             </th>
+
             <th className="click" onClick={() => onToggleSort("revenue")}>
               {t("table.colRevenue")}
             </th>
+
             <th className="click" onClick={() => onToggleSort("last_sale")}>
               {t("table.colLastSale")}
             </th>
+
             <th style={{ width: 180 }}>{t("table.colActions")}</th>
           </tr>
         </thead>
@@ -63,16 +66,16 @@ export default function ProductsTable({
         <tbody>
           {loading ? (
             <>
-              <SkeletonRow cols={10} />
-              <SkeletonRow cols={10} />
-              <SkeletonRow cols={10} />
-              <SkeletonRow cols={10} />
-              <SkeletonRow cols={10} />
-              <SkeletonRow cols={10} />
+              <SkeletonRow cols={8} />
+              <SkeletonRow cols={8} />
+              <SkeletonRow cols={8} />
+              <SkeletonRow cols={8} />
+              <SkeletonRow cols={8} />
+              <SkeletonRow cols={8} />
             </>
           ) : pageItems.length === 0 ? (
             <tr>
-              <td colSpan={10} className="empty">
+              <td colSpan={8} className="empty">
                 {t("table.empty")}
               </td>
             </tr>
@@ -93,13 +96,12 @@ export default function ProductsTable({
                     />
                   </td>
 
-                  {/* <td>{id}</td> */}
-
                   <td title={p.normalized_name || ""}>
                     <div className="name-cell">
                       <div className="name">
                         <bdi>{p.product_name || "-"}</bdi>
                       </div>
+
                       <div className="sub muted">
                         <bdi>{p.normalized_name || "-"}</bdi>
                       </div>
@@ -110,29 +112,41 @@ export default function ProductsTable({
                     <bdi>{p.category ?? "-"}</bdi>
                   </td>
 
-                  <td>{p.is_active ? t("table.activeYes") : t("table.activeNo")}</td>
-
                   <td>
                     {isSuspicious ? (
                       <div className="flag">
-                        <span className="chip chip-warn">{t("table.chipNeedsMerge")}</span>
+                        <span className="chip chip-warn">
+                          {t("table.chipNeedsReview", {
+                            defaultValue: "Needs review",
+                          })}
+                        </span>
+
                         <div className="sub muted" title={reason || ""}>
                           <bdi>{reason || "—"}</bdi>
                         </div>
                       </div>
                     ) : (
-                      <span className="chip chip-ok">{t("table.chipNormal")}</span>
+                      <span className="chip chip-ok">
+                        {t("table.chipNormal")}
+                      </span>
                     )}
                   </td>
 
                   <td>{sales}</td>
+
                   <td>{money(p?.stats?.total_revenue)}</td>
+
                   <td>{dateText(p?.stats?.last_sale)}</td>
 
                   <td className="actions">
-                    <Button size="sm" variant="secondary" onClick={() => onMergeRow(id)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => onMergeRow(id)}
+                    >
                       {t("table.btnMerge")}
                     </Button>
+
                     <DangerButton size="sm" onClick={() => onDeleteRow(id)}>
                       {t("table.btnDelete")}
                     </DangerButton>

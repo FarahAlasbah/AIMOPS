@@ -548,17 +548,7 @@ export default function MappingPage() {
 
   return (
     <div className="data-upload-page">
-      <PageHeader
-        title={t("mappingPage.title")}
-        breadcrumbs={[
-          {
-            label: t("mappingPage.breadcrumbRoot"),
-            link: true,
-            onClick: () => navigate("/app/data-upload/uploads"),
-          },
-          { label: t("mappingPage.breadcrumbBatch", { batchId }), link: false },
-        ]}
-      />
+     
 
       <Card>
         {error && (

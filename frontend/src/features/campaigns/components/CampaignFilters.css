@@ -9,16 +9,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
-.campaign-filter label {
+.campaign-filter label,
+.campaign-filter .form-label {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
 }
 
-.campaign-filter input,
-.campaign-filter select {
+.campaign-filter input {
   height: 42px;
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -29,10 +30,18 @@
   outline: none;
 }
 
-.campaign-filter input:focus,
-.campaign-filter select:focus {
+.campaign-filter input:focus {
   border-color: #03045e;
   box-shadow: 0 0 0 3px rgba(3, 4, 94, 0.08);
+}
+
+.campaign-filter .form-group {
+  margin: 0;
+}
+
+.campaign-filter .fs-trigger {
+  height: 42px;
+  border-radius: 12px;
 }
 
 @media (max-width: 900px) {

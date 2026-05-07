@@ -1,7 +1,7 @@
 // frontend/src/features/products/components/ProductsToolbar.jsx
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../shared/components";
-import DangerButton from "./DangerButton";
+import { RefreshCw } from "lucide-react";
+import FormCalendar from "../../../shared/components/FormCalendar";
 
 export default function ProductsToolbar({
   loading,
@@ -12,12 +12,12 @@ export default function ProductsToolbar({
   category,
   categories,
   onCategoryChange,
-  active,
-  onActiveChange,
   suspicious,
   onSuspiciousChange,
-  hasSales,
-  onHasSalesChange,
+  dateFrom,
+  onDateFromChange,
+  dateTo,
+  onDateToChange,
   onRefresh,
   onMergeSelected,
   onDeleteSelected,
@@ -36,72 +36,112 @@ export default function ProductsToolbar({
 
   return (
     <div className="products-toolbar">
-      <div className="products-toolbar-left">
-        <div className="field">
-          <label>{t("toolbar.searchLabel")}</label>
-          <input
-            className="text"
-            value={q}
-            onChange={(e) => onQChange(e.target.value)}
-            placeholder={t("toolbar.searchPlaceholder")}
-          />
+      <div className="products-toolbar-top">
+        <div className="muted products-results-text">
+          {statusText}
+          {selectionText}
         </div>
 
-        <div className="field">
-          <label>{t("toolbar.categoryLabel")}</label>
-          <select className="text" value={category} onChange={(e) => onCategoryChange(e.target.value)}>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c === "all" ? t("toolbar.categoryAll") : c}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <label>{t("toolbar.statusLabel")}</label>
-          <select className="text" value={active} onChange={(e) => onActiveChange(e.target.value)}>
-            <option value="all">{t("toolbar.statusAll")}</option>
-            <option value="active">{t("toolbar.statusActive")}</option>
-            <option value="inactive">{t("toolbar.statusInactive")}</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>{t("toolbar.suspiciousLabel")}</label>
-          <select className="text" value={suspicious} onChange={(e) => onSuspiciousChange(e.target.value)}>
-            <option value="all">{t("toolbar.suspiciousAll")}</option>
-            <option value="suspicious">{t("toolbar.suspiciousOnly")}</option>
-            <option value="normal">{t("toolbar.normalOnly")}</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>{t("toolbar.salesLabel")}</label>
-          <select className="text" value={hasSales} onChange={(e) => onHasSalesChange(e.target.value)}>
-            <option value="all">{t("toolbar.salesAll")}</option>
-            <option value="has">{t("toolbar.salesHas")}</option>
-            <option value="none">{t("toolbar.salesNone")}</option>
-          </select>
-        </div>
+        <button
+          type="button"
+          className="products-refresh-icon-btn"
+          onClick={onRefresh}
+          disabled={loading}
+          title={t("toolbar.btnRefresh", { defaultValue: "Refresh" })}
+          aria-label={t("toolbar.btnRefresh", { defaultValue: "Refresh" })}
+        >
+          <RefreshCw size={18} className={loading ? "spin-icon" : ""} />
+        </button>
       </div>
 
-      <div className="products-toolbar-right">
-        <div className="muted">
-          {statusText}{selectionText}
+      <div className="products-toolbar-main">
+        <div className="products-toolbar-left">
+          <div className="field field-search">
+            <label>{t("toolbar.searchLabel")}</label>
+            <input
+              className="text"
+              value={q}
+              onChange={(e) => onQChange(e.target.value)}
+              placeholder={t("toolbar.searchPlaceholder")}
+            />
+          </div>
+
+          <div className="field">
+            <label>{t("toolbar.categoryLabel")}</label>
+            <select
+              className="text"
+              value={category}
+              onChange={(e) => onCategoryChange(e.target.value)}
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c === "all" ? t("toolbar.categoryAll") : c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label>
+              {t("toolbar.reviewLabel", { defaultValue: "Needs review" })}
+            </label>
+            <select
+              className="text"
+              value={suspicious}
+              onChange={(e) => onSuspiciousChange(e.target.value)}
+            >
+              <option value="all">
+                {t("toolbar.reviewAll", { defaultValue: "All" })}
+              </option>
+              <option value="suspicious">
+                {t("toolbar.reviewOnly", { defaultValue: "Needs review only" })}
+              </option>
+              <option value="normal">
+                {t("toolbar.normalOnly", { defaultValue: "Normal only" })}
+              </option>
+            </select>
+          </div>
+
+          <div className="field">
+            <FormCalendar
+              label={t("toolbar.dateFromLabel", { defaultValue: "From date" })}
+              value={dateFrom}
+              onChange={(e) => onDateFromChange(e.target.value)}
+              max={dateTo || undefined}
+              placeholder="YYYY-MM-DD"
+            />
+          </div>
+
+          <div className="field">
+            <FormCalendar
+              label={t("toolbar.dateToLabel", { defaultValue: "To date" })}
+              value={dateTo}
+              onChange={(e) => onDateToChange(e.target.value)}
+              min={dateFrom || undefined}
+              placeholder="YYYY-MM-DD"
+            />
+          </div>
         </div>
 
-        <Button onClick={onRefresh} variant="secondary" disabled={loading}>
-          {t("toolbar.btnRefresh")}
-        </Button>
+        <div className="products-toolbar-right">
+  <button
+    type="button"
+    className="products-action-btn merge"
+    onClick={onMergeSelected}
+    disabled={loading || !canMerge}
+  >
+    {t("toolbar.btnMergeSelected")}
+  </button>
 
-        <Button onClick={onMergeSelected} disabled={loading || !canMerge}>
-          {t("toolbar.btnMergeSelected")}
-        </Button>
-
-        <DangerButton onClick={onDeleteSelected} disabled={loading || !canDelete}>
-          {t("toolbar.btnDeleteSelected")}
-        </DangerButton>
+  <button
+    type="button"
+    className="products-action-btn delete"
+    onClick={onDeleteSelected}
+    disabled={loading || !canDelete}
+  >
+    {t("toolbar.btnDeleteSelected")}
+  </button>
+</div>
       </div>
     </div>
   );
