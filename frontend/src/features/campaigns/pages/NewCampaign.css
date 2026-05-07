@@ -277,3 +277,18 @@
     width: 100%;
   }
 }
+
+.new-campaign-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+  .new-campaign-top-actions .btn-outline {
+    width: 100%;
+  }
+}
+

@@ -140,8 +140,7 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
 
   return (
     <div className="mapping-card">
-      <div className="mapping-title">{t("mapping.highConfidence.title")}</div>
-      <div className="mapping-sub">{t("mapping.highConfidence.sub")}</div>
+      
 
       {highConfidence.map((c) => {
         const current = columnMap?.[c.index] || {};
@@ -403,40 +402,60 @@ function SuggestedSkipCard({
 
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
+            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>
+              {c.name}
+            </div>
 
             {c.reason && (
-              <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--c-text-muted)",
+                  marginTop: 4,
+                }}
+              >
                 {t("mapping.suggestedSkip.whySkip")} {c.reason}
               </div>
             )}
 
-            <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => onToggleInclude(c.index)}
-                disabled={!!disabled}
-                title={disabled ? t("mapping.lockedBatch") : ""}
+            {!isIncluded ? (
+              <div className="skip-state-row" style={{ marginTop: 12 }}>
+                <span className="skip-state-badge">
+                  {t("mapping.suggestedSkip.skipped", {
+                    defaultValue: "Skipped",
+                  })}
+                </span>
+
+                <button
+                  type="button"
+                  className="skip-link-btn"
+                  onClick={() => onToggleInclude(c.index)}
+                  disabled={!!disabled}
+                  title={disabled ? t("mapping.lockedBatch") : ""}
+                >
+                  {t("mapping.suggestedSkip.includeColumn", {
+                    defaultValue: "Include this column",
+                  })}
+                </button>
+              </div>
+            ) : (
+              <div
+                className="mapping-row"
+                style={{ marginTop: 12, alignItems: "flex-start" }}
               >
-                {isIncluded
-                  ? t("mapping.suggestedSkip.included")
-                  : t("mapping.suggestedSkip.skipped")}
-              </Button>
+                <button
+                  type="button"
+                  className="mini-btn"
+                  onClick={() => onToggleInclude(c.index)}
+                  disabled={!!disabled}
+                  title={disabled ? t("mapping.lockedBatch") : ""}
+                >
+                  {t("mapping.suggestedSkip.skipThisColumn", {
+                    defaultValue: "Skip this column",
+                  })}
+                </button>
 
-              {!isIncluded && (
-                <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 10 }}>
-                  {t("mapping.suggestedSkip.currentRole")} {roleLabel("skip")}
-                </div>
-              )}
-
-              {isIncluded && (
                 <div style={{ flex: "1 1 auto", minWidth: 260 }}>
-                  <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 8 }}>
-                    {t("mapping.suggestedSkip.currentRole")}{" "}
-                    {currentRole === "skip" ? "Choose a role" : roleLabel(currentRole)}
-                  </div>
-
                   <RolePickerWithConfirm
                     colIndex={c.index}
                     value={currentRole}
@@ -447,10 +466,10 @@ function SuggestedSkipCard({
                     disabled={disabled}
                   />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <ColumnMeta column={c} />
+            <ColumnMeta column={c} showConfidence={false} />
           </div>
         );
       })}

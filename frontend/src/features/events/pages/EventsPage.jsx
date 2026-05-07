@@ -580,11 +580,7 @@ const dismissSelectedDrafts = async (draftsToDismiss = []) => {
 
   return (
     <div className="events-page">
-      <PageHeader
-        title={t("eventsPage.title")}
-        subtitle={t("eventsPage.subtitle")}
-        actions={headerActions}
-      />
+      
 
       {notice && <InfoMessage type="success">{notice}</InfoMessage>}
       {error && <InfoMessage type="error">{error}</InfoMessage>}

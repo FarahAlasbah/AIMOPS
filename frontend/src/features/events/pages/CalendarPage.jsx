@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
-  PageHeader,
+  FormSelect,
   InfoMessage,
 } from "../../../shared/components";
 import { getEvents } from "../../../api/events";
@@ -22,7 +22,7 @@ const getYearOptions = (selectedYear) => {
 
   return Array.from(
     { length: maxYear - minYear + 1 },
-    (_, index) => minYear + index
+    (_, index) => minYear + index,
   );
 };
 
@@ -38,7 +38,6 @@ const getCalendarRange = (date) => {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
   const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-  // small buffer so campaigns/events crossing month edges still load
   start.setDate(start.getDate() - 7);
   end.setDate(end.getDate() + 7);
 
@@ -53,21 +52,14 @@ const normalizeCampaignAsCalendarEvent = (campaign) => {
 
   return {
     ...campaign,
-
-    // Make campaign look like an event for CalendarMonth
     event_id: `campaign-${campaignId}`,
     event_name: campaign?.campaign_name || campaign?.name || "Campaign",
     title: campaign?.campaign_name || campaign?.name || "Campaign",
-
     start_date: campaign?.start_date,
     end_date: campaign?.end_date,
-
-    // Helpful flags
     calendar_type: "campaign",
     source: "campaign",
     campaign_id: campaignId,
-
-    // Avoid draft/detected event filtering
     status: campaign?.status || "active",
   };
 };
@@ -91,7 +83,7 @@ export default function CalendarPage() {
       const date = new Date(2026, index, 1);
 
       return {
-        value: index,
+        value: String(index),
         label: date.toLocaleDateString(locale === "ar" ? "ar" : "en", {
           month: "long",
         }),
@@ -100,7 +92,10 @@ export default function CalendarPage() {
   }, [locale]);
 
   const yearOptions = useMemo(() => {
-    return getYearOptions(jumpYear);
+    return getYearOptions(jumpYear).map((year) => ({
+      value: String(year),
+      label: String(year),
+    }));
   }, [jumpYear]);
 
   useEffect(() => {
@@ -192,81 +187,65 @@ export default function CalendarPage() {
 
   return (
     <div className="calendar-page">
-      <PageHeader
-        title={t("calendarPage.title")}
-        subtitle={t("calendarPage.subtitle")}
-        actions={
-          <div className="calendar-actions">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => navigate("/app/events")}
-            >
-              {t("calendarPage.btnEventsList")}
-            </Button>
+      <div className="calendar-actions">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => navigate("/app/events")}
+        >
+          {t("calendarPage.btnEventsList")}
+        </Button>
 
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setAnchor(startOfMonth(new Date()))}
-            >
-              {t("calendarPage.btnToday")}
-            </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setAnchor(startOfMonth(new Date()))}
+        >
+          {t("calendarPage.btnToday")}
+        </Button>
 
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setAnchor((date) => addMonths(date, -1))}
-            >
-              {t("calendarPage.btnPrev")}
-            </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setAnchor((date) => addMonths(date, -1))}
+        >
+          {t("calendarPage.btnPrev")}
+        </Button>
 
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setAnchor((date) => addMonths(date, 1))}
-            >
-              {t("calendarPage.btnNext")}
-            </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setAnchor((date) => addMonths(date, 1))}
+        >
+          {t("calendarPage.btnNext")}
+        </Button>
 
-            <div className="calendar-jump">
-              <span className="calendar-jump-label">
-                {t("calendarPage.jumpLabel")}
-              </span>
+        <div className="calendar-jump">
+          <span className="calendar-jump-label">
+            {t("calendarPage.jumpLabel")}
+          </span>
 
-              <select
-                className="calendar-jump-select"
-                value={jumpMonth}
-                onChange={(e) => setJumpMonth(Number(e.target.value))}
-                aria-label={t("calendarPage.jumpAriaLabel")}
-              >
-                {monthOptions.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.label}
-                  </option>
-                ))}
-              </select>
+          <FormSelect
+            className="calendar-jump-select calendar-jump-month"
+            value={String(jumpMonth)}
+            onChange={(e) => setJumpMonth(Number(e.target.value))}
+            options={monthOptions}
+            aria-label={t("calendarPage.jumpAriaLabel")}
+          />
 
-              <select
-                className="calendar-jump-select calendar-jump-year"
-                value={jumpYear}
-                onChange={(e) => setJumpYear(Number(e.target.value))}
-                aria-label="Year"
-              >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+          <FormSelect
+            className="calendar-jump-select calendar-jump-year"
+            value={String(jumpYear)}
+            onChange={(e) => setJumpYear(Number(e.target.value))}
+            options={yearOptions}
+            aria-label="Year"
+          />
 
-              <Button type="button" variant="secondary" onClick={applyJump}>
-                {t("calendarPage.btnGo")}
-              </Button>
-            </div>
-          </div>
-        }
-      />
+          <Button type="button" variant="secondary" onClick={applyJump}>
+            {t("calendarPage.btnGo")}
+          </Button>
+        </div>
+      </div>
 
       {error ? <InfoMessage type="error">{error}</InfoMessage> : null}
 

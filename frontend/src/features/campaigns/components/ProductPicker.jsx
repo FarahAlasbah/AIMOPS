@@ -1,3 +1,4 @@
+// frontend/src/features/campaigns/components/ProductPicker.jsx
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ProductSelectionModal from "./ProductSelectionModal";
@@ -14,40 +15,52 @@ const ProductPicker = ({
   errors,
 }) => {
   const { t } = useTranslation("campaigns");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortValue, setSortValue] = useState("name-asc");
+  const [draftProducts, setDraftProducts] = useState([]);
 
   const selectedIds = useMemo(
     () => new Set(selectedProducts.map((item) => item.product_id)),
-    [selectedProducts]
+    [selectedProducts],
   );
+
+  const draftIds = useMemo(
+    () => new Set(draftProducts.map((item) => item.id)),
+    [draftProducts],
+  );
+
+  const blockedIds = useMemo(() => {
+    return new Set([...selectedIds, ...draftIds]);
+  }, [selectedIds, draftIds]);
 
   const categories = useMemo(() => {
     return Array.from(
       new Set(
         availableProducts
           .map((product) => product.category)
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     ).sort((a, b) => a.localeCompare(b));
   }, [availableProducts]);
 
   const hasAvailableToSelect = useMemo(() => {
-    return availableProducts.some((product) => !selectedIds.has(product.id));
-  }, [availableProducts, selectedIds]);
+    return availableProducts.some((product) => !blockedIds.has(product.id));
+  }, [availableProducts, blockedIds]);
 
   const filteredProducts = useMemo(() => {
     const query = searchValue.trim().toLowerCase();
 
     const nextProducts = availableProducts
-      .filter((product) => !selectedIds.has(product.id))
+      .filter((product) => !blockedIds.has(product.id))
       .filter((product) => {
+        const name = String(product.name || "").toLowerCase();
+        const category = String(product.category || "").toLowerCase();
+
         const matchesQuery =
-          !query ||
-          product.name.toLowerCase().includes(query) ||
-          product.category.toLowerCase().includes(query);
+          !query || name.includes(query) || category.includes(query);
 
         const matchesCategory =
           categoryFilter === "all" || product.category === categoryFilter;
@@ -58,17 +71,19 @@ const ProductPicker = ({
     switch (sortValue) {
       case "name-desc":
         return nextProducts.sort((a, b) => b.name.localeCompare(a.name));
+
       case "category":
         return nextProducts.sort((a, b) => {
           const categoryCompare = a.category.localeCompare(b.category);
           if (categoryCompare !== 0) return categoryCompare;
           return a.name.localeCompare(b.name);
         });
+
       case "name-asc":
       default:
         return nextProducts.sort((a, b) => a.name.localeCompare(b.name));
     }
-  }, [availableProducts, selectedIds, searchValue, categoryFilter, sortValue]);
+  }, [availableProducts, blockedIds, searchValue, categoryFilter, sortValue]);
 
   const getProductError = (productId, field) =>
     errors?.productsById?.[productId]?.[field];
@@ -80,38 +95,64 @@ const ProductPicker = ({
 
   const remainingCount = Math.max(selectedProducts.length - 3, 0);
 
+  const openModal = () => {
+    setDraftProducts([]);
+    setIsModalOpen(true);
+  };
+
+  const cancelModal = () => {
+    setDraftProducts([]);
+    setIsModalOpen(false);
+  };
+
+  const addDraftProduct = (product) => {
+    setDraftProducts((prev) => {
+      if (prev.some((item) => item.id === product.id)) return prev;
+      return [...prev, product];
+    });
+  };
+
+  const applyDraftProducts = () => {
+    draftProducts.forEach((product) => {
+      onAddProduct(product);
+    });
+
+    setDraftProducts([]);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="product-picker">
       <div className="product-picker-toolbar">
-  <div className="product-picker-summary">
-    <div className="product-picker-summary-header">
-      <span className="product-picker-summary-label">
-        {t("picker.selectedProductsLabel")}
-      </span>
+        <div className="product-picker-summary">
+          <div className="product-picker-summary-header">
+            <span className="product-picker-summary-label">
+              {t("picker.selectedProductsLabel")}
+            </span>
 
-      <button
-        type="button"
-        className="product-picker-open-btn"
-        onClick={() => setIsModalOpen(true)}
-      >
-        {t("actions.selectProducts")}
-      </button>
-    </div>
+            <button
+              type="button"
+              className="product-picker-open-btn"
+              onClick={openModal}
+            >
+              {t("actions.selectProducts")}
+            </button>
+          </div>
 
-    <h4>{selectedProducts.length}</h4>
+          <h4>{selectedProducts.length}</h4>
 
-    <p>
-      {selectedProducts.length
-        ? remainingCount > 0
-          ? t("picker.selectedPreviewWithMore", {
-              names: previewNames,
-              count: remainingCount,
-            })
-          : previewNames
-        : t("picker.selectedEmpty")}
-    </p>
-  </div>
-</div>
+          <p>
+            {selectedProducts.length
+              ? remainingCount > 0
+                ? t("picker.selectedPreviewWithMore", {
+                    names: previewNames,
+                    count: remainingCount,
+                  })
+                : previewNames
+              : t("picker.selectedEmpty")}
+          </p>
+        </div>
+      </div>
 
       {errors?.selectedProducts ? (
         <p className="product-picker-error">{errors.selectedProducts}</p>
@@ -144,14 +185,18 @@ const ProductPicker = ({
                           onUpdateProduct(
                             product.product_id,
                             "target_quantity",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder={t("fields.targetQuantityPlaceholder")}
                       />
+
                       {getProductError(product.product_id, "target_quantity") ? (
                         <p className="product-picker-error">
-                          {getProductError(product.product_id, "target_quantity")}
+                          {getProductError(
+                            product.product_id,
+                            "target_quantity",
+                          )}
                         </p>
                       ) : null}
                     </div>
@@ -163,6 +208,7 @@ const ProductPicker = ({
                           ? ""
                           : ` (${t("common.optional")})`}
                       </label>
+
                       <input
                         type="number"
                         min="0"
@@ -172,7 +218,7 @@ const ProductPicker = ({
                           onUpdateProduct(
                             product.product_id,
                             "discount_pct",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder={
@@ -181,6 +227,7 @@ const ProductPicker = ({
                             : t("fields.discountOptionalPlaceholder")
                         }
                       />
+
                       {getProductError(product.product_id, "discount_pct") ? (
                         <p className="product-picker-error">
                           {getProductError(product.product_id, "discount_pct")}
@@ -209,7 +256,8 @@ const ProductPicker = ({
 
       <ProductSelectionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={cancelModal}
+        onApply={applyDraftProducts}
         loading={loading}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -219,9 +267,10 @@ const ProductPicker = ({
         onSortChange={setSortValue}
         categories={categories}
         products={filteredProducts}
-        selectedCount={selectedProducts.length}
+        selectedCount={selectedProducts.length + draftProducts.length}
+        draftCount={draftProducts.length}
         hasAvailableToSelect={hasAvailableToSelect}
-        onAddProduct={onAddProduct}
+        onAddProduct={addDraftProduct}
       />
     </div>
   );

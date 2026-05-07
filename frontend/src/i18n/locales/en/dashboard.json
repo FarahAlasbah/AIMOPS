@@ -1,16 +1,13 @@
 {
   "roles": {
     "admin": {
-      "title": "Admin Dashboard",
-      "subtitle": "A clear overview of operations, campaigns, uploads, and forecasting"
+      "title": "Welcome to AIMOPS"
     },
     "marketing": {
-      "title": "Marketing Dashboard",
-      "subtitle": "Campaign performance, uploads, products, and forecast readiness"
+"title": "Welcome to AIMOPS"
     },
     "owner": {
-      "title": "Business Owner Dashboard",
-      "subtitle": "A high-level view of business activity and forecasting progress"
+"title": "Welcome to AIMOPS"
     },
     "default": {
       "title": "Dashboard",
