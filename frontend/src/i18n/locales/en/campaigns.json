@@ -117,7 +117,7 @@
     "title": "Campaign Details",
     "subtitle": "Review campaign status, products, channels, and summary information",
     "duration": "Duration (days)",
-    "predictedRoi": "Predicted ROI",
+    "predictedRoi": "Expected Sales",
     "additionalRevenue": "Forecast Additional Revenue",
     "schedule": "Schedule",
     "createdAt": "Created At",

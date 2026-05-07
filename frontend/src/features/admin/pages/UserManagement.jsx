@@ -169,17 +169,7 @@ const UserManagement = () => {
 
   return (
     <div className="user-management-page">
-      <PageHeader
-        title={t("userManagement.title")}
-        subtitle={t("userManagement.subtitle")}
-        actions={
-          !showCreateForm && (
-            <Button onClick={() => setShowCreateForm(true)}>
-              {t("userManagement.createNewUser")}
-            </Button>
-          )
-        }
-      />
+      
 
       {successMessage && <InfoMessage type="success">{successMessage}</InfoMessage>}
       {apiError && <InfoMessage type="error">{apiError}</InfoMessage>}

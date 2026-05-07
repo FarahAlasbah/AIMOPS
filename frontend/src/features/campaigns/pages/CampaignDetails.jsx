@@ -134,11 +134,7 @@ const CampaignDetails = () => {
 
   return (
     <div className="campaign-details-page">
-      <PageHeader
-        breadcrumbs={breadcrumbs}
-        title={campaign?.campaign_name || t("details.title")}
-        subtitle={t("details.subtitle")}
-        actions={
+     
           <div className="campaign-details-actions">
             <button
               type="button"
@@ -174,9 +170,6 @@ const CampaignDetails = () => {
               </button>
             ) : null}
           </div>
-        }
-      />
-
       {pageError ? <div className="campaign-page-alert error">{pageError}</div> : null}
 
       {loading ? (

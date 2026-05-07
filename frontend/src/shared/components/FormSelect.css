@@ -1,0 +1,193 @@
+/* frontend/src/shared/components/FormSelect.css */
+
+.form-select-custom {
+  position: relative;
+}
+
+.fs-trigger {
+  position: relative;
+  width: 100%;
+  height: 42px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #111827;
+  padding: 0 42px 0 12px;
+  font-size: 14px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  outline: none;
+  text-align: start;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+html[dir="rtl"] .fs-trigger {
+  padding: 0 12px 0 42px;
+}
+
+.fs-trigger:hover:not(:disabled) {
+  border-color: #bfdbfe;
+  background: #fbfdff;
+}
+
+.fs-trigger:focus-visible,
+.fs-trigger.open {
+  border-color: #9bbce6;
+  box-shadow: 0 0 0 4px rgba(3, 4, 94, 0.08);
+}
+
+.fs-trigger.error {
+  border-color: #ef4444;
+}
+
+.fs-trigger.disabled,
+.fs-trigger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.fs-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fs-trigger:not(.has-value) .fs-value {
+  color: #6b7280;
+}
+
+.fs-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease;
+}
+
+html[dir="rtl"] .fs-chevron {
+  right: auto;
+  left: 12px;
+}
+
+.fs-trigger.open .fs-chevron {
+  transform: translateY(-50%) rotate(180deg);
+  color: #03045e;
+}
+
+.fs-menu {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  animation: fs-menu-in 0.14s ease;
+}
+
+@keyframes fs-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fs-option {
+  width: 100%;
+  min-height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #111827;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  text-align: start;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.fs-option:hover:not(:disabled),
+.fs-option.active {
+  background: #f1f5ff;
+  color: #03045e;
+}
+
+.fs-option.selected {
+  background: #eef2ff;
+  color: #03045e;
+  font-weight: 800;
+}
+
+.fs-option.disabled,
+.fs-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fs-option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fs-check {
+  color: #03045e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fs-empty {
+  padding: 12px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Scrollbar polish */
+.fs-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fs-menu::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.fs-menu::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

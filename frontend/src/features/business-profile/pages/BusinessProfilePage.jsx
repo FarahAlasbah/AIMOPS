@@ -94,10 +94,6 @@ export default function BusinessProfilePage() {
 
   return (
     <div className="business-profile-page">
-      <PageHeader
-        title="Business Profile"
-        subtitle="Manage the core business information used across overview, forecasting, campaigns, and AI consultation."
-      />
 
       <div className="business-profile-grid">
         <Card title="Business information">
@@ -172,66 +168,7 @@ export default function BusinessProfilePage() {
           )}
         </Card>
 
-        <Card title="Profile impact">
-          <div className="business-profile-side">
-            <div className="business-profile-note-list">
-              <div className="business-profile-note-item">
-                <div className="business-profile-note-icon">
-                  <Sparkles size={16} />
-                </div>
-                <div>
-                  <strong>AI consultation context</strong>
-                  <p>The assistant can answer with better business-specific context.</p>
-                </div>
-              </div>
-
-              <div className="business-profile-note-item">
-                <div className="business-profile-note-icon">
-                  <LineChart size={16} />
-                </div>
-                <div>
-                  <strong>Forecasting relevance</strong>
-                  <p>Industry and city can support smarter future forecasting logic.</p>
-                </div>
-              </div>
-
-              <div className="business-profile-note-item">
-                <div className="business-profile-note-icon">
-                  <Building2 size={16} />
-                </div>
-                <div>
-                  <strong>Workspace identity</strong>
-                  <p>This becomes the main business identity shown in the app.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="business-profile-meta">
-              <h4>Current snapshot</h4>
-
-              <div className="business-profile-meta-grid">
-                <div>
-                  <span>Name</span>
-                  <strong>{profile?.business_name || "Not set"}</strong>
-                </div>
-
-                <div>
-                  <span>Industry</span>
-                  <strong>{profile?.industry || "Not set"}</strong>
-                </div>
-
-                <div>
-                  <span>City</span>
-                  <strong>{profile?.city || "Not set"}</strong>
-                </div>
-              </div>
-
-              <div className="business-profile-created-at">
-                Created at: {formatCreatedAt(profile?.created_at)}
-              </div>
-            </div>
-          </div>
-        </Card>
+        
       </div>
     </div>
   );

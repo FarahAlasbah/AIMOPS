@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { useBusinessProfile } from "../hooks/useBusinessProfile";
 
 export default function BusinessProfileBanner() {
-  const { initialized, loading, isProfileComplete } = useBusinessProfile();
+  const {  loading, isProfileComplete } = useBusinessProfile();
 
-  if (!initialized || loading || isProfileComplete) {
+  if ( loading || isProfileComplete) {
     return null;
   }
 
