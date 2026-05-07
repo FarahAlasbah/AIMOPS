@@ -256,17 +256,7 @@ export default function ReviewPage() {
 
   return (
     <div className="data-upload-page">
-      <PageHeader
-        title={t("reviewPage.title")}
-        breadcrumbs={[
-          {
-            label: t("reviewPage.breadcrumbRoot"),
-            link: true,
-            onClick: () => navigate("/app/data-upload/uploads"),
-          },
-          { label: t("reviewPage.breadcrumbBatch", { batchId }), link: false },
-        ]}
-      />
+    
 
       <Card>
         {localLoading ? (

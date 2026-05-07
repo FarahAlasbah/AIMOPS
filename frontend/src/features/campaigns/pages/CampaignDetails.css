@@ -5,8 +5,11 @@
 
 .campaign-details-actions {
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
 .campaign-page-alert {
@@ -207,8 +210,8 @@
 
 .btn-danger {
   border: 1px solid #fecaca;
-  background: #ffffff;
-  color: #b91c1c;
+  background: #b91c1c;
+  color: #ffffff;
 }
 
 @media (max-width: 950px) {
@@ -216,6 +219,10 @@
   .campaign-details-grid,
   .details-list {
     grid-template-columns: 1fr;
+  }
+
+  .campaign-details-actions {
+    justify-content: stretch;
   }
 
   .campaign-details-actions .btn-primary,

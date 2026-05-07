@@ -125,7 +125,7 @@
     "refreshAnalysis": "تحديث التحليل",
     "clearLocal": "مسح المحلي",
     "delete": "حذف",
-    "deleteTitle": "يحذف سجلات مبيعات هذه الدفعة من الخادم"
+    "deleteTitle": "يحذف هذا الملف وسجلات المبيعات المرتبطة به"
   },
   "analyzeProgress": {
     "defaultLabel": "جارٍ التحليل وإعداد التعيين...",
@@ -168,6 +168,16 @@
     "errorGeneric": "حدث خطأ ما."
   },
   "uploadsPage": {
+    "deleteDialogTitle": "حذف هذا الملف؟",
+    "deleteDialogMessage": "هل أنت متأكد أنك تريد حذف \"{{fileName}}\"؟\n\nسيتم حذف الملف المرفوع وسجلات المبيعات المرتبطة به.\nلن يتم حذف المنتجات.",
+    "deleteDialogCancel": "إلغاء",
+    "deleteDialogConfirm": "حذف",
+    "deleteUploadHumanTitle": "حذف هذا الملف؟",
+    "deleteUploadHumanMessage": "هل أنت متأكد أنك تريد حذف \"{{fileName}}\"؟\n\nسيتم حذف الملف المرفوع وسجلات المبيعات المرتبطة به.\nلن يتم حذف المنتجات.",
+    "deleteUploadHumanConfirm": "حذف",
+    "bulkDeleteDialogTitle": "حذف الملفات المحددة؟",
+    "bulkDeleteDialogMessage": "هل أنت متأكد أنك تريد حذف {{count}} ملف/ملفات محددة؟\n\nسيتم حذف الملفات المرفوعة وسجلات المبيعات المرتبطة بها.\nلن يتم حذف المنتجات.",
+    "bulkDeleteDialogConfirm": "حذف المحدد",
     "title": "رفع بيانات مبيعات الحملة",
     "breadcrumbRoot": "الحملات",
     "breadcrumbCurrent": "رفع بيانات المبيعات",
@@ -175,10 +185,6 @@
     "refreshing": "جارٍ التحديث...",
     "refresh": "تحديث",
     "dismiss": "إغلاق",
-    "deleteDialogTitle": "حذف الملف المرفوع",
-    "deleteDialogMessage": "حذف ({{fileName}})؟\n\nسيؤدي هذا إلى حذف سجلات المبيعات لهذه الدفعة من الخادم. تبقى المنتجات محفوظة.",
-    "deleteDialogCancel": "إلغاء",
-    "deleteDialogConfirm": "حذف",
     "errorDuplicateFile": "هذا الملف تم رفعه مسبقاً. يرجى اختيار ملف مختلف.",
     "errorNoFile": "يرجى اختيار ملف أولاً.",
     "errorLoadFailed": "فشل تحميل قائمة الملفات المرفوعة.",

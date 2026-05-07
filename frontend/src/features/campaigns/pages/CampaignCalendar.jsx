@@ -1,11 +1,14 @@
 // frontend/src/features/campaigns/pages/CampaignCalendar.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, PageHeader, FormCalendar } from "../../../shared/components";
+import { RefreshCw } from "lucide-react";
+
+import { Card, FormCalendar } from "../../../shared/components";
 import { getCampaignCalendar, getCampaigns } from "../../../api/campaigns";
 import { formatDate, getDefaultCalendarRange } from "../utils";
 import { CampaignStatusBadge } from "../components";
+
 import "./CampaignCalendar.css";
 
 const getCampaignId = (campaign) =>
@@ -61,6 +64,50 @@ const mergeCampaigns = (...lists) => {
   return Array.from(map.values());
 };
 
+function CalendarCampaignSkeleton({ count = 3 }) {
+  return (
+    <div className="calendar-cards" aria-hidden="true">
+      {Array.from({ length: count }).map((_, index) => (
+        <article key={index} className="calendar-campaign-card">
+          <div className="calendar-campaign-top">
+            <div className="calendar-skeleton-stack">
+              <div className="calendar-sk" style={{ width: 190, height: 18 }} />
+              <div className="calendar-sk" style={{ width: 120, height: 13 }} />
+            </div>
+
+            <div className="calendar-sk calendar-sk-pill" />
+          </div>
+
+          <div className="calendar-campaign-grid">
+            {Array.from({ length: 4 }).map((__, itemIndex) => (
+              <div key={itemIndex}>
+                <div
+                  className="calendar-sk"
+                  style={{ width: "46%", height: 12, marginBottom: 10 }}
+                />
+                <div className="calendar-sk" style={{ width: "70%", height: 15 }} />
+              </div>
+            ))}
+          </div>
+
+          <div className="calendar-skeleton-products">
+            <div className="calendar-sk" style={{ width: 100, height: 13 }} />
+            <div className="calendar-skeleton-chip-row">
+              <div className="calendar-sk calendar-sk-chip" />
+              <div className="calendar-sk calendar-sk-chip" />
+              <div className="calendar-sk calendar-sk-chip" />
+            </div>
+          </div>
+
+          <div className="calendar-campaign-actions">
+            <div className="calendar-sk" style={{ width: 82, height: 44, borderRadius: 12 }} />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 const CampaignCalendar = () => {
   const navigate = useNavigate();
   const { t } = useTranslation("campaigns");
@@ -71,43 +118,53 @@ const CampaignCalendar = () => {
   const [endDate, setEndDate] = useState(defaultRange.endDate);
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [pageError, setPageError] = useState("");
 
-  const loadCalendar = async () => {
-    if (!startDate || !endDate) return;
+  const loadCalendar = useCallback(
+    async ({ showRefreshing = false } = {}) => {
+      if (!startDate || !endDate) return;
 
-    setLoading(true);
-    setPageError("");
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
-    try {
-      const [calendarResponse, campaignsResponse] = await Promise.all([
-        getCampaignCalendar({ startDate, endDate }).catch(() => null),
-        getCampaigns(),
-      ]);
+      setPageError("");
 
-      const calendarCampaigns = normalizeCampaignList(calendarResponse);
-      const allCampaigns = normalizeCampaignList(campaignsResponse);
+      try {
+        const [calendarResponse, campaignsResponse] = await Promise.all([
+          getCampaignCalendar({ startDate, endDate }).catch(() => null),
+          getCampaigns(),
+        ]);
 
-      const merged = mergeCampaigns(calendarCampaigns, allCampaigns)
-        .filter((campaign) => overlapsRange(campaign, startDate, endDate))
-        .sort((a, b) =>
-          toDateKey(getCampaignStartDate(a)).localeCompare(
-            toDateKey(getCampaignStartDate(b))
-          )
-        );
+        const calendarCampaigns = normalizeCampaignList(calendarResponse);
+        const allCampaigns = normalizeCampaignList(campaignsResponse);
 
-      setCampaigns(merged);
-    } catch (error) {
-      setPageError(error.message || t("messages.loadError"));
-      setCampaigns([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const merged = mergeCampaigns(calendarCampaigns, allCampaigns)
+          .filter((campaign) => overlapsRange(campaign, startDate, endDate))
+          .sort((a, b) =>
+            toDateKey(getCampaignStartDate(a)).localeCompare(
+              toDateKey(getCampaignStartDate(b)),
+            ),
+          );
+
+        setCampaigns(merged);
+      } catch (error) {
+        setPageError(error.message || t("messages.loadError"));
+        setCampaigns([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [endDate, startDate, t],
+  );
 
   useEffect(() => {
     loadCalendar();
-  }, [startDate, endDate]);
+  }, [loadCalendar]);
 
   const groupedCampaigns = useMemo(() => {
     const map = new Map();
@@ -125,21 +182,23 @@ const CampaignCalendar = () => {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [campaigns]);
 
+  const handleRefresh = () => {
+    loadCalendar({ showRefreshing: true });
+  };
+
+  const showSkeleton = loading || refreshing;
+
   return (
     <div className="campaign-calendar-page">
-      <PageHeader
-        title={t("calendar.title")}
-        subtitle={t("calendar.subtitle")}
-        actions={
-          <button
-            type="button"
-            className="btn-outline"
-            onClick={() => navigate("/app/campaigns")}
-          >
-            {t("actions.backToCampaigns")}
-          </button>
-        }
-      />
+      <div className="campaign-calendar-top-actions">
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={() => navigate("/app/campaigns")}
+        >
+          {t("actions.backToCampaigns")}
+        </button>
+      </div>
 
       {pageError ? (
         <div className="campaign-page-alert error">{pageError}</div>
@@ -152,6 +211,7 @@ const CampaignCalendar = () => {
               label={t("fields.startDate")}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              disabled={refreshing}
             />
           </div>
 
@@ -161,24 +221,35 @@ const CampaignCalendar = () => {
               value={endDate}
               min={startDate || undefined}
               onChange={(e) => setEndDate(e.target.value)}
+              disabled={refreshing}
             />
           </div>
 
           <div className="calendar-toolbar-action">
             <span className="calendar-toolbar-action-spacer">
-              {t("fields.endDate")}
+              {t("toolbar.refresh", { defaultValue: "Refresh" })}
             </span>
 
-            <button type="button" className="btn-primary" onClick={loadCalendar}>
-              {t("toolbar.refresh", { defaultValue: "Refresh" })}
+            <button
+              type="button"
+              className="calendar-refresh-icon-btn"
+              onClick={handleRefresh}
+              disabled={loading || refreshing}
+              title={t("toolbar.refresh", { defaultValue: "Refresh" })}
+              aria-label={t("toolbar.refresh", { defaultValue: "Refresh" })}
+            >
+              <RefreshCw
+                size={18}
+                className={loading || refreshing ? "spin-icon" : ""}
+              />
             </button>
           </div>
         </div>
       </Card>
 
-      <Card>
-        {loading ? (
-          <div className="campaign-calendar-empty">{t("common.loading")}</div>
+      <Card aria-busy={showSkeleton}>
+        {showSkeleton ? (
+          <CalendarCampaignSkeleton />
         ) : campaigns.length ? (
           <div className="calendar-cards">
             {groupedCampaigns.map(([dateKey, items]) => (

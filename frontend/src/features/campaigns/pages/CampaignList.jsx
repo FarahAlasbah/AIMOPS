@@ -181,10 +181,7 @@ const CampaignList = () => {
 
   return (
     <div className="campaign-list-page">
-      <PageHeader
-        title={t("list.title")}
-        subtitle={t("list.subtitle")}
-        actions={
+      
           <div className="campaign-list-header-actions">
             <button
               type="button"
@@ -204,8 +201,7 @@ const CampaignList = () => {
               </button>
             ) : null}
           </div>
-        }
-      />
+       
 
       {pageError ? <div className="campaign-page-alert error">{pageError}</div> : null}
 

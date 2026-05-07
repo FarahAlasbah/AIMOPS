@@ -1,26 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import {
+  Activity,
   CalendarDays,
   Download,
   FileText,
   Megaphone,
   Package,
   Printer,
+  RefreshCcw,
   TrendingUp,
   Upload,
 } from "lucide-react";
 
-import { Card, PageHeader } from "../../../shared/components";
-import {
-  getCampaignsForDashboard,
-  getDashboardSummary,
-  getForecastSummaryForDashboard,
-  getProductsForCharts,
-  getUploadsForCharts,
-} from "../../../api/dashboard";
+import { Card, FormSelect, PageHeader } from "../../../shared/components";
+import { getDashboardReport } from "../../../api/reports";
 
 import "./ReportsPage.css";
+
+const ALL_TIME_START_DATE = "2024-01-01";
 
 const PERIOD_OPTIONS = [
   { value: "30", label: "Last 30 days" },
@@ -30,48 +28,54 @@ const PERIOD_OPTIONS = [
   { value: "all", label: "All time" },
 ];
 
-const CAMPAIGN_STATUS_ORDER = ["active", "planned", "completed", "unknown"];
 const FORECAST_STATUS_ORDER = ["ready", "training", "failed", "idle"];
+const UPLOAD_STATUS_ORDER = ["processed", "mapping", "pending", "failed"];
 
-function normalizeStatus(value) {
-  const status = String(value || "").toLowerCase();
-  return status || "unknown";
+function toDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
-function getDateValue(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
-}
+function getDateRangeFromPeriod(period) {
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
 
-function getPeriodStart(period) {
-  if (period === "all") return null;
+  if (period === "all") {
+    return {
+      startDate: ALL_TIME_START_DATE,
+      endDate: toDateInputValue(end),
+    };
+  }
 
   const days = Number(period);
-  if (!Number.isFinite(days)) return null;
-
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
+  const start = new Date(end);
   start.setDate(start.getDate() - days + 1);
-  return start;
+
+  return {
+    startDate: toDateInputValue(start),
+    endDate: toDateInputValue(end),
+  };
 }
 
-function isInsidePeriod(value, periodStart) {
-  if (!periodStart) return true;
-
-  const date = getDateValue(value);
-  if (!date) return false;
-
-  return date >= periodStart;
+function normalizeSelectValue(value) {
+  if (value?.target?.value) return value.target.value;
+  if (value?.value) return value.value;
+  return value;
 }
 
-function formatNumber(value) {
+function normalizeStatus(value) {
+  return String(value || "unknown").toLowerCase();
+}
+
+function formatNumber(value, digits = 1) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "0";
 
   return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 1,
+    maximumFractionDigits: digits,
   }).format(number);
 }
 
@@ -108,49 +112,16 @@ function formatDate(value) {
   }).format(date);
 }
 
-function dayKey(value) {
-  const date = getDateValue(value);
-  if (!date) return null;
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 function shortDayLabel(value) {
-  const date = getDateValue(value);
-  if (!date) return String(value || "");
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
 
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
   }).format(date);
-}
-
-function getProductRevenue(product) {
-  return Number(product?.stats?.total_revenue ?? product?.total_revenue ?? 0) || 0;
-}
-
-function getProductSales(product) {
-  return Number(product?.stats?.total_sales ?? product?.total_sales ?? 0) || 0;
-}
-
-function getProductName(product) {
-  return product?.product_name || product?.name || "Unnamed product";
-}
-
-function getProductCategory(product) {
-  return product?.category || "Uncategorized";
-}
-
-function getUploadDate(upload) {
-  return upload?.uploaded_at || upload?.created_at || upload?.date || upload?.uploadedAt;
-}
-
-function getCampaignDate(campaign) {
-  return campaign?.start_date || campaign?.created_at || campaign?.date;
 }
 
 function downloadCsv(filename, rows) {
@@ -179,201 +150,221 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+function getCampaignName(campaign) {
+  return campaign?.campaign_name || campaign?.name || "Untitled campaign";
+}
+
+function getCampaignType(campaign) {
+  return campaign?.campaign_type || campaign?.type || "-";
+}
+
+function getCampaignStatus(campaign) {
+  return normalizeStatus(campaign?.status);
+}
+
+function getCampaignBudget(campaign) {
+  return Number(campaign?.budget ?? campaign?.total_budget ?? 0) || 0;
+}
+
+function getCampaignRoi(campaign) {
+  return campaign?.predicted_roi ?? campaign?.estimated_roi ?? campaign?.roi ?? null;
+}
+
+function getCampaignRevenue(campaign) {
+  return (
+    Number(
+      campaign?.forecast_additional_revenue ??
+        campaign?.additional_revenue ??
+        campaign?.revenue ??
+        campaign?.total_revenue ??
+        0
+    ) || 0
+  );
+}
+
+function ReportsSkeletonCard() {
+  return (
+    <div className="reports-stat-card reports-skeleton-card">
+      <div className="reports-skeleton reports-skeleton-title" />
+      <div className="reports-skeleton reports-skeleton-value" />
+      <div className="reports-skeleton reports-skeleton-line" />
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const [period, setPeriod] = useState("90");
+  const [dateRange, setDateRange] = useState(() => getDateRangeFromPeriod("90"));
 
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+  const [report, setReport] = useState(null);
 
-  const [summary, setSummary] = useState(null);
-  const [uploads, setUploads] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [forecastSummary, setForecastSummary] = useState({
-    total: 0,
-    ready: 0,
-    training: 0,
-    failed: 0,
-    idle: 0,
-  });
-
-  const loadReports = async () => {
+  const loadReports = async (range = dateRange) => {
     setLoading(true);
     setPageError("");
 
     try {
-      const [
-        summaryData,
-        uploadList,
-        productList,
-        campaignList,
-        forecastData,
-      ] = await Promise.all([
-        getDashboardSummary(),
-        getUploadsForCharts({ limit: 500 }),
-        getProductsForCharts({ limit: 300 }),
-        getCampaignsForDashboard(),
-        getForecastSummaryForDashboard(),
-      ]);
+      const data = await getDashboardReport({
+        startDate: range.startDate,
+        endDate: range.endDate,
+      });
 
-      setSummary(summaryData || {});
-      setUploads(Array.isArray(uploadList) ? uploadList : []);
-      setProducts(Array.isArray(productList) ? productList : []);
-      setCampaigns(Array.isArray(campaignList) ? campaignList : []);
-      setForecastSummary(
-        forecastData || {
-          total: 0,
-          ready: 0,
-          training: 0,
-          failed: 0,
-          idle: 0,
-        }
-      );
+      setReport(data || null);
     } catch (error) {
-      setPageError(error?.message || "Failed to load reports.");
+      setPageError(
+        error?.response?.data?.detail ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load reports."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadReports();
-  }, []);
+    loadReports(dateRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange.startDate, dateRange.endDate]);
 
-  const periodStart = useMemo(() => getPeriodStart(period), [period]);
+  const summary = report?.summary || {};
+  const salesTrend = Array.isArray(report?.sales_trend) ? report.sales_trend : [];
+  const topProducts = Array.isArray(report?.top_products) ? report.top_products : [];
+  const campaignPerformance = Array.isArray(report?.campaign_performance)
+    ? report.campaign_performance
+    : [];
+  const forecastHealth = report?.forecast_health || {};
+  const uploadActivity = report?.upload_activity || {};
 
-  const filteredUploads = useMemo(() => {
-    return uploads.filter((upload) => isInsidePeriod(getUploadDate(upload), periodStart));
-  }, [uploads, periodStart]);
+  const handlePeriodChange = (nextValue) => {
+    const value = normalizeSelectValue(nextValue);
+    setPeriod(value);
+    setDateRange(getDateRangeFromPeriod(value));
+  };
 
-  const filteredCampaigns = useMemo(() => {
-    return campaigns.filter((campaign) =>
-      isInsidePeriod(getCampaignDate(campaign), periodStart)
-    );
-  }, [campaigns, periodStart]);
+  const reportCards = useMemo(() => {
+    return [
+      {
+        label: "Total revenue",
+        value: formatCurrency(summary.total_revenue),
+        helper: `${formatNumber(summary.average_daily_revenue)} average daily revenue`,
+        icon: TrendingUp,
+        tone: "blue",
+      },
+      {
+        label: "Quantity sold",
+        value: formatNumber(summary.total_quantity_sold),
+        helper: `${formatNumber(summary.sales_record_count)} sales records`,
+        icon: Package,
+        tone: "indigo",
+      },
+      {
+        label: "Products sold",
+        value: formatNumber(summary.products_sold_count),
+        helper: "Unique products with sales",
+        icon: Package,
+        tone: "emerald",
+      },
+      {
+        label: "Campaigns",
+        value: formatNumber(summary.campaign_count),
+        helper: `${formatNumber(summary.active_campaign_count)} active campaigns`,
+        icon: Megaphone,
+        tone: "violet",
+      },
+      {
+        label: "Forecast models",
+        value: formatNumber(summary.forecast_models_total),
+        helper: `${formatNumber(summary.forecast_models_ready)} ready models`,
+        icon: Activity,
+        tone: "blue",
+      },
+      {
+        label: "Uploads",
+        value: formatNumber(summary.uploads_count),
+        helper: `${formatNumber(summary.processed_uploads_count)} processed uploads`,
+        icon: Upload,
+        tone: "amber",
+      },
+    ];
+  }, [summary]);
 
-  const productTotals = useMemo(() => {
-    let totalRevenue = 0;
-    let totalSales = 0;
-    let productsWithSales = 0;
-
-    products.forEach((product) => {
-      const revenue = getProductRevenue(product);
-      const sales = getProductSales(product);
-
-      totalRevenue += revenue;
-      totalSales += sales;
-
-      if (sales > 0 || revenue > 0) {
-        productsWithSales += 1;
-      }
-    });
-
+  const salesTrendChartOptions = useMemo(() => {
     return {
-      totalRevenue,
-      totalSales,
-      productsWithSales,
-      averageRevenuePerProduct:
-        productsWithSales > 0 ? totalRevenue / productsWithSales : 0,
+      chart: {
+        type: "area",
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        fontFamily: "inherit",
+      },
+      stroke: {
+        curve: "smooth",
+        width: 3,
+      },
+      fill: {
+        type: "gradient",
+        gradient: {
+          opacityFrom: 0.25,
+          opacityTo: 0.04,
+        },
+      },
+      dataLabels: { enabled: false },
+      grid: {
+        borderColor: "#eef2f7",
+        strokeDashArray: 4,
+      },
+      xaxis: {
+        categories: salesTrend.map((item) => shortDayLabel(item.period)),
+      },
+      yaxis: {
+        labels: {
+          formatter: (value) => formatNumber(value, 0),
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: (value) => formatCurrency(value),
+        },
+      },
     };
-  }, [products]);
+  }, [salesTrend]);
 
-  const campaignTotals = useMemo(() => {
-    let totalBudget = 0;
-    let additionalRevenue = 0;
-    let totalRoi = 0;
-    let roiCount = 0;
-
-    filteredCampaigns.forEach((campaign) => {
-      totalBudget += Number(campaign?.budget || 0);
-      additionalRevenue += Number(
-        campaign?.forecast_additional_revenue ||
-          campaign?.additional_revenue ||
-          campaign?.forecast_impact?.totals?.additional_revenue ||
-          0
-      );
-
-      const roi = Number(campaign?.predicted_roi ?? campaign?.estimated_roi);
-      if (Number.isFinite(roi)) {
-        totalRoi += roi;
-        roiCount += 1;
-      }
-    });
-
+  const quantityTrendChartOptions = useMemo(() => {
     return {
-      total: filteredCampaigns.length,
-      totalBudget,
-      additionalRevenue,
-      averageRoi: roiCount > 0 ? totalRoi / roiCount : null,
+      chart: {
+        type: "bar",
+        toolbar: { show: false },
+        fontFamily: "inherit",
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 7,
+          columnWidth: "45%",
+        },
+      },
+      dataLabels: { enabled: false },
+      grid: {
+        borderColor: "#eef2f7",
+        strokeDashArray: 4,
+      },
+      xaxis: {
+        categories: salesTrend.map((item) => shortDayLabel(item.period)),
+      },
+      yaxis: {
+        min: 0,
+        forceNiceScale: true,
+        labels: {
+          formatter: (value) => formatNumber(value, 0),
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: (value) => `${formatNumber(value)} units`,
+        },
+      },
     };
-  }, [filteredCampaigns]);
-
-  const topProducts = useMemo(() => {
-    return [...products]
-      .map((product) => ({
-        id: product?.product_id ?? product?.id ?? getProductName(product),
-        name: getProductName(product),
-        category: getProductCategory(product),
-        revenue: getProductRevenue(product),
-        sales: getProductSales(product),
-        lastSale: product?.stats?.last_sale || product?.last_sale || null,
-      }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 8);
-  }, [products]);
-
-  const campaignStatusStats = useMemo(() => {
-    const counts = {
-      active: 0,
-      planned: 0,
-      completed: 0,
-      unknown: 0,
-    };
-
-    filteredCampaigns.forEach((campaign) => {
-      const status = normalizeStatus(campaign?.status);
-      if (counts[status] === undefined) counts.unknown += 1;
-      else counts[status] += 1;
-    });
-
-    return counts;
-  }, [filteredCampaigns]);
-
-  const uploadsOverTime = useMemo(() => {
-    const map = new Map();
-
-    filteredUploads.forEach((upload) => {
-      const key = dayKey(getUploadDate(upload));
-      if (!key) return;
-
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-
-    const sortedKeys = Array.from(map.keys()).sort().slice(-14);
-
-    return {
-      labels: sortedKeys.map(shortDayLabel),
-      values: sortedKeys.map((key) => map.get(key) || 0),
-    };
-  }, [filteredUploads]);
-
-  const campaignTimeline = useMemo(() => {
-    const map = new Map();
-
-    filteredCampaigns.forEach((campaign) => {
-      const key = dayKey(getCampaignDate(campaign));
-      if (!key) return;
-
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-
-    const sortedKeys = Array.from(map.keys()).sort().slice(-14);
-
-    return {
-      labels: sortedKeys.map(shortDayLabel),
-      values: sortedKeys.map((key) => map.get(key) || 0),
-    };
-  }, [filteredCampaigns]);
+  }, [salesTrend]);
 
   const topProductChartOptions = useMemo(() => {
     return {
@@ -395,9 +386,9 @@ export default function ReportsPage() {
         strokeDashArray: 4,
       },
       xaxis: {
-        categories: topProducts.map((product) => product.name),
+        categories: topProducts.map((product) => product.product_name || "Unnamed product"),
         labels: {
-          formatter: (value) => formatNumber(value),
+          formatter: (value) => formatNumber(value, 0),
         },
       },
       tooltip: {
@@ -408,87 +399,7 @@ export default function ReportsPage() {
     };
   }, [topProducts]);
 
-  const statusChartOptions = useMemo(() => {
-    return {
-      chart: {
-        type: "donut",
-        toolbar: { show: false },
-        fontFamily: "inherit",
-      },
-      labels: CAMPAIGN_STATUS_ORDER.map((status) => {
-        if (status === "active") return "Active";
-        if (status === "planned") return "Planned";
-        if (status === "completed") return "Completed";
-        return "Unknown";
-      }),
-      dataLabels: { enabled: false },
-      legend: {
-        position: "bottom",
-      },
-      stroke: {
-        width: 0,
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: "68%",
-            labels: {
-              show: true,
-              total: {
-                show: true,
-                label: "Campaigns",
-                formatter: () => formatNumber(filteredCampaigns.length),
-              },
-            },
-          },
-        },
-      },
-    };
-  }, [filteredCampaigns.length]);
-
-  const timelineChartOptions = useMemo(() => {
-    return {
-      chart: {
-        type: "area",
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        fontFamily: "inherit",
-      },
-      stroke: {
-        curve: "smooth",
-        width: 3,
-      },
-      fill: {
-        type: "gradient",
-        gradient: {
-          opacityFrom: 0.26,
-          opacityTo: 0.05,
-        },
-      },
-      dataLabels: { enabled: false },
-      grid: {
-        borderColor: "#eef2f7",
-        strokeDashArray: 4,
-      },
-      xaxis: {
-        categories: uploadsOverTime.labels,
-      },
-      yaxis: {
-        min: 0,
-        forceNiceScale: true,
-        labels: {
-          formatter: (value) => formatNumber(value),
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: (value) => `${formatNumber(value)} uploads`,
-        },
-      },
-    };
-  }, [uploadsOverTime.labels]);
-
-  const campaignTimelineChartOptions = useMemo(() => {
+  const forecastChartOptions = useMemo(() => {
     return {
       chart: {
         type: "bar",
@@ -507,96 +418,101 @@ export default function ReportsPage() {
         strokeDashArray: 4,
       },
       xaxis: {
-        categories: campaignTimeline.labels,
-      },
-      yaxis: {
-        min: 0,
-        forceNiceScale: true,
-        labels: {
-          formatter: (value) => formatNumber(value),
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: (value) => `${formatNumber(value)} campaigns`,
-        },
-      },
-    };
-  }, [campaignTimeline.labels]);
-
-  const forecastChartOptions = useMemo(() => {
-    return {
-      chart: {
-        type: "bar",
-        toolbar: { show: false },
-        fontFamily: "inherit",
-      },
-      plotOptions: {
-        bar: {
-          borderRadius: 8,
-          columnWidth: "44%",
-        },
-      },
-      dataLabels: { enabled: false },
-      grid: {
-        borderColor: "#eef2f7",
-        strokeDashArray: 4,
-      },
-      xaxis: {
         categories: ["Ready", "Training", "Failed", "Not started"],
       },
       yaxis: {
         min: 0,
         forceNiceScale: true,
         labels: {
-          formatter: (value) => formatNumber(value),
+          formatter: (value) => formatNumber(value, 0),
         },
       },
     };
   }, []);
 
-  const reportCards = useMemo(() => {
-    return [
-      {
-        label: "Total revenue",
-        value: formatCurrency(productTotals.totalRevenue),
-        helper: "Based on product sales totals",
-        icon: TrendingUp,
-        tone: "blue",
+  const uploadChartOptions = useMemo(() => {
+    return {
+      chart: {
+        type: "donut",
+        toolbar: { show: false },
+        fontFamily: "inherit",
       },
-      {
-        label: "Sales records",
-        value: formatNumber(productTotals.totalSales),
-        helper: "Total sales records from products",
-        icon: Package,
-        tone: "indigo",
+      labels: ["Processed", "Mapping", "Pending", "Failed"],
+      dataLabels: { enabled: false },
+      legend: {
+        position: "bottom",
       },
-      {
-        label: "Campaigns",
-        value: formatNumber(campaignTotals.total),
-        helper: `${formatCurrency(campaignTotals.totalBudget)} total budget`,
-        icon: Megaphone,
-        tone: "violet",
+      stroke: {
+        width: 0,
       },
-      {
-        label: "Data uploads",
-        value: formatNumber(filteredUploads.length),
-        helper: `${formatNumber(summary?.uploadsCount ?? uploads.length)} all-time uploads`,
-        icon: Upload,
-        tone: "emerald",
+      plotOptions: {
+        pie: {
+          donut: {
+            size: "68%",
+            labels: {
+              show: true,
+              total: {
+                show: true,
+                label: "Uploads",
+                formatter: () => formatNumber(uploadActivity.total),
+              },
+            },
+          },
+        },
       },
-    ];
-  }, [productTotals, campaignTotals, filteredUploads.length, summary, uploads.length]);
+    };
+  }, [uploadActivity.total]);
+
+  const campaignTotals = useMemo(() => {
+    let totalBudget = 0;
+    let totalRevenue = 0;
+    let totalRoi = 0;
+    let roiCount = 0;
+
+    campaignPerformance.forEach((campaign) => {
+      totalBudget += getCampaignBudget(campaign);
+      totalRevenue += getCampaignRevenue(campaign);
+
+      const roi = Number(getCampaignRoi(campaign));
+      if (Number.isFinite(roi)) {
+        totalRoi += roi;
+        roiCount += 1;
+      }
+    });
+
+    return {
+      count: campaignPerformance.length,
+      totalBudget,
+      totalRevenue,
+      averageRoi: roiCount > 0 ? totalRoi / roiCount : null,
+    };
+  }, [campaignPerformance]);
 
   const handleExportProducts = () => {
     const rows = [
-      ["Product", "Category", "Revenue", "Sales records", "Last sale"],
+      [
+        "Product",
+        "Category",
+        "Revenue",
+        "Quantity sold",
+        "Sales records",
+        "Average daily quantity",
+        "Last sale",
+        "Forecast status",
+        "Forecast next 30 days quantity",
+        "Forecast next 30 days revenue",
+      ],
       ...topProducts.map((product) => [
-        product.name,
-        product.category,
-        product.revenue,
-        product.sales,
-        product.lastSale || "",
+        product.product_name || "",
+        product.category || "",
+        product.total_revenue ?? "",
+        product.total_quantity_sold ?? "",
+        product.sales_record_count ?? "",
+        product.average_daily_quantity ?? "",
+        product.last_sale_date || "",
+        product.forecast_status || "",
+        product.forecast_next_30_days_quantity ?? "",
+        product.forecast_next_30_days_revenue ?? "",
       ]),
     ];
 
@@ -610,38 +526,47 @@ export default function ReportsPage() {
         "Type",
         "Status",
         "Budget",
-        "Predicted ROI",
+        "ROI",
         "Additional revenue",
         "Start date",
         "End date",
       ],
-      ...filteredCampaigns.map((campaign) => [
-        campaign?.campaign_name || "",
-        campaign?.campaign_type || "",
-        campaign?.status || "",
-        campaign?.budget ?? "",
-        campaign?.predicted_roi ?? "",
-        campaign?.forecast_additional_revenue ?? "",
+      ...campaignPerformance.map((campaign) => [
+        getCampaignName(campaign),
+        getCampaignType(campaign),
+        getCampaignStatus(campaign),
+        getCampaignBudget(campaign),
+        getCampaignRoi(campaign) ?? "",
+        getCampaignRevenue(campaign),
         campaign?.start_date || "",
         campaign?.end_date || "",
       ]),
     ];
 
-    downloadCsv("aimops-campaigns-report.csv", rows);
+    downloadCsv("aimops-campaign-performance-report.csv", rows);
   };
 
   return (
     <div className="reports-page">
       <PageHeader
         title="Reports"
-        subtitle="A clear business snapshot built from your existing AIMOPS data."
+        subtitle="Business performance, sales trends, products, campaigns, forecasts, and uploads."
         actions={
           <div className="reports-header-actions">
-            <button type="button" className="reports-btn reports-btn-secondary" onClick={loadReports}>
+            <button
+              type="button"
+              className="reports-btn reports-btn-secondary"
+              onClick={() => loadReports(dateRange)}
+            >
+              <RefreshCcw size={16} />
               Refresh
             </button>
 
-            <button type="button" className="reports-btn reports-btn-secondary" onClick={() => window.print()}>
+            <button
+              type="button"
+              className="reports-btn reports-btn-secondary"
+              onClick={() => window.print()}
+            >
               <Printer size={16} />
               Print
             </button>
@@ -649,58 +574,101 @@ export default function ReportsPage() {
         }
       />
 
-      {pageError ? <div className="reports-alert reports-alert-error">{pageError}</div> : null}
+      {pageError ? (
+        <div className="reports-alert reports-alert-error">{pageError}</div>
+      ) : null}
 
       <Card>
         <div className="reports-toolbar">
           <div>
             <div className="reports-toolbar-title">Report period</div>
             <p>
-              Product revenue is shown from available product totals. Uploads and campaigns are filtered by date.
+              Data is loaded from the backend reports dashboard endpoint using the selected
+              date range.
             </p>
           </div>
 
-          <select
-            className="reports-period-select"
-            value={period}
-            onChange={(event) => setPeriod(event.target.value)}
-          >
-            {PERIOD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div className="reports-filter-group">
+            <div className="reports-filter-item">
+              <span>Preset</span>
+              <FormSelect
+                value={period}
+                onChange={handlePeriodChange}
+                options={PERIOD_OPTIONS}
+              />
+            </div>
+
+            <div className="reports-date-pill">
+              <CalendarDays size={15} />
+              <span>
+                {formatDate(report?.date_range?.start_date || dateRange.startDate)} →{" "}
+                {formatDate(report?.date_range?.end_date || dateRange.endDate)}
+              </span>
+            </div>
+          </div>
         </div>
       </Card>
 
       <div className="reports-stat-grid">
-        {reportCards.map((item) => {
-          const Icon = item.icon;
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <ReportsSkeletonCard key={index} />
+            ))
+          : reportCards.map((item) => {
+              const Icon = item.icon;
 
-          return (
-            <div key={item.label} className={`reports-stat-card tone-${item.tone}`}>
-              <div className="reports-stat-top">
-                <div>
-                  <span>{item.label}</span>
-                  <strong>{loading ? "—" : item.value}</strong>
+              return (
+                <div
+                  key={item.label}
+                  className={`reports-stat-card tone-${item.tone}`}
+                >
+                  <div className="reports-stat-top">
+                    <div>
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                    </div>
+
+                    <div className="reports-stat-icon">
+                      <Icon size={20} />
+                    </div>
+                  </div>
+
+                  <p>{item.helper}</p>
                 </div>
-
-                <div className="reports-stat-icon">
-                  <Icon size={20} />
-                </div>
-              </div>
-
-              <p>{item.helper}</p>
-            </div>
-          );
-        })}
+              );
+            })}
       </div>
 
       <div className="reports-grid reports-grid-main">
+        <Card title="Sales revenue trend">
+          <p className="reports-muted">
+            Daily revenue over the selected report period.
+          </p>
+
+          <div className="reports-chart-box reports-chart-box-large">
+            {loading ? (
+              <div className="reports-empty">Loading chart...</div>
+            ) : salesTrend.length ? (
+              <ReactApexChart
+                type="area"
+                height={340}
+                options={salesTrendChartOptions}
+                series={[
+                  {
+                    name: "Revenue",
+                    data: salesTrend.map((item) => Number(item.total_revenue || 0)),
+                  },
+                ]}
+              />
+            ) : (
+              <div className="reports-empty">No sales trend data available.</div>
+            )}
+          </div>
+        </Card>
+
         <Card title="Top products by revenue">
           <div className="reports-card-action-row">
-            <p className="reports-muted">Your highest-value products based on available product stats.</p>
+            <p className="reports-muted">Highest-value products in this period.</p>
 
             <button
               type="button"
@@ -724,7 +692,9 @@ export default function ReportsPage() {
                 series={[
                   {
                     name: "Revenue",
-                    data: topProducts.map((product) => product.revenue),
+                    data: topProducts.map((product) =>
+                      Number(product.total_revenue || 0)
+                    ),
                   },
                 ]}
               />
@@ -733,70 +703,29 @@ export default function ReportsPage() {
             )}
           </div>
         </Card>
-
-        <Card title="Campaign status">
-          <p className="reports-muted">Current campaign split for the selected period.</p>
-
-          <div className="reports-chart-box reports-chart-box-large">
-            {loading ? (
-              <div className="reports-empty">Loading chart...</div>
-            ) : filteredCampaigns.length ? (
-              <ReactApexChart
-                type="donut"
-                height={340}
-                options={statusChartOptions}
-                series={CAMPAIGN_STATUS_ORDER.map(
-                  (status) => campaignStatusStats[status] || 0
-                )}
-              />
-            ) : (
-              <div className="reports-empty">No campaigns in this period.</div>
-            )}
-          </div>
-        </Card>
       </div>
 
       <div className="reports-grid reports-grid-secondary">
-        <Card title="Uploads over time">
+        <Card title="Quantity sold trend">
           <div className="reports-chart-box">
             {loading ? (
               <div className="reports-empty">Loading chart...</div>
-            ) : uploadsOverTime.values.length ? (
-              <ReactApexChart
-                type="area"
-                height={280}
-                options={timelineChartOptions}
-                series={[
-                  {
-                    name: "Uploads",
-                    data: uploadsOverTime.values,
-                  },
-                ]}
-              />
-            ) : (
-              <div className="reports-empty">No uploads in this period.</div>
-            )}
-          </div>
-        </Card>
-
-        <Card title="Campaigns over time">
-          <div className="reports-chart-box">
-            {loading ? (
-              <div className="reports-empty">Loading chart...</div>
-            ) : campaignTimeline.values.length ? (
+            ) : salesTrend.length ? (
               <ReactApexChart
                 type="bar"
                 height={280}
-                options={campaignTimelineChartOptions}
+                options={quantityTrendChartOptions}
                 series={[
                   {
-                    name: "Campaigns",
-                    data: campaignTimeline.values,
+                    name: "Quantity sold",
+                    data: salesTrend.map((item) =>
+                      Number(item.total_quantity_sold || 0)
+                    ),
                   },
                 ]}
               />
             ) : (
-              <div className="reports-empty">No campaigns in this period.</div>
+              <div className="reports-empty">No quantity trend data available.</div>
             )}
           </div>
         </Card>
@@ -805,16 +734,16 @@ export default function ReportsPage() {
           <div className="reports-chart-box">
             {loading ? (
               <div className="reports-empty">Loading chart...</div>
-            ) : Number(forecastSummary?.total || 0) > 0 ? (
+            ) : Number(forecastHealth.total || 0) > 0 ? (
               <ReactApexChart
                 type="bar"
                 height={280}
                 options={forecastChartOptions}
                 series={[
                   {
-                    name: "Products",
+                    name: "Models",
                     data: FORECAST_STATUS_ORDER.map(
-                      (status) => forecastSummary?.[status] || 0
+                      (status) => Number(forecastHealth?.[status] || 0)
                     ),
                   },
                 ]}
@@ -824,19 +753,38 @@ export default function ReportsPage() {
             )}
           </div>
         </Card>
+
+        <Card title="Upload activity">
+          <div className="reports-chart-box">
+            {loading ? (
+              <div className="reports-empty">Loading chart...</div>
+            ) : Number(uploadActivity.total || 0) > 0 ? (
+              <ReactApexChart
+                type="donut"
+                height={280}
+                options={uploadChartOptions}
+                series={UPLOAD_STATUS_ORDER.map((status) =>
+                  Number(uploadActivity?.[status] || 0)
+                )}
+              />
+            ) : (
+              <div className="reports-empty">No upload activity available.</div>
+            )}
+          </div>
+        </Card>
       </div>
 
       <Card title="Campaign performance">
         <div className="reports-card-action-row">
           <p className="reports-muted">
-            Campaign budget, predicted ROI, and forecasted extra revenue from existing campaign data.
+            Campaign budget, ROI, and generated or forecasted revenue.
           </p>
 
           <button
             type="button"
             className="reports-small-btn"
             onClick={handleExportCampaigns}
-            disabled={!filteredCampaigns.length}
+            disabled={!campaignPerformance.length}
           >
             <Download size={15} />
             CSV
@@ -845,18 +793,22 @@ export default function ReportsPage() {
 
         <div className="reports-campaign-summary">
           <div>
+            <span>Campaigns</span>
+            <strong>{formatNumber(campaignTotals.count)}</strong>
+          </div>
+
+          <div>
             <span>Total budget</span>
             <strong>{formatCurrency(campaignTotals.totalBudget)}</strong>
           </div>
 
           <div>
-            <span>Forecasted extra revenue</span>
-            <strong>{formatCurrency(campaignTotals.additionalRevenue)}</strong>
-          </div>
-
-          <div>
             <span>Average ROI</span>
-            <strong>{campaignTotals.averageRoi == null ? "-" : formatPercent(campaignTotals.averageRoi)}</strong>
+            <strong>
+              {campaignTotals.averageRoi == null
+                ? "-"
+                : formatPercent(campaignTotals.averageRoi)}
+            </strong>
           </div>
         </div>
 
@@ -868,8 +820,8 @@ export default function ReportsPage() {
                 <th>Type</th>
                 <th>Status</th>
                 <th>Budget</th>
-                <th>Predicted ROI</th>
-                <th>Additional revenue</th>
+                <th>ROI</th>
+                <th>Revenue</th>
                 <th>Dates</th>
               </tr>
             </thead>
@@ -881,28 +833,31 @@ export default function ReportsPage() {
                     Loading campaigns...
                   </td>
                 </tr>
-              ) : filteredCampaigns.length ? (
-                filteredCampaigns.slice(0, 10).map((campaign) => (
-                  <tr key={campaign?.campaign_id || campaign?.campaign_name}>
+              ) : campaignPerformance.length ? (
+                campaignPerformance.slice(0, 10).map((campaign, index) => (
+                  <tr key={campaign?.campaign_id || getCampaignName(campaign) || index}>
                     <td>
                       <div className="reports-table-title">
-                        {campaign?.campaign_name || "Untitled campaign"}
+                        {getCampaignName(campaign)}
                       </div>
                     </td>
-                    <td>{campaign?.campaign_type || "-"}</td>
+                    <td>{getCampaignType(campaign)}</td>
                     <td>
-                      <span className={`reports-status-pill ${normalizeStatus(campaign?.status)}`}>
-                        {campaign?.status || "unknown"}
+                      <span
+                        className={`reports-status-pill ${getCampaignStatus(campaign)}`}
+                      >
+                        {getCampaignStatus(campaign)}
                       </span>
                     </td>
-                    <td>{formatCurrency(campaign?.budget)}</td>
-                    <td>{formatPercent(campaign?.predicted_roi)}</td>
-                    <td>{formatCurrency(campaign?.forecast_additional_revenue)}</td>
+                    <td>{formatCurrency(getCampaignBudget(campaign))}</td>
+                    <td>{formatPercent(getCampaignRoi(campaign))}</td>
+                    <td>{formatCurrency(getCampaignRevenue(campaign))}</td>
                     <td>
                       <div className="reports-date-range">
                         <CalendarDays size={14} />
                         <span>
-                          {formatDate(campaign?.start_date)} → {formatDate(campaign?.end_date)}
+                          {formatDate(campaign?.start_date)} →{" "}
+                          {formatDate(campaign?.end_date)}
                         </span>
                       </div>
                     </td>
@@ -911,7 +866,7 @@ export default function ReportsPage() {
               ) : (
                 <tr>
                   <td colSpan={7} className="reports-table-empty">
-                    No campaigns found for this period.
+                    No campaign performance data available.
                   </td>
                 </tr>
               )}
@@ -928,7 +883,11 @@ export default function ReportsPage() {
                 <th>Product</th>
                 <th>Category</th>
                 <th>Revenue</th>
-                <th>Sales records</th>
+                <th>Quantity sold</th>
+                <th>Avg daily qty</th>
+                <th>Forecast status</th>
+                <th>Next 30d qty</th>
+                <th>Next 30d revenue</th>
                 <th>Last sale</th>
               </tr>
             </thead>
@@ -936,25 +895,47 @@ export default function ReportsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="reports-table-empty">
+                  <td colSpan={9} className="reports-table-empty">
                     Loading products...
                   </td>
                 </tr>
               ) : topProducts.length ? (
-                topProducts.map((product) => (
-                  <tr key={product.id}>
-                    <td>
-                      <div className="reports-table-title">{product.name}</div>
-                    </td>
-                    <td>{product.category}</td>
-                    <td>{formatCurrency(product.revenue)}</td>
-                    <td>{formatNumber(product.sales)}</td>
-                    <td>{formatDate(product.lastSale)}</td>
-                  </tr>
-                ))
+                topProducts.map((product) => {
+                  const status = normalizeStatus(product.forecast_status || "idle");
+
+                  return (
+                    <tr key={product.product_id || product.product_name}>
+                      <td>
+                        <div className="reports-table-title">
+                          {product.product_name || "Unnamed product"}
+                        </div>
+                      </td>
+                      <td>{product.category || "-"}</td>
+                      <td>{formatCurrency(product.total_revenue)}</td>
+                      <td>{formatNumber(product.total_quantity_sold)}</td>
+                      <td>{formatNumber(product.average_daily_quantity)}</td>
+                      <td>
+                        <span className={`reports-status-pill ${status}`}>
+                          {product.forecast_status || "not started"}
+                        </span>
+                      </td>
+                      <td>
+                        {product.forecast_next_30_days_quantity == null
+                          ? "-"
+                          : formatNumber(product.forecast_next_30_days_quantity)}
+                      </td>
+                      <td>
+                        {product.forecast_next_30_days_revenue == null
+                          ? "-"
+                          : formatCurrency(product.forecast_next_30_days_revenue)}
+                      </td>
+                      <td>{formatDate(product.last_sale_date)}</td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={5} className="reports-table-empty">
+                  <td colSpan={9} className="reports-table-empty">
                     No product data available.
                   </td>
                 </tr>
@@ -968,10 +949,11 @@ export default function ReportsPage() {
         <div className="reports-footer-note">
           <FileText size={18} />
           <div>
-            <strong>Frontend-only report for now.</strong>
+            <strong>Backend reports endpoint connected.</strong>
             <p>
-              This page uses the existing dashboard, products, uploads, campaigns, and forecast requests.
-              When the backend reports endpoint is ready, only the data loading part needs to change.
+              This page now reads from /api/reports/dashboard using start_date and
+              end_date, so totals, charts, forecast health, upload activity, and tables
+              come from the reports API.
             </p>
           </div>
         </div>

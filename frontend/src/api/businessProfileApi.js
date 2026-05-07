@@ -1,23 +1,7 @@
+// frontend/src/api/businessProfileApi.js
+import api from "./api";
+
 const BUSINESS_PROFILE_URL = "/api/business-profile";
-
-async function parseJson(response) {
-  const text = await response.text();
-
-  if (!text) return null;
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-function makeError(message, status, data) {
-  const error = new Error(message);
-  error.status = status;
-  error.data = data;
-  return error;
-}
 
 function normalizeProfile(profile) {
   if (!profile) return null;
@@ -39,35 +23,10 @@ function buildPayload(values) {
   };
 }
 
-async function request(url, options = {}) {
-  const response = await fetch(url, {
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw makeError(
-      data?.message || `Request failed with status ${response.status}.`,
-      response.status,
-      data
-    );
-  }
-
-  return data;
-}
-
 export async function getBusinessProfile() {
   try {
-    const data = await request(BUSINESS_PROFILE_URL, {
-      method: "GET",
-    });
+    const res = await api.get(BUSINESS_PROFILE_URL);
+    const data = res.data;
 
     if (data?.success === false && !data?.profile) {
       return null;
@@ -75,7 +34,7 @@ export async function getBusinessProfile() {
 
     return normalizeProfile(data?.profile);
   } catch (error) {
-    if (error.status === 404) {
+    if (error.response?.status === 404) {
       return null;
     }
 
@@ -86,10 +45,8 @@ export async function getBusinessProfile() {
 export async function createBusinessProfile(values) {
   const payload = buildPayload(values);
 
-  const data = await request(BUSINESS_PROFILE_URL, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  const res = await api.post(BUSINESS_PROFILE_URL, payload);
+  const data = res.data;
 
   const directProfile = normalizeProfile(data?.profile);
   if (directProfile) return directProfile;
@@ -100,10 +57,8 @@ export async function createBusinessProfile(values) {
 export async function updateBusinessProfile(values) {
   const payload = buildPayload(values);
 
-  const data = await request(BUSINESS_PROFILE_URL, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
+  const res = await api.put(BUSINESS_PROFILE_URL, payload);
+  const data = res.data;
 
   const directProfile = normalizeProfile(data?.profile);
   if (directProfile) return directProfile;
@@ -119,7 +74,7 @@ export async function saveBusinessProfile(values, hasExistingProfile) {
   try {
     return await createBusinessProfile(values);
   } catch (error) {
-    if (error.status === 409) {
+    if (error.response?.status === 409) {
       return updateBusinessProfile(values);
     }
 

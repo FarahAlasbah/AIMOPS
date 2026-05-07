@@ -5,8 +5,11 @@
 
 .campaign-list-header-actions {
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 18px;
 }
 
 .campaign-page-alert {
@@ -198,6 +201,7 @@
 
   .campaign-list-header-actions {
     width: 100%;
+    justify-content: stretch;
   }
 
   .campaign-list-header-actions .btn-primary,

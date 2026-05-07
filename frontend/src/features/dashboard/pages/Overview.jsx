@@ -467,7 +467,7 @@ export default function Overview() {
 
   return (
   <div className="overview-page">
-    <PageHeader title={t(`roles.${dashboardKey}.title`)} subtitle={t(`roles.${dashboardKey}.subtitle`)} />
+    <PageHeader title={t(`roles.${dashboardKey}.title`)}  />
 
     {error ? <div className="overview-error">{error}</div> : null}
 

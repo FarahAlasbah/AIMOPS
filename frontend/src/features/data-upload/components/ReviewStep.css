@@ -474,3 +474,141 @@
   padding: 3px 8px;
   cursor: default;
 }
+
+/* Green confirmed badge */
+.confirmed-badge {
+  color: #166534;
+  background: #ecfdf5;
+  border-color: #86efac;
+}
+
+/* More obvious category */
+/* Confirmed badge */
+.confirmed-badge {
+  color: #166534;
+  background: #ecfdf5;
+  border-color: #86efac;
+}
+
+
+
+/* RTL support */
+/* Simple visible category row */
+.product-category-simple {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-md);
+  line-height: 1.3;
+}
+
+.product-category-simple-label {
+  color: var(--c-text-muted);
+  font-weight: var(--fw-bold);
+}
+
+.product-category-simple-value {
+  color: var(--c-primary);
+  font-weight: var(--fw-black);
+}
+
+/* Confirmed badge */
+.confirmed-badge {
+  color: #166534;
+  background: #ecfdf5;
+  border-color: #86efac;
+}
+
+/* Simple visible category row */
+.product-category-simple {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-md);
+  line-height: 1.3;
+}
+
+.product-category-simple-label {
+  color: var(--c-text-muted);
+  font-weight: var(--fw-bold);
+}
+
+.product-category-simple-value {
+  color: var(--c-primary);
+  font-weight: var(--fw-black);
+}
+
+/* Modal header actions */
+.merge-modal-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.merge-head-btn {
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 9px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s ease;
+  background: #fff;
+}
+
+.merge-head-btn.secondary {
+  color: var(--c-text);
+  background: #fff;
+}
+
+.merge-head-btn.secondary:hover {
+  background: var(--c-surface-muted);
+}
+
+.merge-head-btn.primary {
+  color: #fff;
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+.merge-head-btn.primary:hover {
+  filter: brightness(1.03);
+}
+
+.merge-head-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Make current product obvious */
+.merge-product-highlight {
+  margin: 14px 16px 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-surface-muted);
+}
+
+.merge-product-highlight-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.merge-product-highlight-name {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--c-text);
+  line-height: 1.25;
+}
+
+/* Remove bottom modal footer if it still exists */
+.merge-modal-foot {
+  display: none;
+}
+

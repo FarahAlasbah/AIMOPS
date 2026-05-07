@@ -1,14 +1,10 @@
+// frontend/src/features/forecasting/pages/ForecastDetailsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ReactApexChart from "react-apexcharts";
 
-import {
-  Button,
-  Card,
-  FormSelect,
-  PageHeader,
-} from "../../../shared/components";
+import { Button, Card, FormSelect } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
 import {
@@ -25,6 +21,7 @@ const POLL_MS = 4000;
 const MAX_FORECAST_DAYS = 90;
 const DEFAULT_VISIBLE_DAYS = 14;
 const WINDOW_PRESETS = [14, 21, 30, 60, 90];
+
 const NO_DATA_HINTS = [
   "no data",
   "no usable",
@@ -40,6 +37,73 @@ const EXPLANATION_CACHE_PREFIX = "aimops_forecast_explanation_v1";
 
 const getExplanationCacheKey = (productId) =>
   `${EXPLANATION_CACHE_PREFIX}:${String(productId)}`;
+
+const stripCodeFence = (value) => {
+  const text = String(value ?? "").trim();
+
+  return text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+};
+
+const tryParseJsonString = (value) => {
+  if (typeof value !== "string") return null;
+
+  const cleaned = stripCodeFence(value);
+
+  if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeExplanationResponse = (raw) => {
+  if (!raw) return null;
+
+  const base =
+    typeof raw === "string"
+      ? { explanation: raw }
+      : raw && typeof raw === "object"
+        ? { ...raw }
+        : null;
+
+  if (!base) return null;
+
+  const parsedFromExplanation = tryParseJsonString(base.explanation);
+
+  if (parsedFromExplanation && typeof parsedFromExplanation === "object") {
+    return {
+      ...base,
+      ...parsedFromExplanation,
+      explanation: String(parsedFromExplanation.explanation || "").trim(),
+      key_drivers: Array.isArray(parsedFromExplanation.key_drivers)
+        ? parsedFromExplanation.key_drivers
+        : Array.isArray(base.key_drivers)
+          ? base.key_drivers
+          : [],
+      generated_at:
+        base.generated_at ||
+        parsedFromExplanation.generated_at ||
+        new Date().toISOString(),
+      cached: base.cached ?? parsedFromExplanation.cached ?? false,
+    };
+  }
+
+  return {
+    ...base,
+    explanation: stripCodeFence(base.explanation),
+    key_drivers: Array.isArray(base.key_drivers) ? base.key_drivers : [],
+    generated_at: base.generated_at || new Date().toISOString(),
+    cached: base.cached ?? false,
+  };
+};
 
 const readExplanationCache = (productId) => {
   try {
@@ -84,16 +148,29 @@ const normalizeStatus = (value) => {
   const v = String(value || "").toLowerCase();
 
   if (["ready", "done", "success", "completed"].includes(v)) return "ready";
-  if (["training", "queued", "pending", "running"].includes(v))
+  if (["training", "queued", "pending", "running"].includes(v)) {
     return "training";
+  }
   if (["failed", "error"].includes(v)) return "failed";
+
   return "idle";
+};
+
+const getConfidenceClass = (value) => {
+  const v = String(value || "").toLowerCase().trim();
+
+  if (v.includes("high")) return "high";
+  if (v.includes("medium") || v.includes("normal")) return "medium";
+  if (v.includes("low")) return "low";
+
+  return "unknown";
 };
 
 const isLikelyNoDataMessage = (value) => {
   const text = String(value || "").toLowerCase();
   return NO_DATA_HINTS.some((token) => text.includes(token));
 };
+
 const getApiStatus = (error) => error?.response?.status;
 
 const extractApiMessage = (error, fallback) => {
@@ -116,69 +193,7 @@ const extractApiMessage = (error, fallback) => {
 
   return fallback;
 };
-const stripCodeFence = (value) => {
-  const text = String(value ?? "").trim();
 
-  return text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
-};
-
-const tryParseJsonString = (value) => {
-  if (typeof value !== "string") return null;
-
-  const cleaned = stripCodeFence(value);
-
-  if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    return null;
-  }
-};
-
-const normalizeExplanationResponse = (raw) => {
-  if (!raw) return null;
-
-  const base =
-    typeof raw === "string"
-      ? { explanation: raw }
-      : raw && typeof raw === "object"
-      ? { ...raw }
-      : null;
-
-  if (!base) return null;
-
-  const parsedFromExplanation = tryParseJsonString(base.explanation);
-
-  if (parsedFromExplanation && typeof parsedFromExplanation === "object") {
-    return {
-      ...base,
-      ...parsedFromExplanation,
-      explanation: String(parsedFromExplanation.explanation || "").trim(),
-      key_drivers: Array.isArray(parsedFromExplanation.key_drivers)
-        ? parsedFromExplanation.key_drivers
-        : Array.isArray(base.key_drivers)
-        ? base.key_drivers
-        : [],
-      generated_at: base.generated_at || parsedFromExplanation.generated_at || new Date().toISOString(),
-      cached: base.cached ?? parsedFromExplanation.cached ?? false,
-    };
-  }
-
-  return {
-    ...base,
-    explanation: stripCodeFence(base.explanation),
-    key_drivers: Array.isArray(base.key_drivers) ? base.key_drivers : [],
-    generated_at: base.generated_at || new Date().toISOString(),
-    cached: base.cached ?? false,
-  };
-};
 const toLocalDateKey = (value = new Date()) => {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "";
@@ -186,11 +201,13 @@ const toLocalDateKey = (value = new Date()) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 };
 
 const parseDateKey = (value) => {
   if (!value) return null;
+
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return null;
 
@@ -208,6 +225,7 @@ const clampDateKey = (value, min, max) => {
 const addDaysToKey = (value, days) => {
   const d = parseDateKey(value);
   if (!d) return value;
+
   d.setDate(d.getDate() + Number(days || 0));
   return toLocalDateKey(d);
 };
@@ -227,6 +245,7 @@ const getWeekStartKey = (value) => {
 
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
+
   d.setDate(d.getDate() + diff);
   return toLocalDateKey(d);
 };
@@ -234,6 +253,7 @@ const getWeekStartKey = (value) => {
 const fmtNumber = (value, locale = "en") => {
   const n = Number(value);
   if (Number.isNaN(n)) return "—";
+
   return new Intl.NumberFormat(locale === "ar" ? "ar" : "en", {
     maximumFractionDigits: 2,
   }).format(n);
@@ -242,6 +262,7 @@ const fmtNumber = (value, locale = "en") => {
 const fmtMoney = (value, locale = "en") => {
   const n = Number(value);
   if (Number.isNaN(n)) return "—";
+
   return new Intl.NumberFormat(locale === "ar" ? "ar" : "en", {
     style: "currency",
     currency: "ILS",
@@ -252,8 +273,10 @@ const fmtMoney = (value, locale = "en") => {
 
 const fmtDate = (value, locale = "en") => {
   if (!value) return "—";
+
   const d = parseDateKey(value) || new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
+
   return d.toLocaleDateString(locale === "ar" ? "ar" : "en", {
     year: "numeric",
     month: "short",
@@ -263,8 +286,10 @@ const fmtDate = (value, locale = "en") => {
 
 const fmtDateTime = (value, locale = "en") => {
   if (!value) return "—";
+
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
+
   return d.toLocaleString(locale === "ar" ? "ar" : "en");
 };
 
@@ -332,6 +357,7 @@ export default function ForecastDetailsPage() {
   const { productId } = useParams();
   const { t, i18n } = useTranslation("forecasting");
   const navigate = useNavigate();
+
   const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
 
   const [windowPreset, setWindowPreset] = useState(
@@ -343,10 +369,10 @@ export default function ForecastDetailsPage() {
   const [status, setStatus] = useState(null);
   const [statusErr, setStatusErr] = useState("");
 
-const [detailsLoading, setDetailsLoading] = useState(false);
-const [forecast, setForecast] = useState(null);
-const [detailsErr, setDetailsErr] = useState("");
-const [detailsWarn, setDetailsWarn] = useState("");
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [forecast, setForecast] = useState(null);
+  const [detailsErr, setDetailsErr] = useState("");
+  const [detailsWarn, setDetailsWarn] = useState("");
 
   const [actionBusy, setActionBusy] = useState(false);
   const [info, setInfo] = useState(null);
@@ -365,6 +391,7 @@ const [detailsWarn, setDetailsWarn] = useState("");
         ...res,
         status: normalizeStatus(res?.status),
       };
+
       setStatus(nextStatus);
       return nextStatus;
     } catch (e) {
@@ -376,63 +403,63 @@ const [detailsWarn, setDetailsWarn] = useState("");
   }, [productId, t]);
 
   const loadForecast = useCallback(async () => {
-  setDetailsLoading(true);
-  setDetailsErr("");
-  setDetailsWarn("");
+    setDetailsLoading(true);
+    setDetailsErr("");
+    setDetailsWarn("");
 
-  try {
-    const res = await getProductForecast(productId, {
-      days: MAX_FORECAST_DAYS,
-    });
+    try {
+      const res = await getProductForecast(productId, {
+        days: MAX_FORECAST_DAYS,
+      });
 
-    setForecast(res);
-    return res;
-  } catch (e) {
-    setForecast(null);
+      setForecast(res);
+      return res;
+    } catch (e) {
+      setForecast(null);
 
-    if (getApiStatus(e) === 404) {
-      setDetailsWarn(
-        t("messages.forecastNotFound", {
-          defaultValue:
-            "No forecast is available for this product yet. Generate a forecast first.",
-        }),
-      );
+      if (getApiStatus(e) === 404) {
+        setDetailsWarn(
+          t("messages.forecastNotFound", {
+            defaultValue:
+              "No forecast is available for this product yet. Generate a forecast first.",
+          }),
+        );
+        return null;
+      }
+
+      setDetailsErr(extractApiMessage(e, t("messages.detailsFailed")));
       return null;
+    } finally {
+      setDetailsLoading(false);
     }
-
-    setDetailsErr(extractApiMessage(e, t("messages.detailsFailed")));
-    return null;
-  } finally {
-    setDetailsLoading(false);
-  }
-}, [productId, t]);
+  }, [productId, t]);
 
   const loadExplanation = useCallback(async () => {
-  setExplanationLoading(true);
-  setExplanationErr("");
+    setExplanationLoading(true);
+    setExplanationErr("");
 
-  try {
-    const res = await getForecastExplanation(productId);
-    const normalized = normalizeExplanationResponse(res);
+    try {
+      const res = await getForecastExplanation(productId);
+      const normalized = normalizeExplanationResponse(res);
 
-    setExplanationData(normalized);
-    writeExplanationCache(productId, normalized);
+      setExplanationData(normalized);
+      writeExplanationCache(productId, normalized);
 
-    return normalized;
-  } catch (e) {
-    setExplanationData(null);
+      return normalized;
+    } catch (e) {
+      setExplanationData(null);
 
-    const message =
-      e?.response?.data?.detail ||
-      e?.message ||
-      t("messages.explanationFailed");
+      const message =
+        e?.response?.data?.detail ||
+        e?.message ||
+        t("messages.explanationFailed");
 
-    setExplanationErr(String(message));
-    return null;
-  } finally {
-    setExplanationLoading(false);
-  }
-}, [productId, t]);
+      setExplanationErr(String(message));
+      return null;
+    } finally {
+      setExplanationLoading(false);
+    }
+  }, [productId, t]);
 
   const handleExplainWithAi = async () => {
     setHasFetchedExplanation(true);
@@ -440,118 +467,31 @@ const [detailsWarn, setDetailsWarn] = useState("");
   };
 
   const handleReExplainWithAi = async () => {
-  setHasFetchedExplanation(true);
-  setExplanationLoading(true);
-  setExplanationErr("");
-
-  try {
-    await deleteForecastExplanation(productId);
-    clearExplanationCache(productId);
-
-    const res = await getForecastExplanation(productId);
-    const normalized = normalizeExplanationResponse(res);
-
-    setExplanationData(normalized);
-    writeExplanationCache(productId, normalized);
-  } catch (e) {
-    const message =
-      e?.response?.data?.detail ||
-      e?.message ||
-      t("messages.explanationFailed");
-
-    setExplanationErr(String(message));
-    setExplanationData(null);
-  } finally {
-    setExplanationLoading(false);
-  }
-};
-
-  useEffect(() => {
-    loadStatus();
-  }, [loadStatus]);
-
-  useEffect(() => {
-  const cached = readExplanationCache(productId);
-
-  if (cached?.explanation) {
-    setExplanationData(cached);
-    setExplanationErr("");
-    setExplanationLoading(false);
     setHasFetchedExplanation(true);
-    return;
-  }
-
-  setExplanationData(null);
-  setExplanationErr("");
-  setExplanationLoading(false);
-  setHasFetchedExplanation(false);
-}, [productId]);
-
-  useEffect(() => {
-  if (!status?.status) return;
-
-  if (status.status === "ready") {
-    loadForecast();
-
-    const cached = readExplanationCache(productId);
-    if (cached?.explanation) {
-      setExplanationData(cached);
-      setExplanationErr("");
-      setExplanationLoading(false);
-      setHasFetchedExplanation(true);
-    }
-
-    return;
-  }
-
-  setForecast(null);
-  setDetailsErr("");
-  setDetailsWarn("");
-
-  if (status.status === "training" || status.status === "failed") {
-    setExplanationData(null);
+    setExplanationLoading(true);
     setExplanationErr("");
-    setExplanationLoading(false);
-    setHasFetchedExplanation(false);
-  }
-}, [status?.status, loadForecast, productId]);
 
-  useEffect(() => {
-    if (status?.status !== "training") return;
+    try {
+      await deleteForecastExplanation(productId);
+      clearExplanationCache(productId);
 
-    const id = window.setInterval(loadStatus, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [status?.status, loadStatus]);
+      const res = await getForecastExplanation(productId);
+      const normalized = normalizeExplanationResponse(res);
 
-  useEffect(() => {
-    if (!forecast) return;
+      setExplanationData(normalized);
+      writeExplanationCache(productId, normalized);
+    } catch (e) {
+      const message =
+        e?.response?.data?.detail ||
+        e?.message ||
+        t("messages.explanationFailed");
 
-    const start = forecast?.forecast_period?.start || toLocalDateKey();
-    const end =
-      forecast?.forecast_period?.end ||
-      forecast?.daily?.[forecast?.daily?.length - 1]?.date ||
-      start;
-
-    const defaultEnd = clampDateKey(
-      addDaysToKey(start, DEFAULT_VISIBLE_DAYS - 1),
-      start,
-      end,
-    );
-
-    const visibleLength = getRangeLength(start, defaultEnd);
-    setWindowPreset(
-      String(
-        WINDOW_PRESETS.includes(visibleLength)
-          ? visibleLength
-          : DEFAULT_VISIBLE_DAYS,
-      ),
-    );
-    setSelectedEndDate(defaultEnd);
-  }, [
-    forecast?.product_id,
-    forecast?.forecast_period?.start,
-    forecast?.forecast_period?.end,
-  ]);
+      setExplanationErr(String(message));
+      setExplanationData(null);
+    } finally {
+      setExplanationLoading(false);
+    }
+  };
 
   const handleGenerate = async (retrain = false) => {
     setActionBusy(true);
@@ -594,16 +534,96 @@ const [detailsWarn, setDetailsWarn] = useState("");
     }
   };
 
-  const handleRefresh = async () => {
-    setInfo(null);
-    const nextStatus = await loadStatus();
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
 
-    if (normalizeStatus(nextStatus?.status) === "ready") {
-      await loadForecast();
+  useEffect(() => {
+    const cached = readExplanationCache(productId);
+
+    if (cached?.explanation) {
+      setExplanationData(cached);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(true);
+      return;
     }
-  };
+
+    setExplanationData(null);
+    setExplanationErr("");
+    setExplanationLoading(false);
+    setHasFetchedExplanation(false);
+  }, [productId]);
+
+  useEffect(() => {
+    if (!status?.status) return;
+
+    if (status.status === "ready") {
+      loadForecast();
+
+      const cached = readExplanationCache(productId);
+      if (cached?.explanation) {
+        setExplanationData(cached);
+        setExplanationErr("");
+        setExplanationLoading(false);
+        setHasFetchedExplanation(true);
+      }
+
+      return;
+    }
+
+    setForecast(null);
+    setDetailsErr("");
+    setDetailsWarn("");
+
+    if (status.status === "training" || status.status === "failed") {
+      setExplanationData(null);
+      setExplanationErr("");
+      setExplanationLoading(false);
+      setHasFetchedExplanation(false);
+    }
+  }, [status?.status, loadForecast, productId]);
+
+  useEffect(() => {
+    if (status?.status !== "training") return undefined;
+
+    const id = window.setInterval(loadStatus, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [status?.status, loadStatus]);
+
+  useEffect(() => {
+    if (!forecast) return;
+
+    const start = forecast?.forecast_period?.start || toLocalDateKey();
+    const end =
+      forecast?.forecast_period?.end ||
+      forecast?.daily?.[forecast?.daily?.length - 1]?.date ||
+      start;
+
+    const defaultEnd = clampDateKey(
+      addDaysToKey(start, DEFAULT_VISIBLE_DAYS - 1),
+      start,
+      end,
+    );
+
+    const visibleLength = getRangeLength(start, defaultEnd);
+
+    setWindowPreset(
+      String(
+        WINDOW_PRESETS.includes(visibleLength)
+          ? visibleLength
+          : DEFAULT_VISIBLE_DAYS,
+      ),
+    );
+    setSelectedEndDate(defaultEnd);
+  }, [
+    forecast?.product_id,
+    forecast?.forecast_period?.start,
+    forecast?.forecast_period?.end,
+  ]);
 
   const daily = Array.isArray(forecast?.daily) ? forecast.daily : [];
+
   const forecastStart = forecast?.forecast_period?.start || toLocalDateKey();
   const forecastEnd =
     forecast?.forecast_period?.end ||
@@ -698,6 +718,7 @@ const [detailsWarn, setDetailsWarn] = useState("");
       current.quantity += Number(item?.predicted_quantity || 0);
       current.revenue += Number(item?.predicted_revenue || 0);
       current.days += 1;
+
       map.set(weekStart, current);
     }
 
@@ -789,9 +810,19 @@ const [detailsWarn, setDetailsWarn] = useState("");
       xaxis: {
         type: "datetime",
         labels: { datetimeUTC: false },
+        title: {
+          text: t("details.axisDailyX", {
+            defaultValue: "Forecast date",
+          }),
+        },
       },
       yaxis: {
         forceNiceScale: true,
+        title: {
+          text: t("details.axisDailyY", {
+            defaultValue: "Predicted quantity",
+          }),
+        },
         labels: {
           formatter: (value) => fmtNumber(value, locale),
         },
@@ -807,7 +838,10 @@ const [detailsWarn, setDetailsWarn] = useState("");
               ctx?.w?.globals?.seriesNames?.[ctx?.seriesIndex] || "";
 
             if (seriesName === t("details.datasets.confidenceBand")) {
-              return `${fmtNumber(point?.quantity_lower, locale)} → ${fmtNumber(point?.quantity_upper, locale)}`;
+              return `${fmtNumber(point?.quantity_lower, locale)} → ${fmtNumber(
+                point?.quantity_upper,
+                locale,
+              )}`;
             }
 
             return fmtNumber(value, locale);
@@ -896,17 +930,30 @@ const [detailsWarn, setDetailsWarn] = useState("");
       xaxis: {
         type: "datetime",
         labels: { datetimeUTC: false },
+        title: {
+          text: t("details.axisWeeklyX", {
+            defaultValue: "Week start date",
+          }),
+        },
       },
       yaxis: [
         {
-          title: { text: t("details.yAxes.quantity") },
+          title: {
+            text: t("details.yAxes.quantity", {
+              defaultValue: "Weekly quantity",
+            }),
+          },
           labels: {
             formatter: (value) => fmtNumber(value, locale),
           },
         },
         {
           opposite: true,
-          title: { text: t("details.yAxes.revenue") },
+          title: {
+            text: t("details.yAxes.revenue", {
+              defaultValue: "Predicted revenue",
+            }),
+          },
           labels: {
             formatter: (value) => fmtMoney(value, locale),
           },
@@ -921,17 +968,20 @@ const [detailsWarn, setDetailsWarn] = useState("");
   }, [locale, t]);
 
   const explanationText = useMemo(() => {
-  const normalized = normalizeExplanationResponse(explanationData);
-  return String(normalized?.explanation || "").trim();
-}, [explanationData]);
+    const normalized = normalizeExplanationResponse(explanationData);
+    return String(normalized?.explanation || "").trim();
+  }, [explanationData]);
 
   const hasExplanation = Boolean(explanationText);
-const explanationDrivers = useMemo(() => {
-  const normalized = normalizeExplanationResponse(explanationData);
-  return Array.isArray(normalized?.key_drivers)
-    ? normalized.key_drivers.filter(Boolean)
-    : [];
-}, [explanationData]);
+
+  const explanationDrivers = useMemo(() => {
+    const normalized = normalizeExplanationResponse(explanationData);
+
+    return Array.isArray(normalized?.key_drivers)
+      ? normalized.key_drivers.filter(Boolean)
+      : [];
+  }, [explanationData]);
+
   const isExplanationStale = useMemo(() => {
     if (!hasExplanation) return false;
 
@@ -973,69 +1023,29 @@ const explanationDrivers = useMemo(() => {
 
   return (
     <div className="forecast-details-page">
-      <PageHeader
-        title={productDisplayName}
-        subtitle={t("details.pageSubtitle")}
-        actions={
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => navigate("/app/forecasting")}
-            >
-              {t("details.back")}
-            </Button>
-
-            <Button type="button" variant="secondary" onClick={handleRefresh}>
-              {t("details.refresh")}
-            </Button>
-          </div>
-        }
-      />
-
-      <Card className="forecast-details-card">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
+      <div className="forecast-details-actions">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => navigate("/app/forecasting")}
         >
-          <div>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                color: "#6b7280",
-                marginBottom: 6,
-              }}
-            >
-              Product
-            </div>
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                color: "#111827",
-                lineHeight: 1.2,
-              }}
-            >
-              {productDisplayName}
-            </div>
-            <div style={{ marginTop: 6, fontSize: 14, color: "#6b7280" }}>
-              Category: {productCategory}
-            </div>
-          </div>
+          {t("details.back")}
+        </Button>
+      </div>
+
+      <Card className="forecast-product-card">
+        <div className="forecast-product-label">Product</div>
+        <div className="forecast-product-name">
+          <bdi>{productDisplayName}</bdi>
+        </div>
+        <div className="forecast-product-category">
+          Category: <bdi>{productCategory}</bdi>
         </div>
       </Card>
 
       {statusErr ? <InfoMessage type="error">{statusErr}</InfoMessage> : null}
-{detailsErr ? <InfoMessage type="error">{detailsErr}</InfoMessage> : null}
-{info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
+      {detailsErr ? <InfoMessage type="error">{detailsErr}</InfoMessage> : null}
+      {info ? <InfoMessage type={info.type}>{info.text}</InfoMessage> : null}
 
       {statusLoading ? (
         <ForecastDetailsSkeleton />
@@ -1088,39 +1098,27 @@ const explanationDrivers = useMemo(() => {
           </div>
 
           {status?.error ? (
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 13,
-                color: "#991b1b",
-                lineHeight: 1.5,
-              }}
-            >
-              {status.error}
-            </div>
+            <div className="forecast-status-error">{status.error}</div>
           ) : null}
         </Card>
       ) : detailsLoading && !forecast ? (
         <ForecastDetailsSkeleton />
-     ) : !forecast ? (
-  <Card>
-    <InfoMessage type={detailsWarn || likelyNoData ? "warning" : "error"}>
-      {detailsWarn ||
-        (likelyNoData
-          ? t("messages.noDataDetected")
-          : t("messages.detailsFailed"))}
-    </InfoMessage>
+      ) : !forecast ? (
+        <Card>
+          <InfoMessage type={detailsWarn || likelyNoData ? "warning" : "error"}>
+            {detailsWarn ||
+              (likelyNoData
+                ? t("messages.noDataDetected")
+                : t("messages.detailsFailed"))}
+          </InfoMessage>
 
-    <div className="forecast-state-actions">
+          <div className="forecast-state-actions">
             <Button
               type="button"
               variant="secondary"
               onClick={() => navigate("/app/data-upload")}
             >
               {t("actions.uploadData")}
-            </Button>
-            <Button type="button" variant="secondary" onClick={handleRefresh}>
-              {t("details.refresh")}
             </Button>
           </div>
         </Card>
@@ -1137,9 +1135,7 @@ const explanationDrivers = useMemo(() => {
             </div>
 
             <div className="forecast-kpi">
-              <div className="forecast-kpi-label">
-                {t("details.summaryAvg")}
-              </div>
+              <div className="forecast-kpi-label">{t("details.summaryAvg")}</div>
               <div className="forecast-kpi-value">
                 {fmtNumber(selectedSummary.avgDailyQuantity, locale)}
               </div>
@@ -1177,68 +1173,37 @@ const explanationDrivers = useMemo(() => {
                 {t("details.summaryConfidence")}
               </div>
               <div className="forecast-kpi-value">
-                {selectedSummary.confidence || "—"}
+                <span
+                  className={`forecast-confidence-chip ${getConfidenceClass(
+                    selectedSummary.confidence,
+                  )}`}
+                >
+                  {selectedSummary.confidence || "—"}
+                </span>
               </div>
             </div>
           </div>
 
-          <Card className="forecast-details-card">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: 24,
-              }}
-            >
-              <div
-                style={{
-                  padding: "4px 0",
-                  background: "transparent",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    color: "#9ca3af",
-                    marginBottom: 8,
-                  }}
-                >
-                  {t("details.metaPeriod")}
-                </div>
+          <Card className="forecast-details-card forecast-analytics-card">
+            <div className="forecast-period-block">
+              <div className="forecast-period-label">
+                {t("details.metaPeriod")}
+              </div>
 
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: "#111827",
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {fmtDate(forecastStart, locale)}
-                  <span style={{ margin: "0 10px", color: "#d1d5db" }}>→</span>
-                  {fmtDate(forecastEnd, locale)}
-                </div>
+              <div className="forecast-period-value">
+                {fmtDate(forecastStart, locale)}
+                <span>→</span>
+                {fmtDate(forecastEnd, locale)}
               </div>
             </div>
 
             <div
-              style={{
-                marginTop: 24,
-                paddingTop: 20,
-                borderTop: "1px solid #e5e7eb",
-                display: "grid",
-                gridTemplateColumns: selectedSummary.hasEventBoosts
-                  ? "220px minmax(280px, 1fr) auto"
-                  : "220px minmax(280px, 1fr)",
-                gap: 20,
-                alignItems: "start",
-              }}
+              className={[
+                "forecast-window-panel",
+                selectedSummary.hasEventBoosts ? "has-boosts" : "",
+              ].join(" ")}
             >
-              <div style={{ minWidth: 0 }}>
+              <div className="forecast-window-select">
                 <FormSelect
                   label={t("details.visibleWindowLabel")}
                   options={[
@@ -1253,79 +1218,34 @@ const explanationDrivers = useMemo(() => {
                 />
               </div>
 
-              <div
-                style={{
-                  minWidth: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    color: "#9ca3af",
-                    marginBottom: 10,
-                  }}
-                >
+              <div className="forecast-selected-range">
+                <div className="forecast-selected-range-label">
                   Selected Range
                 </div>
 
-                <div
-                  style={{
-                    height: 42,
-                    display: "flex",
-                    alignItems: "center",
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: "#111827",
-                    lineHeight: 1.4,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+                <div className="forecast-selected-range-value">
                   <span>{fmtDate(forecastStart, locale)}</span>
-                  <span
-                    style={{
-                      margin: "0 8px",
-                      color: "#d1d5db",
-                      flex: "0 0 auto",
-                    }}
-                  >
-                    →
-                  </span>
+                  <span className="forecast-selected-range-arrow">→</span>
                   <span>{fmtDate(safeEndDate, locale)}</span>
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#6b7280",
-                      flex: "0 0 auto",
-                    }}
-                  >
-                    ({visibleDaily.length}{" "}
-                    {t("details.days14").replace("14 ", "").toLowerCase()})
-                  </span>
                 </div>
               </div>
 
               {selectedSummary.hasEventBoosts ? (
-                <div
-                  style={{
-                    minHeight: 42,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
+                <div className="forecast-window-boost">
                   <span className="forecast-badge accent">
                     {t("details.eventBoostsActive")}
                   </span>
                 </div>
               ) : null}
+            </div>
+
+            <div className="forecast-chart-warning">
+              <InfoMessage type="warning">
+                {t("details.chartWarning", {
+                  defaultValue:
+                    "Forecast values are estimates based on the available sales history. Use them as planning guidance, not as guaranteed demand.",
+                })}
+              </InfoMessage>
             </div>
 
             <div className="forecast-chart-grid">
@@ -1336,6 +1256,8 @@ const explanationDrivers = useMemo(() => {
                 <div className="forecast-chart-subtitle">
                   {t("details.dailySubtitle")}
                 </div>
+
+                
 
                 <div className="forecast-chart-box">
                   {noForecastInRange ? (
@@ -1361,6 +1283,8 @@ const explanationDrivers = useMemo(() => {
                   {t("details.weeklySubtitle")}
                 </div>
 
+                
+
                 <div className="forecast-chart-box small">
                   {weeklyBuckets.length === 0 ? (
                     <InfoMessage type="info">
@@ -1380,15 +1304,7 @@ const explanationDrivers = useMemo(() => {
           </Card>
 
           <div className="forecast-explanation">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 12,
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="forecast-explanation-head">
               <div className="forecast-explanation-title">AI Explanation</div>
 
               {!hasFetchedExplanation ? (
@@ -1425,39 +1341,40 @@ const explanationDrivers = useMemo(() => {
               </div>
             ) : null}
 
-           {hasFetchedExplanation && hasExplanation ? (
-  <div className="forecast-ai-body">
-    {isExplanationStale ? (
-      <div className="forecast-ai-stale">
-        This explanation is older than the current forecast. Re-explain to refresh it.
-      </div>
-    ) : null}
+            {hasFetchedExplanation && hasExplanation ? (
+              <div className="forecast-ai-body">
+                {isExplanationStale ? (
+                  <div className="forecast-ai-stale">
+                    This explanation is older than the current forecast.
+                    Re-explain to refresh it.
+                  </div>
+                ) : null}
 
-    <div className="forecast-ai-summary">
-      {explanationText}
-    </div>
+                <div className="forecast-ai-summary">{explanationText}</div>
 
-    {explanationDrivers.length > 0 ? (
-      <div className="forecast-ai-drivers-card">
-        <div className="forecast-drivers-title">Key Drivers</div>
+                {explanationDrivers.length > 0 ? (
+                  <div className="forecast-ai-drivers-card">
+                    <div className="forecast-drivers-title">Key Drivers</div>
 
-        <div className="forecast-ai-drivers">
-          {explanationDrivers.map((driver, index) => (
-            <div className="forecast-ai-driver" key={`${driver}-${index}`}>
-              <span className="forecast-ai-driver-dot" />
-              <span>{driver}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    ) : null}
-  </div>
-) : null}
+                    <div className="forecast-ai-drivers">
+                      {explanationDrivers.map((driver, index) => (
+                        <div
+                          className="forecast-ai-driver"
+                          key={`${driver}-${index}`}
+                        >
+                          <span className="forecast-ai-driver-dot" />
+                          <span>{driver}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {hasFetchedExplanation && explanationData?.generated_at ? (
               <div className="forecast-note" style={{ marginTop: 10 }}>
-                Generated at:{" "}
-                {fmtDateTime(explanationData.generated_at, locale)}
+                Generated at: {fmtDateTime(explanationData.generated_at, locale)}
                 {explanationData?.cached ? " • Cached" : ""}
               </div>
             ) : null}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, PageHeader, FormCalendar } from "../../../shared/components";
+import { Card, FormCalendar } from "../../../shared/components";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import { createCampaign, publishCampaign } from "../../../api/campaigns";
 import { getProducts } from "../../../api/products";
@@ -303,12 +303,16 @@ const NewCampaign = () => {
 
   return (
     <div className="new-campaign-page">
-      <PageHeader
-        breadcrumbs={breadcrumbs}
-        title={t("form.title")}
-        subtitle={t("form.subtitle")}
-      />
-
+      
+<div className="new-campaign-top-actions">
+  <button
+    type="button"
+    className="btn-outline"
+    onClick={() => navigate("/app/campaigns")}
+  >
+    {t("actions.backToCampaigns")}
+  </button>
+</div>
       {pageError ? <div className="campaign-page-alert error">{pageError}</div> : null}
       {successMessage ? (
         <div className="campaign-page-alert success">{successMessage}</div>

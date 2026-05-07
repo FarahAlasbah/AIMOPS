@@ -170,3 +170,35 @@
     height: 60px;
   }
 }
+
+.upload-help-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 14px;
+  color: #1d4ed8;
+  margin-top: 16px;
+}
+
+.upload-help-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upload-help-text {
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+

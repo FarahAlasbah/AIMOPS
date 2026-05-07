@@ -125,8 +125,7 @@
     "refreshAnalysis": "Refresh analysis",
     "clearLocal": "Clear local",
     "delete": "Delete",
-    "deleteTitle": "Deletes this batch sales records from the server"
-  },
+"deleteTitle": "Deletes this upload and its sales records"  },
   "analyzeProgress": {
     "defaultLabel": "Analyzing & preparing mapping...",
     "loading": "Loading",
@@ -168,6 +167,16 @@
     "errorGeneric": "Something went wrong."
   },
   "uploadsPage": {
+    "deleteDialogTitle": "Delete this upload?",
+"deleteDialogMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
+"deleteDialogCancel": "Cancel",
+"deleteDialogConfirm": "Delete",
+"deleteUploadHumanTitle": "Delete this upload?",
+"deleteUploadHumanMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
+"deleteUploadHumanConfirm": "Delete",
+"bulkDeleteDialogTitle": "Delete selected uploads?",
+"bulkDeleteDialogMessage": "Are you sure you want to delete {{count}} selected upload(s)?\n\nThe uploaded files and their sales records will be removed.\nYour products will not be deleted.",
+"bulkDeleteDialogConfirm": "Delete selected",
     "title": "Upload Campaign Sales Data",
     "breadcrumbRoot": "Campaigns",
     "breadcrumbCurrent": "Upload Sales Data",
@@ -175,10 +184,6 @@
     "refreshing": "Refreshing...",
     "refresh": "Refresh",
     "dismiss": "Dismiss",
-    "deleteDialogTitle": "Delete upload",
-    "deleteDialogMessage": "Delete ({{fileName}})?\n\nThis will delete sales records for this batch on the server. Products are kept.",
-    "deleteDialogCancel": "Cancel",
-    "deleteDialogConfirm": "Delete",
     "errorDuplicateFile": "This file was already uploaded before. Please choose a different file.",
     "errorNoFile": "Please select a file first.",
     "errorLoadFailed": "Failed to load uploads list.",

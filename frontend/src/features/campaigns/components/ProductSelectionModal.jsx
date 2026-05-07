@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+// frontend/src/features/campaigns/components/ProductSelectionModal.jsx
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { FormSelect } from "../../../shared/components";
 import "./ProductSelectionModal.css";
 
 const ProductSelectionModal = ({
   isOpen,
   onClose,
+  onApply,
   loading,
   searchValue,
   onSearchChange,
@@ -15,6 +18,7 @@ const ProductSelectionModal = ({
   categories,
   products,
   selectedCount,
+  draftCount = 0,
   hasAvailableToSelect,
   onAddProduct,
 }) => {
@@ -39,13 +43,45 @@ const ProductSelectionModal = ({
     };
   }, [isOpen, onClose]);
 
+  const categoryOptions = useMemo(
+    () => [
+      {
+        value: "all",
+        label: t("filters.allCategories"),
+      },
+      ...categories.map((category) => ({
+        value: category,
+        label: category,
+      })),
+    ],
+    [categories, t],
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      {
+        value: "name-asc",
+        label: t("filters.sortNameAsc"),
+      },
+      {
+        value: "name-desc",
+        label: t("filters.sortNameDesc"),
+      },
+      {
+        value: "category",
+        label: t("filters.sortCategory"),
+      },
+    ],
+    [t],
+  );
+
   if (!isOpen) return null;
 
   const emptyMessage = loading
     ? t("messages.loadingProducts")
     : hasAvailableToSelect
-    ? t("messages.noMatchingProducts")
-    : t("messages.noProductsLeftToSelect");
+      ? t("messages.noMatchingProducts")
+      : t("messages.noProductsLeftToSelect");
 
   return (
     <div
@@ -80,7 +116,10 @@ const ProductSelectionModal = ({
 
         <div className="product-selection-modal__controls">
           <div className="product-selection-modal__field product-selection-modal__field--search">
-            <label htmlFor="campaign-product-search">{t("filters.search")}</label>
+            <label htmlFor="campaign-product-search">
+              {t("filters.search")}
+            </label>
+
             <input
               id="campaign-product-search"
               type="text"
@@ -91,34 +130,21 @@ const ProductSelectionModal = ({
           </div>
 
           <div className="product-selection-modal__field">
-            <label htmlFor="campaign-product-category">
-              {t("filters.category")}
-            </label>
-            <select
-              id="campaign-product-category"
+            <FormSelect
+              label={t("filters.category")}
               value={categoryFilter}
               onChange={(e) => onCategoryChange(e.target.value)}
-            >
-              <option value="all">{t("filters.allCategories")}</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              options={categoryOptions}
+            />
           </div>
 
           <div className="product-selection-modal__field">
-            <label htmlFor="campaign-product-sort">{t("filters.sortBy")}</label>
-            <select
-              id="campaign-product-sort"
+            <FormSelect
+              label={t("filters.sortBy")}
               value={sortValue}
               onChange={(e) => onSortChange(e.target.value)}
-            >
-              <option value="name-asc">{t("filters.sortNameAsc")}</option>
-              <option value="name-desc">{t("filters.sortNameDesc")}</option>
-              <option value="category">{t("filters.sortCategory")}</option>
-            </select>
+              options={sortOptions}
+            />
           </div>
         </div>
 
@@ -136,6 +162,7 @@ const ProductSelectionModal = ({
                     <span className="product-selection-modal__card-name">
                       {product.name}
                     </span>
+
                     <span className="product-selection-modal__card-category">
                       {product.category}
                     </span>
@@ -153,7 +180,15 @@ const ProductSelectionModal = ({
         </div>
 
         <div className="product-selection-modal__footer">
-          <p>{t("picker.selectedCountText", { count: selectedCount })}</p>
+          <p>
+            {t("picker.selectedCountText", { count: selectedCount })}
+            {draftCount > 0
+              ? ` · ${t("picker.pendingCountText", {
+                  count: draftCount,
+                  defaultValue: `${draftCount} pending`,
+                })}`
+              : ""}
+          </p>
 
           <div className="product-selection-modal__footer-actions">
             <button
@@ -167,7 +202,7 @@ const ProductSelectionModal = ({
             <button
               type="button"
               className="product-selection-modal__button product-selection-modal__button--primary"
-              onClick={onClose}
+              onClick={onApply}
             >
               {t("actions.apply")}
             </button>
