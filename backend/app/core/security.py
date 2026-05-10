@@ -6,6 +6,8 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.core.config import settings
+from jose import JWTError, ExpiredSignatureError
+from fastapi import HTTPException, status
 
 # Password hashing context with proper configuration
 pwd_context = CryptContext(
@@ -98,17 +100,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def decode_access_token(token: str) -> Optional[dict]:
-    """
-    Decode and verify JWT token
-    
-    Args:
-        token: JWT token string
-    
-    Returns:
-        Dictionary with user data if valid, None if invalid/expired
-    """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )

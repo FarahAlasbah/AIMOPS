@@ -19,6 +19,7 @@ from app.api.forecasts import router as forecasts_router
 from app.api.consultation import router as consultation_router
 from app.api.business_profile import router as business_profile_router
 from app.api.reports import router as reports_router
+from app.api.audit_logs import router as audit_logs_router
 
 
 # ============================================
@@ -35,7 +36,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=settings.ALLOWED_ORIGINS.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,6 +77,7 @@ app.include_router(campaigns.router)
 app.include_router(consultation_router)
 app.include_router(business_profile_router)
 app.include_router(reports_router)
+app.include_router(audit_logs_router)
 
 
 # ============================================
@@ -101,24 +103,24 @@ def health_check():
     }
 
 
-@app.get("/api/test/users")
-def test_get_users(db: Session = Depends(get_db)):
-    """TEST ENDPOINT"""
-    users_list = db.query(User).all()
-    return {
-        "count": len(users_list),
-        "users": [user.to_dict() for user in users_list]
-    }
+# @app.get("/api/test/users")
+# def test_get_users(db: Session = Depends(get_db)):
+#     """TEST ENDPOINT"""
+#     users_list = db.query(User).all()
+#     return {
+#         "count": len(users_list),
+#         "users": [user.to_dict() for user in users_list]
+#     }
 
 
-@app.get("/api/test/roles")
-def test_get_roles(db: Session = Depends(get_db)):
-    """TEST ENDPOINT"""
-    roles = db.query(Role).all()
-    return {
-        "count": len(roles),
-        "roles": [role.to_dict() for role in roles]
-    }
+# @app.get("/api/test/roles")
+# def test_get_roles(db: Session = Depends(get_db)):
+#     """TEST ENDPOINT"""
+#     roles = db.query(Role).all()
+#     return {
+#         "count": len(roles),
+#         "roles": [role.to_dict() for role in roles]
+#     }
 
 
 if __name__ == "__main__":
