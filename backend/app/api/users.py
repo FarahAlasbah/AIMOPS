@@ -145,7 +145,7 @@ def create_new_user(
         "role_id": 3
     }
     """
-    user = create_user(db, user_data)
+    user = create_user(db, user_data, performed_by=current_user)
     
     return UserDetailResponse(
         user_id=user.user_id,
@@ -246,7 +246,7 @@ def reactivate_user_account(
     
     Note: Will fail if username/email are now used by another active user
     """
-    user = reactivate_user(db, user_id)
+    user = reactivate_user(db, user_id, performed_by=current_user)
     
     return UserDetailResponse(
         user_id=user.user_id,
@@ -319,7 +319,8 @@ def change_user_password(
         db=db,
         user_id=user_id,
         current_password=password_data.current_password,
-        new_password=password_data.new_password
+        new_password=password_data.new_password,
+        performed_by=current_user
     )
     
     return result
