@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ const DataUpload = lazy(() => import("./features/data-upload/pages/DataUpload"))
 const FeedbackList = lazy(() => import("./features/feedback/pages/FeedbackList"));
 const FeedbackUpload = lazy(() => import("./features/feedback/pages/FeedbackUpload"));
 const UserManagement = lazy(() => import("./features/admin/pages/UserManagement"));
+const ActivityHistory = lazy(() => import("./features/admin/pages/ActivityHistory"));
 const ProductsPage = lazy(() => import("./features/products/pages/ProductsPage"));
 const ForecastingPage = lazy(() => import("./features/forecasting/pages/ForecastingPage"));
 const ForecastDetailsPage = lazy(() => import("./features/forecasting/pages/ForecastDetailsPage"));
@@ -262,6 +264,15 @@ function App() {
                   <RequirePermission anyOf={["reports.view"]}>
                     <ReportsPage />
                   </RequirePermission>
+                }
+              />
+
+              <Route
+                path="activity-history"
+                element={
+                  <RequireAdminOnly>
+                    <ActivityHistory />
+                  </RequireAdminOnly>
                 }
               />
 

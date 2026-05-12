@@ -34,17 +34,16 @@ function SelectAllCheckbox({
 export default function UploadsList({
   uploads,
   loading,
-  limit,
   offset,
   totalCount,
   hasNext,
   onPrev,
   onNext,
-  hasLocalMapping,
-  hasCachedAnalysis,
+  canOpenReview,
+  isCompletedUpload,
+  onCompletedOpen,
   onOpenMapping,
   onReview,
-  onClearLocal,
   onDelete,
   deletingId,
   deletingIds,
@@ -99,6 +98,22 @@ export default function UploadsList({
     return deletingSet.has(sid) || String(deletingId ?? "") === sid;
   };
 
+  const resolveCanOpenReview = (upload) => {
+    if (typeof canOpenReview === "function") {
+      return canOpenReview(upload);
+    }
+
+    return Boolean(canOpenReview);
+  };
+
+  const resolveIsCompleted = (upload) => {
+    if (typeof isCompletedUpload === "function") {
+      return isCompletedUpload(upload);
+    }
+
+    return false;
+  };
+
   if (loading) {
     return <UploadsGridSkeleton />;
   }
@@ -142,11 +157,11 @@ export default function UploadsList({
             <UploadRow
               key={u.batchId}
               upload={u}
-              hasLocalMapping={hasLocalMapping(u.batchId)}
-              hasCachedAnalysis={hasCachedAnalysis?.(u.batchId)}
+              canOpenReview={resolveCanOpenReview(u)}
+              isCompleted={resolveIsCompleted(u)}
+              onCompletedOpen={onCompletedOpen}
               onOpenMapping={onOpenMapping}
               onReview={onReview}
-              onClearLocal={onClearLocal}
               onDelete={onDelete}
               deleting={isDeletingUpload(u.batchId)}
               selected={selectedSet.has(String(u.batchId))}
@@ -191,7 +206,6 @@ export default function UploadsList({
   );
 }
 
-/* ── Skeleton ── */
 function UploadsGridSkeleton({ count = 6 }) {
   return (
     <div className="ul-table">
