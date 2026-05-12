@@ -245,3 +245,145 @@
   display: block;
 }
 
+/* Logout confirmation modal */
+
+.logout-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: logout-confirm-fade 0.16s ease;
+}
+
+.logout-confirm-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 26px;
+  text-align: center;
+  box-shadow:
+    0 22px 70px rgba(15, 23, 42, 0.24),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+  animation: logout-confirm-pop 0.18s ease;
+}
+
+.logout-confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #03045e;
+  border: 1px solid #c7d2fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-confirm-title {
+  margin: 0;
+  color: #111827;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.logout-confirm-message {
+  max-width: 330px;
+  margin: 10px auto 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.logout-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.logout-confirm-cancel,
+.logout-confirm-primary {
+  min-width: 122px;
+  height: 42px;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.logout-confirm-cancel {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.logout-confirm-cancel:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.logout-confirm-primary {
+  border: 1px solid #03045e;
+  background: #03045e;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(3, 4, 94, 0.2);
+}
+
+.logout-confirm-primary:hover {
+  background: #080a8a;
+  border-color: #080a8a;
+  transform: translateY(-1px);
+}
+
+@keyframes logout-confirm-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes logout-confirm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .logout-confirm-modal {
+    padding: 22px;
+  }
+
+  .logout-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .logout-confirm-cancel,
+  .logout-confirm-primary {
+    width: 100%;
+  }
+}
