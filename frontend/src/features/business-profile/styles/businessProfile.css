@@ -328,3 +328,131 @@
     justify-content: center;
   }
 }
+.business-profile-suggest-wrap {
+  position: relative;
+}
+
+.business-profile-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: 8px;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.business-profile-suggestion {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: start;
+  font-family: inherit;
+}
+
+.business-profile-suggestion svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.business-profile-suggestion:hover {
+  background: #f8fafc;
+  color: #03045e;
+}
+
+.business-profile-suggestion:hover svg {
+  color: #03045e;
+}
+
+.business-profile-suggestion-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.business-profile-suggestion-text strong {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.business-profile-suggestion-text small {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.business-profile-readonly-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.business-profile-readonly-alert svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.business-profile-readonly-alert strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.business-profile-readonly-alert p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1e40af;
+}
+
+.business-profile-input-wrap.is-disabled {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.business-profile-input-wrap.is-disabled svg {
+  color: #9ca3af;
+}
+
+.business-profile-input-wrap input:disabled {
+  color: #6b7280;
+  cursor: not-allowed;
+  -webkit-text-fill-color: #6b7280;
+}
+
+.business-profile-input-wrap.is-disabled:focus-within {
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.business-profile-actions button[disabled] {
+  box-shadow: none;
+}
+
+

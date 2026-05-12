@@ -1,5 +1,14 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BriefcaseBusiness, Building2, MapPin, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Building2,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
+
+import { useAuth } from "../../../shared/contexts/AuthContext";
+import { isAdminUser } from "../../../shared/permissions/rolePermissions";
 import { useBusinessProfile } from "../hooks/useBusinessProfile";
 import "../styles/businessProfile.css";
 
@@ -13,6 +22,9 @@ function formatCreatedAt(value) {
 }
 
 export default function BusinessProfileOverviewPanel() {
+  const { user } = useAuth();
+  const canEditBusinessProfile = isAdminUser(user);
+
   const { profile, loading, isProfileComplete } = useBusinessProfile();
 
   if (loading) {
@@ -42,16 +54,20 @@ export default function BusinessProfileOverviewPanel() {
             </div>
 
             <div>
-              <h3>Complete your business profile</h3>
+              <h3>Business profile is not complete</h3>
               <p>
-                Add your business name, industry, and city to improve dashboard context,
-                forecasting, and AI consultation quality.
+                {canEditBusinessProfile
+                  ? "Add your business name, industry, and city to improve dashboard context, forecasting, and AI consultation quality."
+                  : "Only an administrator can complete or update the business profile."}
               </p>
             </div>
           </div>
 
-          <Link to="/app/business-profile" className="business-profile-overview-link">
-            Set up profile
+          <Link
+            to="/app/business-profile"
+            className="business-profile-overview-link"
+          >
+            {canEditBusinessProfile ? "Set up profile" : "View profile"}
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -69,12 +85,19 @@ export default function BusinessProfileOverviewPanel() {
 
           <div>
             <h3>{profile?.business_name || "Business Profile"}</h3>
-            <p>Your workspace business context is active.</p>
+            <p>
+              {canEditBusinessProfile
+                ? "Your workspace business context is active."
+                : "Your workspace business context is active. You have read-only access."}
+            </p>
           </div>
         </div>
 
-        <Link to="/app/business-profile" className="business-profile-overview-link">
-          Manage profile
+        <Link
+          to="/app/business-profile"
+          className="business-profile-overview-link"
+        >
+          {canEditBusinessProfile ? "Manage profile" : "View profile"}
           <ArrowRight size={16} />
         </Link>
       </div>

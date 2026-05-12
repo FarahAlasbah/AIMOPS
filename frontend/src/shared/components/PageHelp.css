@@ -1,0 +1,137 @@
+/* frontend/src/shared/components/PageHelp.css */
+
+.page-help-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #03045e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.page-help-btn:hover {
+  border-color: #03045e;
+  background: rgba(3, 4, 94, 0.04);
+}
+
+.page-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.page-help-modal {
+  width: min(560px, 100%);
+  max-height: min(720px, 88vh);
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.22);
+  display: flex;
+  flex-direction: column;
+}
+
+.page-help-header {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.page-help-eyebrow {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #03045e;
+  margin-bottom: 6px;
+}
+
+.page-help-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.page-help-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.page-help-close:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.page-help-body {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.page-help-item {
+  padding: 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  background: #fbfcfe;
+}
+
+.page-help-item strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.page-help-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.page-help-note {
+  padding: 14px;
+  border-radius: 16px;
+  background: #e1ecf7;
+  color: #03045e;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+@media print {
+  .page-help-btn,
+  .page-help-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .page-help-btn {
+    width: 100%;
+  }
+}

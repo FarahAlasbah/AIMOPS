@@ -2,6 +2,8 @@
 import { Expand, Shrink, Trash2, FileText, ExternalLink, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
+import PageHelp from "../../../shared/components/PageHelp";
 import { useConsultation } from "../hooks/useConsultation";
 
 export default function ConsultationHeader({
@@ -11,6 +13,7 @@ export default function ConsultationHeader({
 }) {
   const { t } = useTranslation("consultation");
   const navigate = useNavigate();
+
   const { isDrawerExpanded, toggleDrawerExpanded, closeDrawer } =
     useConsultation();
 
@@ -24,6 +27,43 @@ export default function ConsultationHeader({
       </div>
 
       <div className="consultation-header-actions">
+        <PageHelp
+          title="How to use AI Consultation"
+          buttonLabel="Open consultation help"
+          items={[
+            {
+              title: "1. Ask business questions",
+              description:
+                "Use this chat to ask about campaigns, forecasts, product performance, risks, opportunities, and next actions for the business.",
+            },
+            {
+              title: "2. Use clear prompts",
+              description:
+                "The better your question, the better the answer. Mention the product, campaign, date range, or goal you want help with.",
+            },
+            {
+              title: "3. Use suggested prompts",
+              description:
+                "If you are not sure what to ask, start with one of the suggested prompt chips shown in the empty chat state.",
+            },
+            {
+              title: "4. Save useful summaries",
+              description:
+                "Use Save Summary when the conversation contains useful recommendations you may want to read again later.",
+            },
+            {
+              title: "5. Clear carefully",
+              description:
+                "Clear removes the current conversation. You can save a summary before deleting the chat history.",
+            },
+          ]}
+          note={
+            isDrawer
+              ? "Tip: The drawer is best for quick help while working on campaigns. Open the full page if you want more space."
+              : "Tip: Saved summaries appear in the side panel so you can keep important consultation notes."
+          }
+        />
+
         <button
           type="button"
           className={isDrawer ? "consultation-icon-button" : "consultation-text-button"}

@@ -1,10 +1,10 @@
 // frontend/src/layouts/components/NotificationBell.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Bell, X, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import "./NotificationBell.css";
 
+import FormSelect from "../../shared/components/FormSelect";
 import { useAuth } from "../../shared/contexts/AuthContext";
 import { getUsers } from "../../api/users";
 import {
@@ -19,58 +19,72 @@ import {
   syncForecastNotificationQueue,
 } from "../../shared/utils/forecastNotifications";
 
+import "./NotificationBell.css";
+
 const SEEN_NOTIF_KEY = "aimops_seen_notifications_v1";
 const SEEN_REMINDERS_KEY = "aimops_seen_reminders_v1";
 
 const HIDDEN_NOTIF_KEY = "aimops_hidden_notifications_v1";
 const HIDDEN_REMINDERS_KEY = "aimops_hidden_reminders_v1";
 
-const safeJsonParse = (v, fallback) => {
+const safeJsonParse = (value, fallback) => {
   try {
-    const x = JSON.parse(v);
-    return x ?? fallback;
+    const parsed = JSON.parse(value);
+    return parsed ?? fallback;
   } catch {
     return fallback;
   }
 };
 
 const loadSet = (key) => new Set(safeJsonParse(localStorage.getItem(key), []));
-const saveSet = (key, set) => localStorage.setItem(key, JSON.stringify(Array.from(set)));
+
+const saveSet = (key, set) => {
+  localStorage.setItem(key, JSON.stringify(Array.from(set)));
+};
 
 const fmtDateTime = (iso, locale = undefined) => {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleString(locale);
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return String(iso);
+
+  return date.toLocaleString(locale);
 };
 
-const normalizeNotif = (n) => {
-  const type = n?.type ?? "";
-  const relatedId = n?.related_id ?? n?.entity_id ?? n?.entityId ?? null;
-  const relatedType = n?.related_type ?? null;
+const getForecastLink = (productId) => {
+  if (!productId) return "/app/forecasting";
+  return `/app/forecasting/${productId}`;
+};
+
+const normalizeNotif = (notification) => {
+  const type = notification?.type ?? "";
+  const relatedId =
+    notification?.related_id ??
+    notification?.entity_id ??
+    notification?.entityId ??
+    null;
+  const relatedType = notification?.related_type ?? null;
 
   let link = null;
 
   switch (type) {
     case "event_detection":
-      link = `/app/events`;
+      link = "/app/events";
       break;
 
     case "event_reminder":
-      if (relatedId && relatedType === "event") link = `/app/events/${relatedId}`;
-      else link = `/app/events`;
+      if (relatedId && relatedType === "event") {
+        link = `/app/events/${relatedId}`;
+      } else {
+        link = "/app/events";
+      }
       break;
 
     case "forecast_ready":
     case "forecast-ready":
     case "forecast":
-      if (relatedId) link = `/app/forecasts/${relatedId}`;
-      else link = `/app/forecasts`;
-      break;
-
     case "forecast-failed":
-      if (relatedId) link = `/app/forecasts/${relatedId}`;
-      else link = `/app/forecasts`;
+      link = getForecastLink(relatedId);
       break;
 
     case "campaign":
@@ -79,29 +93,40 @@ const normalizeNotif = (n) => {
 
     case "product":
       if (relatedId) link = `/app/products/${relatedId}`;
-      else link = `/app/products`;
+      else link = "/app/products";
       break;
 
     default:
-      // Fallback: infer from title keywords for blank-type notifications
-      if (n?.title?.toLowerCase().includes("product")) link = `/app/products`;
-      else if (n?.title?.toLowerCase().includes("event")) link = `/app/events`;
-      else if (n?.title?.toLowerCase().includes("forecast")) link = `/app/forecasts`;
-      else link = null;
+      if (notification?.title?.toLowerCase().includes("product")) {
+        link = "/app/products";
+      } else if (notification?.title?.toLowerCase().includes("event")) {
+        link = "/app/events";
+      } else if (notification?.title?.toLowerCase().includes("forecast")) {
+        link = "/app/forecasting";
+      } else {
+        link = null;
+      }
   }
 
   return {
-    id: n?.notification_id ?? n?.id ?? n?._id ?? `${n?.created_at || ""}:${n?.title || ""}`,
-    title: n?.title ?? "",
-    message: n?.message ?? "",
+    id:
+      notification?.notification_id ??
+      notification?.id ??
+      notification?._id ??
+      `${notification?.created_at || ""}:${notification?.title || ""}`,
+    title: notification?.title ?? "",
+    message: notification?.message ?? "",
     type,
-    createdAt: n?.created_at ?? n?.createdAt ?? "",
+    createdAt: notification?.created_at ?? notification?.createdAt ?? "",
     link,
+    raw: notification,
   };
 };
+
 const normalizeLocalForecastNotification = (item, t) => {
   const isReady = String(item?.status || "").toLowerCase() === "ready";
-  const productName = item?.product_name || t("notifications.forecastUnknownProduct");
+  const productName =
+    item?.product_name || t("notifications.forecastUnknownProduct");
 
   return {
     id: item?.id || `forecast:${item?.product_id || ""}`,
@@ -113,30 +138,30 @@ const normalizeLocalForecastNotification = (item, t) => {
       : t("notifications.forecastFailedBody", { name: productName }),
     type: isReady ? "forecast-ready" : "forecast-failed",
     createdAt: item?.created_at || item?.createdAt || "",
-
-    // ✅ ADD THIS
-    link: item?.product_id
-      ? `/app/forecasts/${item.product_id}`
-      : null,
+    link: getForecastLink(item?.product_id),
+    raw: item,
   };
 };
+
 const dedupeById = (items) => {
   const seen = new Set();
-  const out = [];
+  const output = [];
 
   for (const item of items) {
     const id = String(item?.id ?? "");
     if (!id || seen.has(id)) continue;
+
     seen.add(id);
-    out.push(item);
+    output.push(item);
   }
 
-  return out;
+  return output;
 };
 
 export default function NotificationBell() {
   const { t, i18n } = useTranslation();
   const { user, hasPermission } = useAuth();
+  const navigate = useNavigate();
 
   const isAdmin =
     user?.role === "admin" ||
@@ -160,6 +185,9 @@ export default function NotificationBell() {
   const [inbox, setInbox] = useState([]);
 
   const [hiddenTick, setHiddenTick] = useState(0);
+  const [seenTick, setSeenTick] = useState(0);
+
+  const [selectedNotification, setSelectedNotification] = useState(null);
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -178,37 +206,108 @@ export default function NotificationBell() {
 
   const roles = useMemo(() => {
     const set = new Set();
-    for (const u of users) {
-      const r = u?.role?.name || u?.role_name || u?.role;
-      if (r) set.add(r);
+
+    for (const currentUser of users) {
+      const role =
+        currentUser?.role?.name || currentUser?.role_name || currentUser?.role;
+
+      if (role) set.add(role);
     }
+
     return Array.from(set);
   }, [users]);
+
+  const targetModeOptions = useMemo(
+    () => [
+      { value: "all", label: t("notifications.targetAll") },
+      { value: "user", label: t("notifications.targetUser") },
+      { value: "role", label: t("notifications.targetRole") },
+    ],
+    [t],
+  );
+
+  const typeOptions = useMemo(
+    () => [
+      { value: "system", label: t("notifications.types.system") },
+      { value: "info", label: t("notifications.types.info") },
+      { value: "warning", label: t("notifications.types.warning") },
+    ],
+    [t],
+  );
+
+  const userOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: usersLoading ? t("notifications.loading") : "—",
+        disabled: true,
+      },
+      ...users.map((currentUser) => ({
+        value: String(currentUser.user_id ?? currentUser.id),
+        label: `${currentUser.username || currentUser.email || "User"}${
+          currentUser.email ? ` (${currentUser.email})` : ""
+        }`,
+      })),
+    ],
+    [users, usersLoading, t],
+  );
+
+  const roleOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: usersLoading ? t("notifications.loading") : "—",
+        disabled: true,
+      },
+      ...roles.map((role) => ({
+        value: role,
+        label: role,
+      })),
+    ],
+    [roles, usersLoading, t],
+  );
 
   const fetchAll = async () => {
     setLoading(true);
     setLoadError("");
 
     try {
-      const [remRes, notifRes, forecastRes] = await Promise.all([
-        getUpcomingReminders().catch(() => null),
-        getMyNotifications().catch(() => []),
-        getForecastStatuses().catch(() => null),
-      ]);
+      const [remindersResponse, notificationsResponse, forecastResponse] =
+        await Promise.all([
+          getUpcomingReminders().catch(() => null),
+          getMyNotifications().catch(() => []),
+          getForecastStatuses().catch(() => null),
+        ]);
 
-      const remList = Array.isArray(remRes?.reminders) ? remRes.reminders : [];
-      const notifList = Array.isArray(notifRes) ? notifRes : [];
+      const reminderList = Array.isArray(remindersResponse?.reminders)
+        ? remindersResponse.reminders
+        : [];
 
-      if (Array.isArray(forecastRes?.models)) {
-        syncForecastNotificationQueue(forecastRes.models);
+      const notificationList = Array.isArray(notificationsResponse)
+        ? notificationsResponse
+        : [];
+
+      const forecastModels = Array.isArray(forecastResponse?.models)
+        ? forecastResponse.models
+        : Array.isArray(forecastResponse?.products)
+          ? forecastResponse.products
+          : [];
+
+      if (forecastModels.length > 0) {
+        syncForecastNotificationQueue(forecastModels);
       }
 
       const localForecastInbox = getLocalForecastNotifications().map((item) =>
-        normalizeLocalForecastNotification(item, t)
+        normalizeLocalForecastNotification(item, t),
       );
 
-      setReminders(remList);
-      setInbox(dedupeById([...localForecastInbox, ...notifList.map(normalizeNotif)]));
+      setReminders(reminderList);
+      setInbox(
+        dedupeById([
+          ...localForecastInbox,
+          ...notificationList.map(normalizeNotif),
+        ]),
+      );
     } catch {
       setLoadError(t("notifications.loadError"));
       setReminders([]);
@@ -220,76 +319,146 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchAll();
-    const id = window.setInterval(fetchAll, 60_000);
-    return () => window.clearInterval(id);
+
+    const intervalId = window.setInterval(fetchAll, 60_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
 
-    const onDown = (e) => {
+    const handlePointerDown = (event) => {
       if (!rootRef.current) return;
-      if (!rootRef.current.contains(e.target)) setOpen(false);
+      if (!rootRef.current.contains(event.target)) setOpen(false);
     };
 
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("touchstart", onDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
     return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
     };
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    scrollRef.current?.scrollTo?.({ top: 0, behavior: "smooth" });
+
+    scrollRef.current?.scrollTo?.({
+      top: 0,
+      behavior: "smooth",
+    });
   }, [activeTab, open]);
 
   const visibleReminders = useMemo(() => {
     const hidden = loadSet(HIDDEN_REMINDERS_KEY);
-    return reminders.filter((r) => !hidden.has(String(r?.original_event_id)));
+
+    return reminders.filter((reminder) => {
+      return !hidden.has(String(reminder?.original_event_id));
+    });
   }, [reminders, hiddenTick]);
 
   const visibleInbox = useMemo(() => {
     const hidden = loadSet(HIDDEN_NOTIF_KEY);
-    return inbox.filter((n) => !hidden.has(String(n?.id)));
+
+    return inbox.filter((notification) => {
+      return !hidden.has(String(notification?.id));
+    });
   }, [inbox, hiddenTick]);
+
+  const markOneReminderSeen = (eventId) => {
+    if (eventId == null) return;
+
+    const seen = loadSet(SEEN_REMINDERS_KEY);
+    const key = String(eventId);
+
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    saveSet(SEEN_REMINDERS_KEY, seen);
+    setSeenTick((value) => value + 1);
+  };
+
+  const markOneInboxSeen = (notificationId) => {
+    if (notificationId == null) return;
+
+    const seen = loadSet(SEEN_NOTIF_KEY);
+    const key = String(notificationId);
+
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    saveSet(SEEN_NOTIF_KEY, seen);
+    setSeenTick((value) => value + 1);
+  };
 
   useEffect(() => {
     if (!open) return;
 
     if (activeTab === "inbox") {
-      const seenNotifs = loadSet(SEEN_NOTIF_KEY);
-      for (const n of visibleInbox) {
-        if (n?.id != null) seenNotifs.add(String(n.id));
+      const seenNotifications = loadSet(SEEN_NOTIF_KEY);
+      let changed = false;
+
+      for (const notification of visibleInbox) {
+        if (notification?.id != null) {
+          const id = String(notification.id);
+
+          if (!seenNotifications.has(id)) {
+            seenNotifications.add(id);
+            changed = true;
+          }
+        }
       }
-      saveSet(SEEN_NOTIF_KEY, seenNotifs);
+
+      if (changed) {
+        saveSet(SEEN_NOTIF_KEY, seenNotifications);
+        setSeenTick((value) => value + 1);
+      }
     } else {
-      const seenRems = loadSet(SEEN_REMINDERS_KEY);
-      for (const r of visibleReminders) {
-        if (r?.original_event_id != null) seenRems.add(String(r.original_event_id));
+      const seenReminders = loadSet(SEEN_REMINDERS_KEY);
+      let changed = false;
+
+      for (const reminder of visibleReminders) {
+        if (reminder?.original_event_id != null) {
+          const id = String(reminder.original_event_id);
+
+          if (!seenReminders.has(id)) {
+            seenReminders.add(id);
+            changed = true;
+          }
+        }
       }
-      saveSet(SEEN_REMINDERS_KEY, seenRems);
+
+      if (changed) {
+        saveSet(SEEN_REMINDERS_KEY, seenReminders);
+        setSeenTick((value) => value + 1);
+      }
     }
   }, [open, activeTab, visibleInbox, visibleReminders]);
 
   const unseen = useMemo(() => {
-    const seenNotifs = loadSet(SEEN_NOTIF_KEY);
-    const seenRems = loadSet(SEEN_REMINDERS_KEY);
+    const seenNotifications = loadSet(SEEN_NOTIF_KEY);
+    const seenReminders = loadSet(SEEN_REMINDERS_KEY);
 
     let inboxUnseen = 0;
-    for (const x of visibleInbox) {
-      const id = x?.id;
+    let remindersUnseen = 0;
+
+    for (const notification of visibleInbox) {
+      const id = notification?.id;
       if (id == null) continue;
-      if (!seenNotifs.has(String(id))) inboxUnseen += 1;
+
+      if (!seenNotifications.has(String(id))) inboxUnseen += 1;
     }
 
-    let remindersUnseen = 0;
-    for (const r of visibleReminders) {
-      const id = r?.original_event_id;
+    for (const reminder of visibleReminders) {
+      const id = reminder?.original_event_id;
       if (id == null) continue;
-      if (!seenRems.has(String(id))) remindersUnseen += 1;
+
+      if (!seenReminders.has(String(id))) remindersUnseen += 1;
     }
 
     return {
@@ -297,43 +466,74 @@ export default function NotificationBell() {
       remindersUnseen,
       total: inboxUnseen + remindersUnseen,
     };
-  }, [visibleInbox, visibleReminders]);
+  }, [visibleInbox, visibleReminders, seenTick]);
 
   const hideOneReminder = (eventId) => {
     const hidden = loadSet(HIDDEN_REMINDERS_KEY);
+
     hidden.add(String(eventId));
     saveSet(HIDDEN_REMINDERS_KEY, hidden);
-    setHiddenTick((x) => x + 1);
+    markOneReminderSeen(eventId);
+    setHiddenTick((value) => value + 1);
   };
 
   const hideAllReminders = () => {
     const hidden = loadSet(HIDDEN_REMINDERS_KEY);
-    for (const r of reminders) {
-      if (r?.original_event_id != null) hidden.add(String(r.original_event_id));
+    const seen = loadSet(SEEN_REMINDERS_KEY);
+
+    for (const reminder of reminders) {
+      if (reminder?.original_event_id != null) {
+        const id = String(reminder.original_event_id);
+        hidden.add(id);
+        seen.add(id);
+      }
     }
+
     saveSet(HIDDEN_REMINDERS_KEY, hidden);
-    setHiddenTick((x) => x + 1);
+    saveSet(SEEN_REMINDERS_KEY, seen);
+    setHiddenTick((value) => value + 1);
+    setSeenTick((value) => value + 1);
   };
 
-  const hideOneInbox = (notifId) => {
+  const hideOneInbox = (notificationId) => {
     const hidden = loadSet(HIDDEN_NOTIF_KEY);
-    hidden.add(String(notifId));
+
+    hidden.add(String(notificationId));
     saveSet(HIDDEN_NOTIF_KEY, hidden);
-    setHiddenTick((x) => x + 1);
+    markOneInboxSeen(notificationId);
+
+    if (selectedNotification?.id === notificationId) {
+      setSelectedNotification(null);
+    }
+
+    setHiddenTick((value) => value + 1);
   };
 
   const hideAllInbox = () => {
     const hidden = loadSet(HIDDEN_NOTIF_KEY);
-    for (const n of inbox) {
-      if (n?.id != null) hidden.add(String(n.id));
+    const seen = loadSet(SEEN_NOTIF_KEY);
+
+    for (const notification of inbox) {
+      if (notification?.id != null) {
+        const id = String(notification.id);
+        hidden.add(id);
+        seen.add(id);
+      }
     }
+
     saveSet(HIDDEN_NOTIF_KEY, hidden);
-    setHiddenTick((x) => x + 1);
+    saveSet(SEEN_NOTIF_KEY, seen);
+    setSelectedNotification(null);
+    setHiddenTick((value) => value + 1);
+    setSeenTick((value) => value + 1);
   };
 
   const clearCurrentTab = () => {
-    if (activeTab === "reminders") hideAllReminders();
-    else hideAllInbox();
+    if (activeTab === "reminders") {
+      hideAllReminders();
+    } else {
+      hideAllInbox();
+    }
   };
 
   const clearEverything = () => {
@@ -341,8 +541,32 @@ export default function NotificationBell() {
     hideAllInbox();
   };
 
+  const goToItem = (link, markSeen) => {
+    markSeen?.();
+    setOpen(false);
+
+    if (link) {
+      navigate(link);
+    }
+  };
+
+  const openNotificationDetails = (notification) => {
+    markOneInboxSeen(notification.id);
+    setOpen(false);
+    setSelectedNotification(notification);
+  };
+
+  const handleItemKeyDown = (event, action) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    action();
+  };
+
   const openComposer = async () => {
+    setOpen(false);
     setComposerOpen(true);
+
     setSendError("");
     setSendOk("");
 
@@ -350,6 +574,7 @@ export default function NotificationBell() {
     if (users.length > 0) return;
 
     setUsersLoading(true);
+
     try {
       const list = await getUsers();
       setUsers(Array.isArray(list) ? list : []);
@@ -376,7 +601,8 @@ export default function NotificationBell() {
     resetComposer();
   };
 
-  const canSendNow = title.trim().length > 0 && message.trim().length > 0 && !sending;
+  const canSendNow =
+    title.trim().length > 0 && message.trim().length > 0 && !sending;
 
   const submit = async () => {
     setSendError("");
@@ -385,19 +611,28 @@ export default function NotificationBell() {
     if (!canSendNow) return;
 
     setSending(true);
+
     try {
       if (targetMode === "user") {
-        const uid = Number(targetUserId);
-        if (Number.isNaN(uid)) {
+        const userId = Number(targetUserId);
+
+        if (Number.isNaN(userId)) {
           setSendError(t("notifications.errors.userRequired"));
           return;
         }
-        await sendNotificationToUser({ user_id: uid, title: title.trim(), message: message.trim(), type });
+
+        await sendNotificationToUser({
+          user_id: userId,
+          title: title.trim(),
+          message: message.trim(),
+          type,
+        });
       } else if (targetMode === "role") {
         if (!targetRole.trim()) {
           setSendError(t("notifications.errors.roleRequired"));
           return;
         }
+
         await broadcastNotification({
           title: title.trim(),
           message: message.trim(),
@@ -417,12 +652,13 @@ export default function NotificationBell() {
       setSendOk(t("notifications.sentOk"));
       await fetchAll();
       resetComposer();
-    } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.detail ||
+    } catch (error) {
+      const messageText =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
         t("notifications.sendError");
-      setSendError(String(msg));
+
+      setSendError(String(messageText));
     } finally {
       setSending(false);
     }
@@ -435,7 +671,10 @@ export default function NotificationBell() {
       onClick={() => setActiveTab(tab)}
     >
       <span className="notif-tab-label">{label}</span>
-      {count > 0 && <span className="notif-tab-badge">{count > 99 ? "99+" : count}</span>}
+
+      {count > 0 && (
+        <span className="notif-tab-badge">{count > 99 ? "99+" : count}</span>
+      )}
     </button>
   );
 
@@ -448,11 +687,16 @@ export default function NotificationBell() {
       <button
         type="button"
         className="notif-btn"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         aria-label={t("notifications.ariaOpen")}
       >
         <Bell size={18} />
-        {unseen.total > 0 && <span className="notif-badge">{unseen.total > 99 ? "99+" : unseen.total}</span>}
+
+        {unseen.total > 0 && (
+          <span className="notif-badge">
+            {unseen.total > 99 ? "99+" : unseen.total}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -466,11 +710,21 @@ export default function NotificationBell() {
 
             <div className="notif-header-actions">
               {isAdmin && (
-                <button type="button" className="notif-linkbtn" onClick={openComposer}>
+                <button
+                  type="button"
+                  className="notif-linkbtn"
+                  onClick={openComposer}
+                >
                   {t("notifications.create")}
                 </button>
               )}
-              <button type="button" className="notif-iconbtn" onClick={() => setOpen(false)} aria-label="Close">
+
+              <button
+                type="button"
+                className="notif-iconbtn"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -482,6 +736,7 @@ export default function NotificationBell() {
               label={t("notifications.reminders")}
               count={unseen.remindersUnseen}
             />
+
             <TabButton
               tab="inbox"
               label={t("notifications.inbox")}
@@ -502,7 +757,9 @@ export default function NotificationBell() {
                 className="notif-toolbtn"
                 onClick={clearCurrentTab}
                 disabled={!hasAnythingVisible}
-                title={t("notifications.clearTabTitle", { defaultValue: "Clear this tab" })}
+                title={t("notifications.clearTabTitle", {
+                  defaultValue: "Clear this tab",
+                })}
               >
                 {t("notifications.clearTab", { defaultValue: "Clear" })}
               </button>
@@ -511,8 +768,12 @@ export default function NotificationBell() {
                 type="button"
                 className="notif-toolbtn danger"
                 onClick={clearEverything}
-                disabled={visibleReminders.length === 0 && visibleInbox.length === 0}
-                title={t("notifications.clearAllTitle", { defaultValue: "Clear everything" })}
+                disabled={
+                  visibleReminders.length === 0 && visibleInbox.length === 0
+                }
+                title={t("notifications.clearAllTitle", {
+                  defaultValue: "Clear everything",
+                })}
               >
                 {t("notifications.clearAll", { defaultValue: "Clear all" })}
               </button>
@@ -526,33 +787,131 @@ export default function NotificationBell() {
               <div className="notif-error">{loadError}</div>
             ) : activeTab === "reminders" ? (
               visibleReminders.length === 0 ? (
-                <div className="notif-empty">{t("notifications.noReminders")}</div>
+                <div className="notif-empty">
+                  {t("notifications.noReminders")}
+                </div>
               ) : (
                 <div className="notif-list">
-                  {visibleReminders.map((r) => (
-                    <Link
-                      key={String(r.original_event_id)}
+                  {visibleReminders.map((reminder) => {
+                    const link = `/app/events/${reminder.original_event_id}`;
+
+                    const openReminder = () => {
+                      goToItem(link, () =>
+                        markOneReminderSeen(reminder.original_event_id),
+                      );
+                    };
+
+                    return (
+                      <div
+                        key={String(reminder.original_event_id)}
+                        className="notif-item"
+                        role="link"
+                        tabIndex={0}
+                        onClick={openReminder}
+                        onKeyDown={(event) =>
+                          handleItemKeyDown(event, openReminder)
+                        }
+                      >
+                        <div className="notif-item-top">
+                          <div className="notif-item-title">
+                            {reminder.event_name}
+                          </div>
+
+                          <div className="notif-item-right">
+                            <div className="notif-chip">
+                              {t("notifications.daysUntil", {
+                                n: reminder.days_until,
+                              })}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="notif-item-x"
+                              aria-label={t("notifications.clearOne", {
+                                defaultValue: "Clear item",
+                              })}
+                              title={t("notifications.clearOne", {
+                                defaultValue: "Clear item",
+                              })}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                hideOneReminder(reminder.original_event_id);
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="notif-item-body">
+                          {reminder.message}
+                        </div>
+
+                        <div className="notif-item-meta">
+                          <span className="meta-label">
+                            {t("notifications.suggested")}
+                          </span>{" "}
+                          <span className="meta-val">
+                            {reminder?.suggested_dates?.start} →{" "}
+                            {reminder?.suggested_dates?.end}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : visibleInbox.length === 0 ? (
+              <div className="notif-empty">{t("notifications.empty")}</div>
+            ) : (
+              <div className="notif-list">
+                {visibleInbox.map((notification) => {
+                  const link = notification.link;
+
+                  const openNotification = () => {
+                    if (link) {
+                      goToItem(link, () => markOneInboxSeen(notification.id));
+                      return;
+                    }
+
+                    openNotificationDetails(notification);
+                  };
+
+                  return (
+                    <div
+                      key={String(notification.id)}
                       className="notif-item"
-                      to={`/app/events/${r.original_event_id}`}
-                      onClick={() => setOpen(false)}
+                      role={link ? "link" : "button"}
+                      tabIndex={0}
+                      onClick={openNotification}
+                      onKeyDown={(event) =>
+                        handleItemKeyDown(event, openNotification)
+                      }
                     >
                       <div className="notif-item-top">
-                        <div className="notif-item-title">{r.event_name}</div>
+                        <div className="notif-item-title">
+                          {notification.title || t("notifications.untitled")}
+                        </div>
 
                         <div className="notif-item-right">
                           <div className="notif-chip">
-                            {t("notifications.daysUntil", { n: r.days_until })}
+                            {String(notification.type || "info")}
                           </div>
 
                           <button
                             type="button"
                             className="notif-item-x"
-                            aria-label={t("notifications.clearOne", { defaultValue: "Clear item" })}
-                            title={t("notifications.clearOne", { defaultValue: "Clear item" })}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              hideOneReminder(r.original_event_id);
+                            aria-label={t("notifications.clearOne", {
+                              defaultValue: "Clear item",
+                            })}
+                            title={t("notifications.clearOne", {
+                              defaultValue: "Clear item",
+                            })}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              hideOneInbox(notification.id);
                             }}
                           >
                             <X size={14} />
@@ -560,196 +919,224 @@ export default function NotificationBell() {
                         </div>
                       </div>
 
-                      <div className="notif-item-body">{r.message}</div>
+                      <div className="notif-item-body">
+                        {notification.message}
+                      </div>
 
                       <div className="notif-item-meta">
-                        <span className="meta-label">{t("notifications.suggested")}</span>{" "}
-                        <span className="meta-val">
-                          {r?.suggested_dates?.start} → {r?.suggested_dates?.end}
-                        </span>
+                        {fmtDateTime(notification.createdAt, locale)}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              )
-            ) : visibleInbox.length === 0 ? (
-              <div className="notif-empty">{t("notifications.empty")}</div>
-            ) : (
-<div className="notif-list">
-  {visibleInbox.map((n) => {
-      console.log("NOTIF DEBUG:", JSON.stringify(n, null, 2)); // ← add this
-
-    const link = n.link;
-
-    return link ? (
-      <Link
-        key={String(n.id)}
-        to={link}
-        className="notif-item"
-        onClick={() => setOpen(false)}
-      >
-        <div className="notif-item-top">
-          <div className="notif-item-title">
-            {n.title || t("notifications.untitled")}
-          </div>
-          <div className="notif-item-right">
-            <div className="notif-chip">{String(n.type || "info")}</div>
-            <button
-              type="button"
-              className="notif-item-x"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                hideOneInbox(n.id);
-              }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-        <div className="notif-item-body">{n.message}</div>
-        <div className="notif-item-meta">{fmtDateTime(n.createdAt, locale)}</div>
-      </Link>
-    ) : (
-      <div key={String(n.id)} className="notif-item static">
-        <div className="notif-item-top">
-          <div className="notif-item-title">
-            {n.title || t("notifications.untitled")}
-          </div>
-          <div className="notif-item-right">
-            <div className="notif-chip">{String(n.type || "info")}</div>
-            <button
-              type="button"
-              className="notif-item-x"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                hideOneInbox(n.id);
-              }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-        <div className="notif-item-body">{n.message}</div>
-        <div className="notif-item-meta">{fmtDateTime(n.createdAt, locale)}</div>
-      </div>
-    );
-  })}
-</div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
       )}
 
+      {selectedNotification && (
+        <div
+          className="notif-detail-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedNotification.title || t("notifications.untitled")}
+          onClick={() => setSelectedNotification(null)}
+        >
+          <div
+            className="notif-detail-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="notif-detail-header">
+              <div>
+                <div className="notif-detail-kicker">
+                  {t("notifications.notificationDetails", {
+                    defaultValue: "Notification",
+                  })}
+                </div>
+
+                <div className="notif-detail-title">
+                  {selectedNotification.title || t("notifications.untitled")}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="notif-iconbtn"
+                onClick={() => setSelectedNotification(null)}
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="notif-detail-body">
+              <div className="notif-detail-chip-row">
+                <span className="notif-chip">
+                  {String(selectedNotification.type || "info")}
+                </span>
+
+                {selectedNotification.createdAt && (
+                  <span className="notif-detail-date">
+                    {fmtDateTime(selectedNotification.createdAt, locale)}
+                  </span>
+                )}
+              </div>
+
+              <p className="notif-detail-message">
+                {selectedNotification.message ||
+                  t("notifications.noMessage", {
+                    defaultValue: "No message content.",
+                  })}
+              </p>
+            </div>
+
+            <div className="notif-detail-actions">
+              <button
+                type="button"
+                className="notif-secondary"
+                onClick={() => hideOneInbox(selectedNotification.id)}
+              >
+                {t("notifications.clearOne", {
+                  defaultValue: "Clear item",
+                })}
+              </button>
+
+              <button
+                type="button"
+                className="notif-primary"
+                onClick={() => setSelectedNotification(null)}
+              >
+                {t("actions.close", {
+                  defaultValue: "Close",
+                })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {composerOpen && isAdmin && (
-        <div className="notif-modal-overlay" role="dialog" aria-label="Create notification">
+        <div
+          className="notif-modal-overlay"
+          role="dialog"
+          aria-label="Create notification"
+        >
           <div className="notif-modal">
             <div className="notif-modal-header">
-              <div className="notif-modal-title">{t("notifications.createTitle")}</div>
-              <button type="button" className="notif-iconbtn" onClick={closeComposer} aria-label="Close">
+              <div className="notif-modal-title">
+                {t("notifications.createTitle")}
+              </div>
+
+              <button
+                type="button"
+                className="notif-iconbtn"
+                onClick={closeComposer}
+                aria-label="Close"
+              >
                 <X size={16} />
               </button>
             </div>
 
             <div className="notif-form">
-              <div className="notif-row">
-                <label className="notif-label">{t("notifications.target")}</label>
-                <select
-                  className="notif-select"
-                  value={targetMode}
-                  onChange={(e) => setTargetMode(e.target.value)}
-                  disabled={sending}
-                >
-                  <option value="all">{t("notifications.targetAll")}</option>
-                  <option value="user">{t("notifications.targetUser")}</option>
-                  <option value="role">{t("notifications.targetRole")}</option>
-                </select>
-              </div>
+              <FormSelect
+                label={t("notifications.target")}
+                value={targetMode}
+                options={targetModeOptions}
+                disabled={sending}
+                onChange={(event) => {
+                  setTargetMode(event.target.value);
+                  setTargetRole("");
+                  setTargetUserId("");
+                }}
+              />
 
               {targetMode === "user" && (
-                <div className="notif-row">
-                  <label className="notif-label">{t("notifications.user")}</label>
-                  <select
-                    className="notif-select"
-                    value={targetUserId}
-                    onChange={(e) => setTargetUserId(e.target.value)}
-                    disabled={sending || usersLoading}
-                  >
-                    <option value="">{usersLoading ? t("notifications.loading") : "—"}</option>
-                    {users.map((u) => (
-                      <option key={u.user_id ?? u.id} value={String(u.user_id ?? u.id)}>
-                        {u.username} ({u.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <FormSelect
+                  label={t("notifications.user")}
+                  value={targetUserId}
+                  options={userOptions}
+                  disabled={sending || usersLoading}
+                  onChange={(event) => setTargetUserId(event.target.value)}
+                />
               )}
 
               {targetMode === "role" && (
                 <div className="notif-row">
-                  <label className="notif-label">{t("notifications.role")}</label>
-                  <select
-                    className="notif-select"
+                  <FormSelect
+                    label={t("notifications.role")}
                     value={targetRole}
-                    onChange={(e) => setTargetRole(e.target.value)}
+                    options={roleOptions}
                     disabled={sending || usersLoading}
-                  >
-                    <option value="">{usersLoading ? t("notifications.loading") : "—"}</option>
-                    {roles.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(event) => setTargetRole(event.target.value)}
+                  />
 
-                  <div className="notif-hint">{t("notifications.roleHint")}</div>
+                  <div className="notif-hint">
+                    {t("notifications.roleHint")}
+                  </div>
                 </div>
               )}
 
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.title")}</label>
+                <label className="notif-label">
+                  {t("notifications.fields.title")}
+                </label>
+
                 <input
                   className="notif-input"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(event) => setTitle(event.target.value)}
                   disabled={sending}
                   placeholder={t("notifications.placeholders.title")}
                 />
               </div>
 
               <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.message")}</label>
+                <label className="notif-label">
+                  {t("notifications.fields.message")}
+                </label>
+
                 <textarea
                   className="notif-textarea"
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(event) => setMessage(event.target.value)}
                   disabled={sending}
                   placeholder={t("notifications.placeholders.message")}
                   rows={4}
                 />
               </div>
 
-              <div className="notif-row">
-                <label className="notif-label">{t("notifications.fields.type")}</label>
-                <select className="notif-select" value={type} onChange={(e) => setType(e.target.value)} disabled={sending}>
-                  <option value="system">{t("notifications.types.system")}</option>
-                  <option value="info">{t("notifications.types.info")}</option>
-                  <option value="warning">{t("notifications.types.warning")}</option>
-                </select>
-              </div>
+              <FormSelect
+                label={t("notifications.fields.type")}
+                value={type}
+                options={typeOptions}
+                disabled={sending}
+                onChange={(event) => setType(event.target.value)}
+              />
 
               {sendError && <div className="notif-error">{sendError}</div>}
               {sendOk && <div className="notif-success">{sendOk}</div>}
 
               <div className="notif-actions">
-                <button type="button" className="notif-secondary" onClick={closeComposer} disabled={sending}>
+                <button
+                  type="button"
+                  className="notif-secondary"
+                  onClick={closeComposer}
+                  disabled={sending}
+                >
                   {t("actions.cancel")}
                 </button>
 
-                <button type="button" className="notif-primary" onClick={submit} disabled={!canSendNow}>
+                <button
+                  type="button"
+                  className="notif-primary"
+                  onClick={submit}
+                  disabled={!canSendNow}
+                >
                   <Send size={16} />
-                  {sending ? t("notifications.sending") : t("notifications.send")}
+                  {sending
+                    ? t("notifications.sending")
+                    : t("notifications.send")}
                 </button>
               </div>
             </div>

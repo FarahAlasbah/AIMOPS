@@ -30,7 +30,7 @@
 
 @font-face {
   font-family: "Believe Stronger";
-  src: url("../../../assets/fonts/believestronger-regular.otf") format("opentype");
+  src: url("/fonts/believestronger-regular.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -174,3 +174,74 @@
     transform: translateX(-100%);
   }
 }
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 12px;
+}
+
+.brand-link:focus-visible {
+  outline: 3px solid rgba(3, 4, 94, 0.18);
+  outline-offset: 4px;
+}
+
+.brand-link:hover .brand-text {
+  color: #023e8a;
+}
+/* Fix logout icon inside sidebar footer */
+.sidebar-footer .user-profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  overflow: visible;
+}
+
+.sidebar-footer .user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-footer .user-name,
+.sidebar-footer .user-role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-footer .logout-button {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #03045e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: none;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-footer .logout-button:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #03045e;
+}
+
+.sidebar-footer .logout-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
