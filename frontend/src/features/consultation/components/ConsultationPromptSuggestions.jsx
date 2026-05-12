@@ -1,3 +1,4 @@
+// frontend/src/features/consultation/components/ConsultationPromptSuggestions.jsx
 import { useTranslation } from "react-i18next";
 import { useConsultation } from "../hooks/useConsultation";
 
@@ -27,6 +28,7 @@ export default function ConsultationPromptSuggestions() {
           key={prompt}
           type="button"
           className="consultation-prompt-chip"
+          dir="auto"
           onClick={() => setDraft(prompt)}
         >
           {prompt}

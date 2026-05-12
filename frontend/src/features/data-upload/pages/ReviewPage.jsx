@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
-
+import PageHelp from "../../../shared/components/PageHelp";
 import { confirmProducts, getAllUploads } from "../../../api/data";
 import { broadcastNotification } from "../../../api/notifications";
 import ReviewStep from "../components/ReviewStep";
@@ -256,7 +256,37 @@ export default function ReviewPage() {
 
   return (
     <div className="data-upload-page">
-    
+    <PageHeader
+  
+  actions={
+    <PageHelp
+      title="How to use Product Review"
+      items={[
+        {
+          title: "1. Check extracted products",
+          description:
+            "Review the products AIMOPS found from the uploaded sales file. Make sure the product names and categories look correct.",
+        },
+        {
+          title: "2. Merge duplicates",
+          description:
+            "Use Manage merges when the same product appears with different spellings or names. This keeps reports and forecasts cleaner.",
+        },
+        {
+          title: "3. Watch typo warnings",
+          description:
+            "Warning chips show possible spelling issues or product names that may need merging.",
+        },
+        {
+          title: "4. Confirm products",
+          description:
+            "After confirming, the products become available for the rest of the system, including reports and forecasting.",
+        },
+      ]}
+      note="Once products are confirmed or the batch is already processed, editing is locked."
+    />
+  }
+/>
 
       <Card>
         {localLoading ? (

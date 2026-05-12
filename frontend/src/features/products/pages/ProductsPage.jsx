@@ -1,8 +1,10 @@
 // frontend/src/features/products/pages/ProductsPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "../../../shared/components";
+
+import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
+import PageHelp from "../../../shared/components/PageHelp";
 
 import {
   bulkDeleteProducts,
@@ -178,7 +180,7 @@ export default function ProductsPage() {
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(sorted.length / pageSize)),
-    [sorted.length, pageSize],
+    [sorted.length, pageSize]
   );
 
   const pageSafe = Math.min(page, totalPages);
@@ -250,7 +252,7 @@ export default function ProductsPage() {
     const primary = Number(mergePrimary);
 
     const merges = Array.from(new Set(mergeIds.map(Number))).filter(
-      (x) => x && x !== primary,
+      (x) => x && x !== primary
     );
 
     if (!primary || merges.length === 0) {
@@ -307,7 +309,7 @@ export default function ProductsPage() {
   const anySelectedHasSales = useMemo(
     () =>
       selectedProducts.some((p) => Number(p?.stats?.total_sales || 0) > 0),
-    [selectedProducts],
+    [selectedProducts]
   );
 
   const doDelete = async () => {
@@ -340,6 +342,43 @@ export default function ProductsPage() {
 
   return (
     <div className="products-page">
+      <PageHeader
+        actions={
+          <PageHelp
+            title="How to use Products"
+            buttonLabel="Open products help"
+            items={[
+              {
+                title: "1. Review extracted products",
+                description:
+                  "This page shows the products AIMOPS found from uploaded sales data, including category, sales count, revenue, and last sale date.",
+              },
+              {
+                title: "2. Use filters to find products",
+                description:
+                  "Search by product name, filter by category, filter products that need review, or narrow the list by last sale date.",
+              },
+              {
+                title: "3. Check products that need review",
+                description:
+                  "Rows marked as Needs review may contain possible duplicates, spelling issues, or unusual product names that should be checked.",
+              },
+              {
+                title: "4. Merge duplicate products",
+                description:
+                  "Select two or more products, then use Merge selected. Choose the main product that should stay, and merge the duplicate names into it.",
+              },
+              {
+                title: "5. Delete carefully",
+                description:
+                  "Deleting products can affect product lists, reports, and forecasting. Products with sales history require extra caution.",
+              },
+            ]}
+            note="Tip: Clean product names make reports and forecasts more accurate, especially when the same product appears with different spellings."
+          />
+        }
+      />
+
       <Card>
         {err && (
           <div style={{ marginBottom: 12 }}>

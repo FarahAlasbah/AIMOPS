@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { RefreshCw } from "lucide-react";
 
-import { Button, Card, FormSelect } from "../../../shared/components";
+import { Button, Card, FormSelect, PageHeader } from "../../../shared/components";
 import FormCalendar from "../../../shared/components/FormCalendar";
 import InfoMessage from "../../../shared/components/InfoMessage";
+import PageHelp from "../../../shared/components/PageHelp";
 
 import { getProducts } from "../../../api/products";
 import { generateForecast, getForecastStatuses } from "../../../api/forecasts";
@@ -473,6 +474,49 @@ export default function ForecastingPage() {
 
   return (
     <div className="forecasting-page">
+      <PageHeader
+        
+        actions={
+          <PageHelp
+            title="How to use Forecasting"
+            buttonLabel="Open forecasting help"
+            items={[
+              {
+                title: "1. Check product readiness",
+                description:
+                  "Each product has a forecast status. Not Started means no forecast exists yet, Training means AIMOPS is generating it, Ready means you can view the forecast, and Failed means you can retry.",
+              },
+              {
+                title: "2. Generate forecasts",
+                description:
+                  "Click Generate for a product when it has enough sales history. AIMOPS uses uploaded sales data to estimate future demand.",
+              },
+              {
+                title: "3. Upload data when needed",
+                description:
+                  "If a product has no sales history or not enough usable data, upload sales data first before generating a forecast.",
+              },
+              {
+                title: "4. Wait while training finishes",
+                description:
+                  "Training can take a little time. You can stay on this page, or go back to the dashboard and AIMOPS will notify you when watched forecasts are ready.",
+              },
+              {
+                title: "5. Open ready forecasts",
+                description:
+                  "When a forecast is Ready, click View to open the forecast details page with charts, summary numbers, confidence, and AI explanation.",
+              },
+              {
+                title: "6. Retry failed forecasts",
+                description:
+                  "If a forecast fails, check the error message. Retry after uploading better data or after fixing the product sales history.",
+              },
+            ]}
+            note="Tip: Forecast quality depends on clean product names and enough sales history. Merge duplicate products before forecasting when needed."
+          />
+        }
+      />
+
       {pageSkeleton ? (
         <ForecastSummarySkeleton />
       ) : (

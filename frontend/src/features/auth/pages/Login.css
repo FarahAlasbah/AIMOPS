@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Believe Stronger";
-  src: url("../../../assets/fonts/believestronger-regular.otf") format("opentype");
+  src: url("/fonts/believestronger-regular.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;

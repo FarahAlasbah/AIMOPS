@@ -534,3 +534,13 @@ html[dir="rtl"] .products-toolbar .fc-input {
     width: 100%;
   }
 }
+
+.products-toolbar .fs-trigger {
+  height: 44px;
+  border-radius: 14px;
+}
+
+.products-toolbar .field .form-group {
+  width: 100%;
+}
+

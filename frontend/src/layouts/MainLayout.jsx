@@ -1,7 +1,7 @@
+// frontend/src/layouts/MainLayout.jsx
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Menu } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 import AdminSidebar from "./components/AdminSidebar";
 import NotificationBell from "./components/NotificationBell";
@@ -16,7 +16,6 @@ import "./MainLayout.css";
 
 function MainLayoutFrame() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { t } = useTranslation();
   const { isDrawerOpen, isDrawerExpanded } = useConsultation();
 
   return (
@@ -31,14 +30,12 @@ function MainLayoutFrame() {
         <header className="app-header">
           <button
             type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setSidebarOpen((value) => !value)}
             className="menu-button"
             aria-label="Toggle sidebar"
           >
             <Menu size={24} />
           </button>
-
-          
 
           <div className="header-actions">
             <LangToggle />
@@ -57,12 +54,10 @@ function MainLayoutFrame() {
   );
 }
 
-const MainLayout = () => {
+export default function MainLayout() {
   return (
     <ConsultationProvider>
       <MainLayoutFrame />
     </ConsultationProvider>
   );
-};
-
-export default MainLayout;
+}
