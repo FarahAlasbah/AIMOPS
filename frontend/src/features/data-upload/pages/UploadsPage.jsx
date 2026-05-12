@@ -1,30 +1,32 @@
-// frontend/src/features/data-upload/pages/UploadsPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, PageHeader, Button } from "../../../shared/components";
+
+import { Button, Card, FormSelect, PageHeader } from "../../../shared/components";
 import FormCalendar from "../../../shared/components/FormCalendar";
 import InfoMessage from "../../../shared/components/InfoMessage";
-import "../components/UploadCard.css";
-import "../components/UploadCard.css";
+import PageHelp from "../../../shared/components/PageHelp";
 import {
-  uploadSalesData,
-  getAllUploads,
   deleteUploadBatch,
+  getUploadsPage,
+  uploadSalesData,
 } from "../../../api/data";
+import ConfirmDialog from "../components/ConfirmDialog";
 import UploadStep from "../components/UploadStep";
 import UploadsList from "../components/UploadsList";
-import ConfirmDialog from "../components/ConfirmDialog";
-
 import {
   MAX_MB,
   getFileKey,
   readDedupeSet,
-  writeDedupeSet,
-  validateSelectedFile,
   removeDedupeKeysForFileName,
+  validateSelectedFile,
+  writeDedupeSet,
 } from "../utils/fileUtils";
-import { getCachedAnalysis, clearCachedAnalysis } from "../utils/analysisCache";
+import { clearCachedAnalysis, getCachedAnalysis } from "../utils/analysisCache";
+
+import "../components/UploadCard.css";
+
+const LIMIT = 20;
 
 const normalizeUpload = (u) => ({
   batchId: u?.batch_id ?? u?.batchId,
@@ -62,6 +64,7 @@ const extractApiError = (err, fallback) => {
 
   if (data?.detail && typeof data.detail === "object") {
     if (typeof data.detail.message === "string") return data.detail.message;
+
     try {
       return JSON.stringify(data.detail);
     } catch {
@@ -88,21 +91,31 @@ const dedupeUploadsByBatch = (list) => {
   return list.filter((u) => {
     const id = String(u?.batchId ?? "").trim();
     if (!id || seen.has(id)) return false;
+
     seen.add(id);
     return true;
   });
 };
 
-const getTime = (v) => {
-  const ts = new Date(v || "").getTime();
-  return Number.isNaN(ts) ? 0 : ts;
-};
+function normalizeSelectValue(value) {
+  if (value?.target?.value != null) return value.target.value;
+  if (value?.value != null) return value.value;
+  return value;
+}
 
-const compareText = (a, b) =>
-  String(a || "").localeCompare(String(b || ""), undefined, {
-    sensitivity: "base",
-    numeric: true,
-  });
+function useDebouncedValue(value, delay = 350) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export default function UploadsPage() {
   const { t } = useTranslation("upload");
@@ -120,13 +133,16 @@ export default function UploadsPage() {
 
   const [uploadsLoading, setUploadsLoading] = useState(false);
   const [uploads, setUploads] = useState([]);
-  const limit = 20;
   const [offset, setOffset] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const [sortBy, setSortBy] = useState("newest");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 350);
 
   const [deletingIds, setDeletingIds] = useState(() => new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -143,15 +159,53 @@ export default function UploadsPage() {
     [],
   );
 
+  const sortOptions = useMemo(
+    () => [
+      {
+        value: "newest",
+        label: t("uploadsPage.sortNewest", {
+          defaultValue: "Newest first",
+        }),
+      },
+      {
+        value: "oldest",
+        label: t("uploadsPage.sortOldest", {
+          defaultValue: "Oldest first",
+        }),
+      },
+      {
+        value: "name_asc",
+        label: t("uploadsPage.sortNameAsc", {
+          defaultValue: "File name A–Z",
+        }),
+      },
+      {
+        value: "name_desc",
+        label: t("uploadsPage.sortNameDesc", {
+          defaultValue: "File name Z–A",
+        }),
+      },
+      {
+        value: "status",
+        label: t("uploadsPage.sortStatus", {
+          defaultValue: "Status",
+        }),
+      },
+    ],
+    [t],
+  );
+
   const extractOverlapWarning = (res) => {
-    const warning =
+    const warningMessage =
       res?.overlap_warning ||
       res?.overlapWarning ||
       res?.warning ||
       res?.warnings ||
       "";
 
-    if (typeof warning === "string" && warning.trim()) return warning.trim();
+    if (typeof warningMessage === "string" && warningMessage.trim()) {
+      return warningMessage.trim();
+    }
 
     const overlap =
       res?.overlap ||
@@ -182,14 +236,16 @@ export default function UploadsPage() {
     }
 
     const msg = cleanStr(res?.message);
+
     if (msg) {
-      const m = msg.toLowerCase();
+      const lower = msg.toLowerCase();
+
       if (
-        m.includes("overlap") ||
-        m.includes("overlapping") ||
-        m.includes("duplicate") ||
-        m.includes("dedup") ||
-        m.includes("replaced")
+        lower.includes("overlap") ||
+        lower.includes("overlapping") ||
+        lower.includes("duplicate") ||
+        lower.includes("dedup") ||
+        lower.includes("replaced")
       ) {
         return msg;
       }
@@ -198,126 +254,53 @@ export default function UploadsPage() {
     return "";
   };
 
-  const fetchUploads = async () => {
-    setUploadsLoading(true);
-    setError("");
+  const fetchUploads = useCallback(
+    async (nextOffset = offset) => {
+      setUploadsLoading(true);
+      setError("");
 
-    try {
-      const raw = await getAllUploads({ limit: 100, maxPages: 50 });
-      const normalized = Array.isArray(raw) ? raw.map(normalizeUpload) : [];
-      setUploads(dedupeUploadsByBatch(normalized));
-    } catch (e) {
-      setError(extractApiError(e, t("uploadsPage.errorLoadFailed")));
-      setUploads([]);
-    } finally {
-      setUploadsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUploads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    setOffset(0);
-  }, [sortBy, searchQuery, dateFrom, dateTo]);
-
-  const filteredUploads = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-
-    const rawFromTs = dateFrom
-      ? new Date(`${dateFrom}T00:00:00`).getTime()
-      : null;
-    const rawToTs = dateTo
-      ? new Date(`${dateTo}T23:59:59.999`).getTime()
-      : null;
-
-    const fromTs =
-      rawFromTs != null && rawToTs != null
-        ? Math.min(rawFromTs, rawToTs)
-        : rawFromTs;
-    const toTs =
-      rawFromTs != null && rawToTs != null
-        ? Math.max(rawFromTs, rawToTs)
-        : rawToTs;
-
-    return uploads.filter((u) => {
-      if (q) {
-        const name = String(u?.fileName || "").toLowerCase();
-        if (!name.includes(q)) return false;
-      }
-
-      if (fromTs != null || toTs != null) {
-        const ts = getTime(u?.uploadedAt);
-        if (!ts) return false;
-        if (fromTs != null && ts < fromTs) return false;
-        if (toTs != null && ts > toTs) return false;
-      }
-
-      return true;
-    });
-  }, [uploads, searchQuery, dateFrom, dateTo]);
-
-  const sortedUploads = useMemo(() => {
-    const list = [...filteredUploads];
-
-    switch (sortBy) {
-      case "oldest":
-        return list.sort(
-          (a, b) => getTime(a.uploadedAt) - getTime(b.uploadedAt),
-        );
-
-      case "name_asc":
-        return list.sort((a, b) => compareText(a.fileName, b.fileName));
-
-      case "name_desc":
-        return list.sort((a, b) => compareText(b.fileName, a.fileName));
-
-      case "status":
-        return list.sort((a, b) => {
-          const s = compareText(a.status, b.status);
-          if (s !== 0) return s;
-          return getTime(b.uploadedAt) - getTime(a.uploadedAt);
+      try {
+        const page = await getUploadsPage({
+          limit: LIMIT,
+          offset: nextOffset,
+          search: debouncedSearchQuery,
+          sortBy,
+          dateFrom,
+          dateTo,
         });
 
-      case "newest":
-      default:
-        return list.sort(
-          (a, b) => getTime(b.uploadedAt) - getTime(a.uploadedAt),
-        );
-    }
-  }, [filteredUploads, sortBy]);
+        const normalized = Array.isArray(page.items)
+          ? page.items.map(normalizeUpload)
+          : [];
 
-  useEffect(() => {
-    if (offset > 0 && offset >= sortedUploads.length) {
-      const lastValidOffset =
-        sortedUploads.length > 0
-          ? Math.floor((sortedUploads.length - 1) / limit) * limit
-          : 0;
-      setOffset(lastValidOffset);
-    }
-  }, [offset, sortedUploads.length, limit]);
+        const nextUploads = dedupeUploadsByBatch(normalized);
 
-  useEffect(() => {
-    const existingIds = new Set(
-      sortedUploads
-        .map((u) => String(u?.batchId ?? "").trim())
-        .filter(Boolean),
-    );
-
-    setSelectedBatchIds((prev) => {
-      const next = prev.filter((id) => existingIds.has(String(id)));
-      return next.length === prev.length ? prev : next;
-    });
-  }, [sortedUploads]);
-
-  const visibleUploads = useMemo(
-    () => sortedUploads.slice(offset, offset + limit),
-    [sortedUploads, offset, limit],
+        setUploads(nextUploads);
+        setTotalCount(page.total ?? nextUploads.length);
+        setHasNextPage(Boolean(page.hasNext));
+      } catch (e) {
+        setError(extractApiError(e, t("uploadsPage.errorLoadFailed")));
+        setUploads([]);
+        setTotalCount(0);
+        setHasNextPage(false);
+      } finally {
+        setUploadsLoading(false);
+      }
+    },
+    [dateFrom, dateTo, debouncedSearchQuery, offset, sortBy, t],
   );
 
-  const hasNext = offset + limit < sortedUploads.length;
+  useEffect(() => {
+    fetchUploads(offset);
+  }, [offset, fetchUploads]);
+
+  useEffect(() => {
+    setSelectedBatchIds([]);
+
+    if (offset !== 0) {
+      setOffset(0);
+    }
+  }, [sortBy, debouncedSearchQuery, dateFrom, dateTo, offset]);
 
   const selectedBatchIdSet = useMemo(
     () => new Set(selectedBatchIds.map(String)),
@@ -326,14 +309,15 @@ export default function UploadsPage() {
 
   const selectedUploads = useMemo(
     () =>
-      sortedUploads.filter((u) =>
+      uploads.filter((u) =>
         selectedBatchIdSet.has(String(u?.batchId ?? "")),
       ),
-    [sortedUploads, selectedBatchIdSet],
+    [uploads, selectedBatchIdSet],
   );
 
   const selectedCount = selectedUploads.length;
   const isDeleting = deletingIds.size > 0;
+  const hasNext = hasNextPage;
 
   const toggleSelectUpload = (batchId, checked) => {
     const id = String(batchId ?? "").trim();
@@ -355,7 +339,7 @@ export default function UploadsPage() {
   const toggleSelectVisible = (checked) => {
     if (isDeleting) return;
 
-    const visibleIds = visibleUploads
+    const visibleIds = uploads
       .map((u) => String(u?.batchId ?? "").trim())
       .filter(Boolean);
 
@@ -388,6 +372,7 @@ export default function UploadsPage() {
     }
 
     const validation = validateSelectedFile(file);
+
     if (!validation.ok) {
       setUploadedFile(null);
       setError(validation.message);
@@ -396,6 +381,7 @@ export default function UploadsPage() {
 
     const fileKey = getFileKey(file);
     const dedupe = readDedupeSet();
+
     if (dedupe.has(fileKey)) {
       setUploadedFile(null);
       setError(t("uploadsPage.errorDuplicateFile"));
@@ -438,11 +424,12 @@ export default function UploadsPage() {
         return;
       }
 
-      await fetchUploads();
       setOffset(0);
+      await fetchUploads(0);
+
       setUploadedFile(null);
       setProgress(0);
-      setFileInputKey((k) => k + 1);
+      setFileInputKey((key) => key + 1);
     } catch (err) {
       if (err?.response?.status === 409) {
         const existingId = getExistingBatchIdFrom409(err);
@@ -456,15 +443,15 @@ export default function UploadsPage() {
 
         setUploadedFile(null);
         setProgress(0);
-        setFileInputKey((k) => k + 1);
+        setFileInputKey((key) => key + 1);
 
         if (existingId) {
           navigate(`/app/data-upload/map/${existingId}`);
           return;
         }
 
-        await fetchUploads();
         setOffset(0);
+        await fetchUploads(0);
         setError(msg);
         return;
       }
@@ -487,6 +474,7 @@ export default function UploadsPage() {
 
   const clearLocalForBatch = (batchId) => {
     clearCachedAnalysis(batchId);
+
     try {
       localStorage.removeItem(LS_CONFIRMED_KEY(batchId));
       localStorage.removeItem(LS_MAPPING_DRAFT_KEY(batchId));
@@ -498,6 +486,7 @@ export default function UploadsPage() {
 
   const requestDelete = (upload) => {
     if (!upload?.batchId || isDeleting) return;
+
     setError("");
     setConfirmTarget({
       mode: "single",
@@ -561,8 +550,12 @@ export default function UploadsPage() {
       );
 
       closeConfirm();
-      setOffset(0);
-      await fetchUploads();
+
+      if (offset !== 0 && uploads.length === deletedIds.length) {
+        setOffset((prev) => Math.max(0, prev - LIMIT));
+      } else {
+        await fetchUploads(offset);
+      }
 
       if (failures.length > 0) {
         const baseMessage = extractApiError(
@@ -629,21 +622,51 @@ export default function UploadsPage() {
 
   return (
     <div className="data-upload-page">
-      
+      <PageHeader
+        actions={
+          <PageHelp
+            title="How to use Data Upload"
+            items={[
+              {
+                title: "1. Upload a sales file",
+                description:
+                  "Choose a CSV or Excel file that contains sales data such as date, product name, quantity, price, and total amount.",
+              },
+              {
+                title: "2. Check previous uploads",
+                description:
+                  "Use the uploads table to find older files, filter by date, search by file name, or sort by status.",
+              },
+              {
+                title: "3. Continue the workflow",
+                description:
+                  "Click an uploaded file to continue mapping columns or reviewing extracted products depending on its progress.",
+              },
+              {
+                title: "4. Delete carefully",
+                description:
+                  "Deleting an upload also removes its saved mapping and review cache from the browser.",
+              },
+            ]}
+            note="Tip: If a report or forecast is empty, make sure your sales data was uploaded and fully processed first."
+          />
+        }
+      />
 
       <Card>
-        {error && (
+        {error ? (
           <div style={{ marginBottom: 16 }}>
             <InfoMessage type="error">{error}</InfoMessage>
           </div>
-        )}
+        ) : null}
 
-        {warning && (
+        {warning ? (
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
               <div style={{ flex: "1 1 auto" }}>
                 <InfoMessage type="warn">{warning}</InfoMessage>
               </div>
+
               <button
                 type="button"
                 className="ghost-btn"
@@ -654,12 +677,14 @@ export default function UploadsPage() {
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
         <UploadStep
           campaignOptions={campaignOptions}
           selectedCampaign={selectedCampaign}
-          onCampaignChange={(e) => setSelectedCampaign(e.target.value)}
+          onCampaignChange={(event) =>
+            setSelectedCampaign(normalizeSelectValue(event))
+          }
           onFileSelect={handleFileSelect}
           uploading={uploading}
           progress={progress}
@@ -668,7 +693,7 @@ export default function UploadsPage() {
             setUploadedFile(null);
             setError("");
             setProgress(0);
-            setFileInputKey((k) => k + 1);
+            setFileInputKey((key) => key + 1);
           }}
           onUpload={handleUpload}
           fileInputKey={fileInputKey}
@@ -685,7 +710,7 @@ export default function UploadsPage() {
             <div className="uploads-header-actions">
               <Button
                 variant="secondary"
-                onClick={fetchUploads}
+                onClick={() => fetchUploads(offset)}
                 disabled={uploadsLoading || isDeleting}
               >
                 {uploadsLoading
@@ -702,12 +727,13 @@ export default function UploadsPage() {
                   defaultValue: "Search file name",
                 })}
               </label>
+
               <input
                 id="uploads-search"
                 className="uploads-input"
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder={t("uploadsPage.searchPlaceholder", {
                   defaultValue: "Search by file name...",
                 })}
@@ -719,7 +745,7 @@ export default function UploadsPage() {
               <FormCalendar
                 label={t("uploadsPage.dateFrom", { defaultValue: "From" })}
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(event) => setDateFrom(event.target.value)}
                 max={dateTo || undefined}
                 disabled={uploadsLoading}
                 placeholder="YYYY-MM-DD"
@@ -730,7 +756,7 @@ export default function UploadsPage() {
               <FormCalendar
                 label={t("uploadsPage.dateTo", { defaultValue: "To" })}
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(event) => setDateTo(event.target.value)}
                 min={dateFrom || undefined}
                 disabled={uploadsLoading}
                 placeholder="YYYY-MM-DD"
@@ -738,40 +764,13 @@ export default function UploadsPage() {
             </div>
 
             <div className="uploads-field">
-              <label htmlFor="uploads-sort" className="uploads-label">
-                {t("uploadsPage.sortBy", { defaultValue: "Sort by" })}
-              </label>
-              <select
-                id="uploads-sort"
-                className="uploads-input uploads-sort-select"
+              <FormSelect
+                label={t("uploadsPage.sortBy", { defaultValue: "Sort by" })}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(event) => setSortBy(normalizeSelectValue(event))}
+                options={sortOptions}
                 disabled={uploadsLoading || isDeleting}
-              >
-                <option value="newest">
-                  {t("uploadsPage.sortNewest", {
-                    defaultValue: "Newest first",
-                  })}
-                </option>
-                <option value="oldest">
-                  {t("uploadsPage.sortOldest", {
-                    defaultValue: "Oldest first",
-                  })}
-                </option>
-                <option value="name_asc">
-                  {t("uploadsPage.sortNameAsc", {
-                    defaultValue: "File name A–Z",
-                  })}
-                </option>
-                <option value="name_desc">
-                  {t("uploadsPage.sortNameDesc", {
-                    defaultValue: "File name Z–A",
-                  })}
-                </option>
-                <option value="status">
-                  {t("uploadsPage.sortStatus", { defaultValue: "Status" })}
-                </option>
-              </select>
+              />
             </div>
 
             <div className="uploads-tools-actions">
@@ -788,7 +787,7 @@ export default function UploadsPage() {
             </div>
           </div>
 
-          {selectedCount > 0 && (
+          {selectedCount > 0 ? (
             <div className="uploads-selection-bar">
               <div className="uploads-selection-text">
                 {t("uploadsPage.selectedUploads", {
@@ -822,17 +821,17 @@ export default function UploadsPage() {
                 </button>
               </div>
             </div>
-          )}
+          ) : null}
 
           <UploadsList
-            uploads={visibleUploads}
+            uploads={uploads}
             loading={uploadsLoading}
-            limit={limit}
+            limit={LIMIT}
             offset={offset}
-            totalCount={sortedUploads.length}
+            totalCount={totalCount}
             hasNext={hasNext}
-            onPrev={() => setOffset((prev) => Math.max(0, prev - limit))}
-            onNext={() => setOffset((prev) => prev + limit)}
+            onPrev={() => setOffset((prev) => Math.max(0, prev - LIMIT))}
+            onNext={() => setOffset((prev) => prev + LIMIT)}
             hasLocalMapping={hasLocalMapping}
             hasCachedAnalysis={hasCachedAnalysis}
             onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}

@@ -1,23 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
 import { Card, PageHeader } from "../../../shared/components";
+import PageHelp from "../../../shared/components/PageHelp";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import {
   deleteCampaign,
   getCampaigns,
   publishCampaign,
 } from "../../../api/campaigns";
-import {
-  formatCurrency,
-  formatDate,
-  formatPercent,
-} from "../utils";
+import { formatCurrency, formatDate, formatPercent } from "../utils";
 import {
   CampaignFilters,
   CampaignStatusBadge,
   ConfirmActionModal,
 } from "../components";
+
 import "./CampaignList.css";
 
 const CampaignList = () => {
@@ -90,7 +89,7 @@ const CampaignList = () => {
       planned: campaigns.filter((item) => item.status === "planned").length,
       completed: campaigns.filter((item) => item.status === "completed").length,
     }),
-    [campaigns]
+    [campaigns],
   );
 
   const closeConfirmModal = () => {
@@ -114,8 +113,8 @@ const CampaignList = () => {
         prev.map((item) =>
           item.campaign_id === campaignId
             ? { ...item, status: "active" }
-            : item
-        )
+            : item,
+        ),
       );
 
       closeConfirmModal();
@@ -135,7 +134,7 @@ const CampaignList = () => {
       await deleteCampaign(campaignId);
 
       setCampaigns((prev) =>
-        prev.filter((item) => item.campaign_id !== campaignId)
+        prev.filter((item) => item.campaign_id !== campaignId),
       );
 
       closeConfirmModal();
@@ -176,13 +175,48 @@ const CampaignList = () => {
         ? t("actions.publishing")
         : t("actions.publish")
       : busyAction === "delete" && busyId === confirmState.campaignId
-      ? t("actions.deleting")
-      : t("actions.delete");
+        ? t("actions.deleting")
+        : t("actions.delete");
 
   return (
     <div className="campaign-list-page">
-      
-          <div className="campaign-list-header-actions">
+      <PageHeader
+        
+        actions={
+          <div className="campaign-list-header-actions" style={{ marginBottom: 0 }}>
+            <PageHelp
+              title="How to use Campaigns"
+              buttonLabel="Open campaigns help"
+              items={[
+                {
+                  title: "1. Review campaign status",
+                  description:
+                    "Planned campaigns are saved but not active yet. Active campaigns are published. Completed campaigns are finished campaigns kept for review.",
+                },
+                {
+                  title: "2. Use filters",
+                  description:
+                    "Search by campaign name, filter by status, or filter by campaign type to find campaigns faster.",
+                },
+                {
+                  title: "3. Open campaign details",
+                  description:
+                    "Click the campaign name or View to see selected products, dates, budget, forecast impact, and business advice.",
+                },
+                {
+                  title: "4. Publish planned campaigns",
+                  description:
+                    "Publishing changes a planned campaign into an active campaign. Use this when the campaign is ready to run.",
+                },
+                {
+                  title: "5. Delete carefully",
+                  description:
+                    "Delete a campaign only when it is wrong or no longer needed, because removing it can affect campaign tracking and reports.",
+                },
+              ]}
+              note="Tip: Create campaigns after your products and forecasts are ready, so AIMOPS can give better campaign insights."
+            />
+
             <button
               type="button"
               className="btn-outline"
@@ -201,9 +235,12 @@ const CampaignList = () => {
               </button>
             ) : null}
           </div>
-       
+        }
+      />
 
-      {pageError ? <div className="campaign-page-alert error">{pageError}</div> : null}
+      {pageError ? (
+        <div className="campaign-page-alert error">{pageError}</div>
+      ) : null}
 
       <div className="campaign-summary-grid">
         <Card>

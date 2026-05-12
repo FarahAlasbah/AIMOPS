@@ -12,7 +12,14 @@ function readTotalCount({ data, headers }) {
   if (!Number.isNaN(headerNum) && headerNum >= 0) return headerNum;
 
   if (data && typeof data === "object" && !Array.isArray(data)) {
-    const candidates = [data.total, data.count, data.total_count];
+    const candidates = [
+      data.total,
+      data.count,
+      data.total_count,
+      data.totalCount,
+      data.pagination?.total,
+    ];
+
     for (const value of candidates) {
       const n = Number(value);
       if (!Number.isNaN(n) && n >= 0) return n;
@@ -22,6 +29,24 @@ function readTotalCount({ data, headers }) {
   if (Array.isArray(data)) return data.length;
 
   return null;
+}
+
+function extractItems(data) {
+  if (Array.isArray(data)) return data;
+
+  const candidates = [
+    data?.items,
+    data?.results,
+    data?.uploads,
+    data?.data,
+    data?.batches,
+  ];
+
+  for (const value of candidates) {
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
 }
 
 async function safeCountUsers() {
@@ -64,65 +89,56 @@ async function safeGetUploadsPage({ limit = 5, offset = 0 } = {}) {
     const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
     const data = res.data;
 
-    if (Array.isArray(data)) return data;
-
-    const items = data?.items || data?.results || [];
-    return Array.isArray(items) ? items : [];
+    return {
+      items: extractItems(data),
+      total: readTotalCount({ data, headers: res.headers }),
+    };
   } catch {
-    return [];
+    return {
+      items: [],
+      total: null,
+    };
   }
 }
 
 async function safeCountUploads() {
-  const limit = 200;
-  const maxPages = 500;
+  const firstPage = await safeGetUploadsPage({ limit: 1, offset: 0 });
 
-  let offset = 0;
-  let total = 0;
+  if (firstPage.total != null) return firstPage.total;
 
-  for (let page = 0; page < maxPages; page += 1) {
-    try {
-      const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
-      const data = res.data;
-      const items = Array.isArray(data) ? data : data?.items || data?.results || [];
-
-      total += items.length;
-
-      if (items.length < limit) break;
-      offset += limit;
-    } catch {
-      return null;
-    }
-  }
-
-  return total;
+  return firstPage.items.length;
 }
 
 export async function getDashboardSummary() {
-  const [usersCount, productsCount, uploadsCount, recentUploads] = await Promise.all([
+  const [usersCount, productsCount, uploadsInfo] = await Promise.all([
     safeCountUsers(),
     safeCountProducts(),
-    safeCountUploads(),
     safeGetUploadsPage({ limit: 5, offset: 0 }),
   ]);
 
   return {
     usersCount,
     productsCount,
-    uploadsCount,
-    recentUploads,
+    uploadsCount: uploadsInfo.total ?? uploadsInfo.items.length,
+    recentUploads: uploadsInfo.items,
   };
 }
 
-export async function getUploadsForCharts({ limit = 500 } = {}) {
-  const res = await api.get(`/api/data/uploads?limit=${limit}&offset=0`);
-  return Array.isArray(res.data) ? res.data : [];
+export async function getUploadsForCharts({ limit = 120 } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 120);
+  const res = await api.get(`/api/data/uploads?limit=${safeLimit}&offset=0`);
+  return extractItems(res.data);
 }
 
-export async function getProductsForCharts({ limit = 200 } = {}) {
+export async function getProductsForCharts({ limit = 120 } = {}) {
   const res = await api.get("/api/products");
   const data = res.data;
-  const products = Array.isArray(data?.products) ? data.products : [];
+  const products = Array.isArray(data?.products)
+    ? data.products
+    : Array.isArray(data)
+    ? data
+    : [];
+
   return products.slice(0, limit);
 }
 
@@ -130,8 +146,13 @@ export async function getCampaignsForDashboard() {
   try {
     const res = await api.get("/api/campaigns");
     const data = res.data;
+
     const campaigns = Array.isArray(data?.campaigns)
       ? data.campaigns
+      : Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data?.results)
+      ? data.results
       : Array.isArray(data)
       ? data
       : [];

@@ -1,93 +1,5 @@
 /* frontend/src/layouts/MainLayout.css */
-.main-layout {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f9fafb;
-  width: 100%;
-}
-.main-content {
-  flex: 1;
-  margin-left: 260px;
-  transition: margin-left 0.3s ease;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - 260px);
-  min-width: 0;
-}
-.main-content.sidebar-closed {
-  margin-left: 0;
-  width: 100%;
-}
-.app-header {
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: 100%;
-}
-.menu-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #374151;
-  padding: 8px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
-}
-.menu-button:hover {
-  background-color: #f3f4f6;
-}
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-.content-area {
-  flex: 1;
-  padding: 24px;
-  width: 100%;
-  overflow-x: auto;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-  }
-  .main-content.sidebar-open {
-    margin-left: 0;
-  }
-}
+
 .main-layout {
   display: flex;
   min-height: 100vh;
@@ -115,16 +27,21 @@
   width: 100%;
 }
 
+/*
+  The consultation drawer now always opens from the physical right side.
+  This keeps it away from the sidebar and prevents RTL layout from covering
+  the page incorrectly.
+*/
 .main-content.consultation-drawer-open {
-  padding-right: 460px;
+  padding-right: 440px;
 }
 
 .main-content.consultation-drawer-open.consultation-drawer-expanded {
-  padding-right: 720px;
+  padding-right: 660px;
 }
 
 .app-header {
-  background-color: white;
+  background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   padding: 16px 24px;
   display: flex;
@@ -147,7 +64,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -155,22 +72,19 @@
   background-color: #f3f4f6;
 }
 
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .header-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   flex-shrink: 0;
+}
+
+/* Keep notification + language on the physical right side even in Arabic mode */
+html[dir="rtl"] .header-actions {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .content-area {
@@ -192,6 +106,13 @@
   border: 0;
 }
 
+@media (max-width: 1180px) {
+  .main-content.consultation-drawer-open,
+  .main-content.consultation-drawer-open.consultation-drawer-expanded {
+    padding-right: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
@@ -201,5 +122,13 @@
 
   .main-content.sidebar-open {
     margin-left: 0;
+  }
+
+  .app-header {
+    padding: 14px 16px;
+  }
+
+  .content-area {
+    padding: 18px 14px;
   }
 }
