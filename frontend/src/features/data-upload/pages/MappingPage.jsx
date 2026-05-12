@@ -13,7 +13,7 @@ import { AnalyzeProgress } from "../components/Skeletons";
 import { getCachedAnalysis, setCachedAnalysis } from "../utils/analysisCache";
 import { buildConfirmMappingsPayload } from "../utils/confirmPayload";
 import { normalizeRole } from "../utils/analysisUtils";
-
+import PageHelp from "../../../shared/components/PageHelp";
 const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
 const LS_MAPPING_DRAFT_KEY = (batchId) => `sales_mapping_draft_v1_${batchId}`;
 
@@ -548,7 +548,37 @@ export default function MappingPage() {
 
   return (
     <div className="data-upload-page">
-     
+     <PageHeader
+  
+  actions={
+    <PageHelp
+      title="How to use Column Mapping"
+      items={[
+        {
+          title: "1. Review suggested roles",
+          description:
+            "AIMOPS suggests a role for each column, such as Date, Product name, Quantity, Unit price, or Total amount.",
+        },
+        {
+          title: "2. Confirm uncertain columns",
+          description:
+            "Columns that need verification must be confirmed before you can continue. Use the sample values to decide if the suggestion is correct.",
+        },
+        {
+          title: "3. Fix missing required fields",
+          description:
+            "If a required field is missing, choose the correct column manually from the dropdown.",
+        },
+        {
+          title: "4. Skip irrelevant columns",
+          description:
+            "Columns that are not useful for sales analysis can stay skipped. Only include columns that help reports, forecasts, and product analysis.",
+        },
+      ]}
+      note="You can continue only when all required mappings and verification items are resolved."
+    />
+  }
+/>
 
       <Card>
         {error && (

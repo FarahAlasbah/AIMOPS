@@ -1,10 +1,10 @@
-// frontend/src/features/campaigns/pages/CampaignCalendar.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { RefreshCw } from "lucide-react";
 
-import { Card, FormCalendar } from "../../../shared/components";
+import { Card, FormCalendar, PageHeader } from "../../../shared/components";
+import PageHelp from "../../../shared/components/PageHelp";
 import { getCampaignCalendar, getCampaigns } from "../../../api/campaigns";
 import { formatDate, getDefaultCalendarRange } from "../utils";
 import { CampaignStatusBadge } from "../components";
@@ -85,7 +85,10 @@ function CalendarCampaignSkeleton({ count = 3 }) {
                   className="calendar-sk"
                   style={{ width: "46%", height: 12, marginBottom: 10 }}
                 />
-                <div className="calendar-sk" style={{ width: "70%", height: 15 }} />
+                <div
+                  className="calendar-sk"
+                  style={{ width: "70%", height: 15 }}
+                />
               </div>
             ))}
           </div>
@@ -100,7 +103,10 @@ function CalendarCampaignSkeleton({ count = 3 }) {
           </div>
 
           <div className="calendar-campaign-actions">
-            <div className="calendar-sk" style={{ width: 82, height: 44, borderRadius: 12 }} />
+            <div
+              className="calendar-sk"
+              style={{ width: 82, height: 44, borderRadius: 12 }}
+            />
           </div>
         </article>
       ))}
@@ -190,15 +196,53 @@ const CampaignCalendar = () => {
 
   return (
     <div className="campaign-calendar-page">
-      <div className="campaign-calendar-top-actions">
-        <button
-          type="button"
-          className="btn-outline"
-          onClick={() => navigate("/app/campaigns")}
-        >
-          {t("actions.backToCampaigns")}
-        </button>
-      </div>
+      <PageHeader
+        
+        actions={
+          <div className="campaign-calendar-top-actions" style={{ marginBottom: 0 }}>
+            <PageHelp
+              title="How to use Campaign Calendar"
+              buttonLabel="Open campaign calendar help"
+              items={[
+                {
+                  title: "1. Choose a date range",
+                  description:
+                    "Use the start and end date filters to decide which campaign period you want to view.",
+                },
+                {
+                  title: "2. Understand campaign grouping",
+                  description:
+                    "Campaigns are grouped by their start date, so you can quickly see what begins on each day.",
+                },
+                {
+                  title: "3. Check campaign status",
+                  description:
+                    "Use the status badge to know whether the campaign is planned, active, or completed.",
+                },
+                {
+                  title: "4. Review products and budget",
+                  description:
+                    "Each card shows the campaign products count, date range, and budget to help with planning.",
+                },
+                {
+                  title: "5. Open details",
+                  description:
+                    "Click View to open the full campaign details page, including forecast impact and selected products.",
+                },
+              ]}
+              note="Tip: This page is for campaign planning. The main calendar can also show business events."
+            />
+
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => navigate("/app/campaigns")}
+            >
+              {t("actions.backToCampaigns")}
+            </button>
+          </div>
+        }
+      />
 
       {pageError ? (
         <div className="campaign-page-alert error">{pageError}</div>
@@ -262,10 +306,7 @@ const CampaignCalendar = () => {
                     campaign.product_count ?? campaign.products?.length ?? 0;
 
                   return (
-                    <article
-                      key={campaignId}
-                      className="calendar-campaign-card"
-                    >
+                    <article key={campaignId} className="calendar-campaign-card">
                       <div className="calendar-campaign-top">
                         <div>
                           <h3>{campaign.campaign_name}</h3>
@@ -289,9 +330,7 @@ const CampaignCalendar = () => {
 
                         <div>
                           <span>{t("fields.endDate")}</span>
-                          <strong>
-                            {formatDate(getCampaignEndDate(campaign))}
-                          </strong>
+                          <strong>{formatDate(getCampaignEndDate(campaign))}</strong>
                         </div>
 
                         <div>
@@ -326,9 +365,7 @@ const CampaignCalendar = () => {
                         <button
                           type="button"
                           className="btn-outline"
-                          onClick={() =>
-                            navigate(`/app/campaigns/${campaignId}`)
-                          }
+                          onClick={() => navigate(`/app/campaigns/${campaignId}`)}
                         >
                           {t("actions.view")}
                         </button>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, FormCalendar } from "../../../shared/components";
+
+import { Card, FormCalendar, PageHeader } from "../../../shared/components";
+import PageHelp from "../../../shared/components/PageHelp";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import { createCampaign, publishCampaign } from "../../../api/campaigns";
 import { getProducts } from "../../../api/products";
@@ -14,6 +16,7 @@ import {
   normalizeProductsResponse,
 } from "../utils";
 import { CampaignInsights, ProductPicker } from "../components";
+
 import "./NewCampaign.css";
 
 const NewCampaign = () => {
@@ -65,18 +68,6 @@ const NewCampaign = () => {
     };
   }, [t]);
 
-  const breadcrumbs = [
-    {
-      label: t("list.title"),
-      link: true,
-      onClick: () => navigate("/app/campaigns"),
-    },
-    {
-      label: t("form.title"),
-      link: false,
-    },
-  ];
-
   const updateField = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -108,40 +99,41 @@ const NewCampaign = () => {
   };
 
   const addProduct = (product) => {
-  setSelectedProducts((prev) => {
-    if (prev.some((item) => item.product_id === product.id)) {
-      return prev;
-    }
+    setSelectedProducts((prev) => {
+      if (prev.some((item) => item.product_id === product.id)) {
+        return prev;
+      }
 
-    return [
+      return [
+        ...prev,
+        {
+          product_id: product.id,
+          product_name: product.name,
+          category: product.category,
+          target_quantity: "",
+          discount_pct: 0,
+        },
+      ];
+    });
+
+    setErrors((prev) => ({
       ...prev,
-      {
-        product_id: product.id,
-        product_name: product.name,
-        category: product.category,
-        target_quantity: "",
-        discount_pct: 0,
-      },
-    ];
-  });
+      selectedProducts: undefined,
+      productsById: undefined,
+    }));
+  };
 
-  setErrors((prev) => ({
-    ...prev,
-    selectedProducts: undefined,
-    productsById: undefined,
-  }));
-};
   const removeProduct = (productId) => {
     setSelectedProducts((prev) =>
-      prev.filter((item) => item.product_id !== productId)
+      prev.filter((item) => item.product_id !== productId),
     );
   };
 
   const updateSelectedProduct = (productId, field, value) => {
     setSelectedProducts((prev) =>
       prev.map((item) =>
-        item.product_id === productId ? { ...item, [field]: value } : item
-      )
+        item.product_id === productId ? { ...item, [field]: value } : item,
+      ),
     );
   };
 
@@ -171,15 +163,15 @@ const NewCampaign = () => {
     }
 
     if (
-  formData.budget !== "" &&
-  formData.budget !== null &&
-  formData.budget !== undefined &&
-  Number(formData.budget) < 0
-) {
-  nextErrors.budget = t("validation.budgetInvalid", {
-    defaultValue: "Budget cannot be negative",
-  });
-}
+      formData.budget !== "" &&
+      formData.budget !== null &&
+      formData.budget !== undefined &&
+      Number(formData.budget) < 0
+    ) {
+      nextErrors.budget = t("validation.budgetInvalid", {
+        defaultValue: "Budget cannot be negative",
+      });
+    }
 
     if (
       formData.campaignType === "other" &&
@@ -303,17 +295,58 @@ const NewCampaign = () => {
 
   return (
     <div className="new-campaign-page">
-      
-<div className="new-campaign-top-actions">
-  <button
-    type="button"
-    className="btn-outline"
-    onClick={() => navigate("/app/campaigns")}
-  >
-    {t("actions.backToCampaigns")}
-  </button>
-</div>
-      {pageError ? <div className="campaign-page-alert error">{pageError}</div> : null}
+      <PageHeader
+        
+        actions={
+          <div className="new-campaign-top-actions" style={{ marginBottom: 0 }}>
+            <PageHelp
+              title="How to create a campaign"
+              buttonLabel="Open new campaign help"
+              items={[
+                {
+                  title: "1. Enter campaign details",
+                  description:
+                    "Give the campaign a clear name, choose the type, and add notes that explain the campaign goal.",
+                },
+                {
+                  title: "2. Choose a valid schedule",
+                  description:
+                    "Pick a start date and end date. The end date must be after or equal to the start date.",
+                },
+                {
+                  title: "3. Select channels",
+                  description:
+                    "Choose where the campaign will run, such as social media, email, SMS, or in-store.",
+                },
+                {
+                  title: "4. Select products",
+                  description:
+                    "Choose the products included in the campaign, then enter target quantity and discount percentage when needed.",
+                },
+                {
+                  title: "5. Save or publish",
+                  description:
+                    "Save as Planned if you are still preparing. Create and Publish when the campaign is ready to become active.",
+                },
+              ]}
+              note="Tip: Generate forecasts before creating campaigns to get better date suggestions, uplift estimates, ROI, and business advice."
+            />
+
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => navigate("/app/campaigns")}
+            >
+              {t("actions.backToCampaigns")}
+            </button>
+          </div>
+        }
+      />
+
+      {pageError ? (
+        <div className="campaign-page-alert error">{pageError}</div>
+      ) : null}
+
       {successMessage ? (
         <div className="campaign-page-alert success">{successMessage}</div>
       ) : null}
@@ -343,17 +376,18 @@ const NewCampaign = () => {
               <div className="field">
                 <label>{t("fields.budget")}</label>
                 <input
-  type="number"
-  min="0"
-  step="0.01"
-  value={formData.budget}
-onChange={(e) => {
-  const value = e.target.value;
-  updateField("budget", value === "" ? 0 : value);
-}}  placeholder={t("fields.budgetPlaceholder", {
-    defaultValue: "0 (optional)",
-  })}
-/>
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.budget}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateField("budget", value === "" ? 0 : value);
+                  }}
+                  placeholder={t("fields.budgetPlaceholder", {
+                    defaultValue: "0 (optional)",
+                  })}
+                />
                 {errors.budget ? (
                   <p className="field-error">{errors.budget}</p>
                 ) : null}
@@ -519,23 +553,20 @@ onChange={(e) => {
           <div className="campaign-created-top">
             <div>
               <h3>{createdResult.campaign_name}</h3>
-              {/* <p>{t("messages.createdCampaignSummary")}</p> */}
             </div>
 
             <div className="campaign-created-actions">
               <button
                 type="button"
                 className="btn-outline"
-                onClick={() => navigate(`/app/campaigns/${createdResult.campaign_id}`)}
+                onClick={() =>
+                  navigate(`/app/campaigns/${createdResult.campaign_id}`)
+                }
               >
                 {t("actions.view")}
               </button>
 
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={resetForm}
-              >
+              <button type="button" className="btn-primary" onClick={resetForm}>
                 {t("actions.createAnother")}
               </button>
             </div>

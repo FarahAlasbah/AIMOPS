@@ -1,5 +1,48 @@
-// frontend/src/api/data.js
 import api from "./api";
+
+function extractItems(data) {
+  if (Array.isArray(data)) return data;
+
+  const candidates = [
+    data?.items,
+    data?.results,
+    data?.uploads,
+    data?.data,
+    data?.batches,
+  ];
+
+  for (const value of candidates) {
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
+}
+
+function extractTotal(data, headers, fallback) {
+  const headerVal =
+    headers?.["x-total-count"] ??
+    headers?.["X-Total-Count"] ??
+    headers?.["x-total"] ??
+    headers?.["X-Total"];
+
+  const headerNum = Number(headerVal);
+  if (!Number.isNaN(headerNum) && headerNum >= 0) return headerNum;
+
+  const candidates = [
+    data?.total,
+    data?.count,
+    data?.total_count,
+    data?.totalCount,
+    data?.pagination?.total,
+  ];
+
+  for (const value of candidates) {
+    const n = Number(value);
+    if (!Number.isNaN(n) && n >= 0) return n;
+  }
+
+  return fallback;
+}
 
 export const uploadSalesData = async ({ file, campaignId, onProgress }) => {
   const formData = new FormData();
@@ -22,36 +65,68 @@ export const analyzeSalesBatch = async (batchId) => {
   return res.data;
 };
 
-// Backend pagination
-export const getUploadsPage = async ({ limit = 20, offset = 0 } = {}) => {
-  const res = await api.get(`/api/data/uploads?limit=${limit}&offset=${offset}`);
-  return res.data;
+export const getUploadsPage = async ({
+  limit = 20,
+  offset = 0,
+  search = "",
+  sortBy = "newest",
+  dateFrom = "",
+  dateTo = "",
+} = {}) => {
+  const params = new URLSearchParams();
+
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+
+  if (search.trim()) params.set("search", search.trim());
+  if (sortBy) params.set("sort", sortBy);
+  if (dateFrom) params.set("date_from", dateFrom);
+  if (dateTo) params.set("date_to", dateTo);
+
+  const res = await api.get(`/api/data/uploads?${params.toString()}`);
+  const items = extractItems(res.data);
+  const total = extractTotal(res.data, res.headers, null);
+
+  const normalizedTotal =
+    total == null
+      ? offset + items.length + (items.length >= limit ? 1 : 0)
+      : total;
+
+  return {
+    items,
+    total: normalizedTotal,
+    limit,
+    offset,
+    hasNext:
+      typeof res.data?.has_next === "boolean"
+        ? res.data.has_next
+        : typeof res.data?.hasNext === "boolean"
+        ? res.data.hasNext
+        : offset + items.length < normalizedTotal || items.length >= limit,
+  };
 };
 
-// NEW: fetch all uploads across pages (used for search/sort/filter + status lookup)
-export const getAllUploads = async ({ limit = 100, maxPages = 50 } = {}) => {
+export const getAllUploads = async ({ limit = 100, maxPages = 10 } = {}) => {
   const all = [];
 
   for (let page = 0; page < maxPages; page += 1) {
     const offset = page * limit;
     const chunk = await getUploadsPage({ limit, offset });
-    const list = Array.isArray(chunk) ? chunk : [];
+    const list = Array.isArray(chunk?.items) ? chunk.items : [];
 
     all.push(...list);
 
-    if (list.length < limit) break;
+    if (!chunk.hasNext || list.length < limit) break;
   }
 
   return all;
 };
 
-// Confirm mappings — response includes products.products[] directly
 export const confirmSalesMappings = async (batchId, payload) => {
   const res = await api.post(`/api/data/confirm-mappings/${batchId}`, payload);
   return res.data;
 };
 
-// Confirm products (imports final sales records)
 export const confirmProducts = async (batchId, payload) => {
   const res = await api.post(`/api/data/confirm-products/${batchId}`, payload);
   return res.data;

@@ -1,22 +1,24 @@
+// frontend/src/features/consultation/components/ConsultationDrawer.jsx
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ConsultationPanel from "./ConsultationPanel";
 import { useConsultation } from "../hooks/useConsultation";
 
-export default function ConsultationDrawer() {
-  const {
-    isDrawerOpen,
-    isDrawerExpanded,
-    closeDrawer,
-    ensureHistoryLoaded,
-  } = useConsultation();
+const MOBILE_QUERY = "(max-width: 768px)";
 
-  const [isMobile, setIsMobile] = useState(() =>
-    window.matchMedia("(max-width: 768px)").matches
-  );
+function getIsMobile() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia(MOBILE_QUERY).matches;
+}
+
+export default function ConsultationDrawer() {
+  const { isDrawerOpen, isDrawerExpanded, closeDrawer, ensureHistoryLoaded } =
+    useConsultation();
+
+  const [isMobile, setIsMobile] = useState(getIsMobile);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia(MOBILE_QUERY);
 
     const handleChange = (event) => {
       setIsMobile(event.matches);
@@ -62,7 +64,9 @@ export default function ConsultationDrawer() {
   return createPortal(
     <div
       className={`consultation-drawer-layer ${
-        isMobile ? "consultation-drawer-layer-mobile" : "consultation-drawer-layer-desktop"
+        isMobile
+          ? "consultation-drawer-layer-mobile"
+          : "consultation-drawer-layer-desktop"
       }`}
     >
       {isMobile ? (
@@ -83,6 +87,6 @@ export default function ConsultationDrawer() {
         <ConsultationPanel mode="drawer" />
       </aside>
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -449,3 +449,13 @@ grid-template-columns: 1fr 140px 60px;  align-items: center;
   height: 54px;
   background: var(--c-surface-muted);
 }
+
+.uploads-field .form-group {
+  margin: 0;
+}
+
+.uploads-field .fs-trigger {
+  height: 42px;
+  border-radius: 12px;
+}
+

@@ -8,6 +8,7 @@ import {
   PageHeader,
   InfoMessage,
 } from "../../../shared/components";
+import PageHelp from "../../../shared/components/PageHelp";
 import {
   getEvents,
   getDraftEvents,
@@ -22,7 +23,6 @@ import "./Events.css";
 const TAB_DETECTED = "detected";
 const TAB_CONFIRMED = "confirmed";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 const normalizeId = (id) => String(id ?? "").trim();
 
 const isConfirmedEvent = (event) => {
@@ -39,6 +39,7 @@ const extractApiError = (err, fallback) => {
 
   if (data?.detail && typeof data.detail === "object") {
     if (typeof data.detail.message === "string") return data.detail.message;
+
     try {
       return JSON.stringify(data.detail);
     } catch {
@@ -49,7 +50,6 @@ const extractApiError = (err, fallback) => {
   return fallback;
 };
 
-// ── Draft skeleton ─────────────────────────────────────────────────────────
 function DraftsSkeleton() {
   return (
     <div className="drafts-skeleton">
@@ -67,7 +67,6 @@ function DraftsSkeleton() {
   );
 }
 
-// ── Impact pill helper ─────────────────────────────────────────────────────
 const IMPACT_META = {
   very_high: { label: "Very High", cls: "dimp-veryhigh" },
   high: { label: "High", cls: "dimp-high" },
@@ -81,7 +80,6 @@ const impactMeta = (level) =>
     cls: "dimp-low",
   };
 
-// ── Detected events table ──────────────────────────────────────────────────
 function DraftsTable({
   drafts,
   selectedIds,
@@ -94,16 +92,22 @@ function DraftsTable({
 
   const selectedSet = useMemo(
     () => new Set((Array.isArray(selectedIds) ? selectedIds : []).map(String)),
-    [selectedIds],
+    [selectedIds]
   );
 
   const dismissingSet = useMemo(
-    () => new Set((Array.isArray(dismissingIds) ? dismissingIds : []).map(String)),
-    [dismissingIds],
+    () =>
+      new Set(
+        (Array.isArray(dismissingIds) ? dismissingIds : []).map(String)
+      ),
+    [dismissingIds]
   );
 
   const visibleIds = drafts.map((d) => normalizeId(d.event_id)).filter(Boolean);
-  const selectedVisibleCount = visibleIds.filter((id) => selectedSet.has(id)).length;
+
+  const selectedVisibleCount = visibleIds.filter((id) =>
+    selectedSet.has(id)
+  ).length;
 
   const allSelected =
     visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
@@ -130,6 +134,7 @@ function DraftsTable({
                 })}
               />
             </th>
+
             <th style={{ width: "28%" }}>{t("draftsTable.colPeriod")}</th>
             <th style={{ width: "24%" }}>{t("draftsTable.colProducts")}</th>
             <th style={{ width: "16%" }}>{t("draftsTable.colImpact")}</th>
@@ -155,9 +160,9 @@ function DraftsTable({
             return (
               <tr
                 key={draft.event_id}
-                className={`drafts-row ${checked ? "drafts-row-selected" : ""} ${
-                  dismissing ? "drafts-row-busy" : ""
-                }`}
+                className={`drafts-row ${
+                  checked ? "drafts-row-selected" : ""
+                } ${dismissing ? "drafts-row-busy" : ""}`}
               >
                 <td>
                   <input
@@ -165,7 +170,9 @@ function DraftsTable({
                     className="drafts-checkbox"
                     checked={checked}
                     disabled={dismissing}
-                    onChange={(e) => onToggleOne?.(draft.event_id, e.target.checked)}
+                    onChange={(e) =>
+                      onToggleOne?.(draft.event_id, e.target.checked)
+                    }
                     aria-label={t("draftsTable.selectOne", {
                       defaultValue: "Select detected event",
                     })}
@@ -176,6 +183,7 @@ function DraftsTable({
                   <div className="drafts-dates">
                     {draft.start_date} – {draft.end_date}
                   </div>
+
                   {draft.duration_days && (
                     <div className="drafts-duration">
                       {t("draftsTable.durationDays", {
@@ -221,6 +229,7 @@ function DraftsTable({
     </div>
   );
 }
+
 function ConfirmDialog({
   title,
   message,
@@ -282,7 +291,6 @@ function ConfirmDialog({
   );
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────
 export default function EventsPage() {
   const { t } = useTranslation("events");
   const navigate = useNavigate();
@@ -308,7 +316,6 @@ export default function EventsPage() {
 
   const dismissing = dismissingIds.length > 0;
 
-  // ── Load confirmed events only ───────────────────────────────────────────
   async function load() {
     setLoading(true);
     setError("");
@@ -357,13 +364,14 @@ export default function EventsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Remove selected ids that no longer exist
   useEffect(() => {
     const existing = new Set(drafts.map((d) => normalizeId(d.event_id)));
-    setSelectedDraftIds((prev) => prev.filter((id) => existing.has(String(id))));
+
+    setSelectedDraftIds((prev) =>
+      prev.filter((id) => existing.has(String(id)))
+    );
   }, [drafts]);
 
-  // ── ?draftEvent=<id> from notification ───────────────────────────────────
   useEffect(() => {
     const draftId = searchParams.get("draftEvent");
     if (!draftId || draftsLoading) return;
@@ -373,20 +381,21 @@ export default function EventsPage() {
     if (found) {
       setActiveTab(TAB_DETECTED);
       setActiveDraft(found);
+
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           next.delete("draftEvent");
           return next;
         },
-        { replace: true },
+        { replace: true }
       );
     }
   }, [searchParams, drafts, draftsLoading, setSearchParams]);
 
-  // ── Selection ────────────────────────────────────────────────────────────
   const selectedDrafts = useMemo(() => {
     const set = new Set(selectedDraftIds.map(String));
+
     return drafts.filter((draft) => set.has(normalizeId(draft.event_id)));
   }, [drafts, selectedDraftIds]);
 
@@ -438,104 +447,102 @@ export default function EventsPage() {
   };
 
   const requestDismissSelectedDrafts = () => {
-  if (selectedDrafts.length === 0 || dismissing) return;
-  setDismissConfirmDrafts(selectedDrafts);
-};
+    if (selectedDrafts.length === 0 || dismissing) return;
+    setDismissConfirmDrafts(selectedDrafts);
+  };
 
-const closeDismissConfirm = () => {
-  if (dismissing) return;
-  setDismissConfirmDrafts([]);
-};
+  const closeDismissConfirm = () => {
+    if (dismissing) return;
+    setDismissConfirmDrafts([]);
+  };
 
-const dismissSelectedDrafts = async (draftsToDismiss = []) => {
-  const targets =
-    Array.isArray(draftsToDismiss) && draftsToDismiss.length > 0
-      ? draftsToDismiss
-      : selectedDrafts;
+  const dismissSelectedDrafts = async (draftsToDismiss = []) => {
+    const targets =
+      Array.isArray(draftsToDismiss) && draftsToDismiss.length > 0
+        ? draftsToDismiss
+        : selectedDrafts;
 
-  if (targets.length === 0 || dismissing) return;
+    if (targets.length === 0 || dismissing) return;
 
-  const targetIds = targets
-    .map((d) => normalizeId(d.event_id))
-    .filter(Boolean);
+    const targetIds = targets.map((d) => normalizeId(d.event_id)).filter(Boolean);
 
-  const dismissedIds = [];
-  const failures = [];
+    const dismissedIds = [];
+    const failures = [];
 
-  setDismissConfirmDrafts([]);
-  setError("");
-  setNotice("");
-  setDismissingIds(targetIds);
+    setDismissConfirmDrafts([]);
+    setError("");
+    setNotice("");
+    setDismissingIds(targetIds);
 
-  try {
-    for (const draft of targets) {
-      try {
-        await dismissDraftEvent(draft.event_id);
-        dismissedIds.push(normalizeId(draft.event_id));
-      } catch (err) {
-        failures.push({ draft, err });
+    try {
+      for (const draft of targets) {
+        try {
+          await dismissDraftEvent(draft.event_id);
+          dismissedIds.push(normalizeId(draft.event_id));
+        } catch (err) {
+          failures.push({ draft, err });
+        }
       }
-    }
 
-    setDrafts((prev) =>
-      prev.filter(
-        (draft) => !dismissedIds.includes(normalizeId(draft.event_id)),
-      ),
-    );
-
-    setSelectedDraftIds((prev) =>
-      prev.filter((id) => !dismissedIds.includes(String(id))),
-    );
-
-    if (failures.length === 0) {
-      setNotice(
-        t("eventsPage.dismissSelectedSuccess", {
-          count: dismissedIds.length,
-          defaultValue: `${dismissedIds.length} detected event(s) dismissed.`,
-        }),
-      );
-    } else {
-      const message = extractApiError(
-        failures[0]?.err,
-        t("draftModal.errorDismissFailed", {
-          defaultValue: "Failed to dismiss detected event.",
-        }),
+      setDrafts((prev) =>
+        prev.filter(
+          (draft) => !dismissedIds.includes(normalizeId(draft.event_id))
+        )
       );
 
-      setError(
-        t("eventsPage.dismissSelectedPartialFailed", {
-          failed: failures.length,
-          total: targets.length,
-          defaultValue: `${failures.length} of ${targets.length} detected event(s) could not be dismissed.`,
-        }) + ` ${message}`,
+      setSelectedDraftIds((prev) =>
+        prev.filter((id) => !dismissedIds.includes(String(id)))
       );
+
+      if (failures.length === 0) {
+        setNotice(
+          t("eventsPage.dismissSelectedSuccess", {
+            count: dismissedIds.length,
+            defaultValue: `${dismissedIds.length} detected event(s) dismissed.`,
+          })
+        );
+      } else {
+        const message = extractApiError(
+          failures[0]?.err,
+          t("draftModal.errorDismissFailed", {
+            defaultValue: "Failed to dismiss detected event.",
+          })
+        );
+
+        setError(
+          t("eventsPage.dismissSelectedPartialFailed", {
+            failed: failures.length,
+            total: targets.length,
+            defaultValue: `${failures.length} of ${targets.length} detected event(s) could not be dismissed.`,
+          }) + ` ${message}`
+        );
+      }
+
+      const remainingCount = drafts.filter(
+        (draft) => !dismissedIds.includes(normalizeId(draft.event_id))
+      ).length;
+
+      if (remainingCount <= 0) {
+        setActiveTab(TAB_CONFIRMED);
+      }
+    } finally {
+      setDismissingIds([]);
     }
+  };
 
-    const remainingCount = drafts.filter(
-      (draft) => !dismissedIds.includes(normalizeId(draft.event_id)),
-    ).length;
-
-    if (remainingCount <= 0) {
-      setActiveTab(TAB_CONFIRMED);
-    }
-  } finally {
-    setDismissingIds([]);
-  }
-};
-
-  // ── Draft confirmed / dismissed from modal ───────────────────────────────
   const handleDraftConfirmed = (res, draftEvent) => {
     setNotice(
       res?.message ||
         t("eventsPage.draftConfirmedNotice", {
           name: res?.event_name || "",
-        }),
+        })
     );
 
     const next = drafts.filter((d) => d.event_id !== draftEvent.event_id);
+
     setDrafts(next);
     setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
+      prev.filter((id) => String(id) !== String(draftEvent.event_id))
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -546,9 +553,10 @@ const dismissSelectedDrafts = async (draftsToDismiss = []) => {
 
   const handleDraftDismissed = (_res, draftEvent) => {
     const next = drafts.filter((d) => d.event_id !== draftEvent.event_id);
+
     setDrafts(next);
     setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
+      prev.filter((id) => String(id) !== String(draftEvent.event_id))
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -558,10 +566,47 @@ const dismissSelectedDrafts = async (draftsToDismiss = []) => {
 
   const draftCount = drafts.length;
 
-  // ── Header actions ───────────────────────────────────────────────────────
   const headerActions = useMemo(
     () => (
       <div className="events-actions">
+        <PageHelp
+          title="How to use Events"
+          buttonLabel="Open events help"
+          items={[
+            {
+              title: "1. Start with detected events",
+              description:
+                "Detected events are suggestions found by AIMOPS from your sales data. Review them before adding them to the official events list.",
+            },
+            {
+              title: "2. Review before confirming",
+              description:
+                "Click Review to see the detected event period, affected products, and impact level. Confirm only the events that are useful for the business.",
+            },
+            {
+              title: "3. Dismiss unwanted detections",
+              description:
+                "If a detected event is not useful, select it and dismiss it. Dismissed detections are removed from the review list.",
+            },
+            {
+              title: "4. Use confirmed events for planning",
+              description:
+                "Confirmed events are the official business events. They can be used for calendar planning and impact analysis.",
+            },
+            {
+              title: "5. Create events manually",
+              description:
+                "Use Create Event when you already know an important occasion, campaign-related date, season, or business event.",
+            },
+            {
+              title: "6. Delete carefully",
+              description:
+                "Delete confirmed events only when they are wrong or no longer needed, because removing them can affect event tracking and future analysis.",
+            },
+          ]}
+          note="Tip: Detected events are suggestions. Confirmed events are the ones AIMOPS treats as real business events."
+        />
+
         <Button
           type="button"
           variant="secondary"
@@ -575,12 +620,15 @@ const dismissSelectedDrafts = async (draftsToDismiss = []) => {
         </Button>
       </div>
     ),
-    [navigate, showCreate, t],
+    [navigate, showCreate, t]
   );
 
   return (
     <div className="events-page">
-      
+      <PageHeader
+        
+        actions={headerActions}
+      />
 
       {notice && <InfoMessage type="success">{notice}</InfoMessage>}
       {error && <InfoMessage type="error">{error}</InfoMessage>}
@@ -606,221 +654,226 @@ const dismissSelectedDrafts = async (draftsToDismiss = []) => {
         </Card>
       )}
 
-      {/* ── Tab switcher ── */}
-      <div className="ev-tabs">
-        <button
-          type="button"
-          className={`ev-tab ${
-            activeTab === TAB_DETECTED ? "ev-tab-active" : ""
-          }`}
-          onClick={() => setActiveTab(TAB_DETECTED)}
-        >
-          {t("eventsPage.tabDetected", {
-            defaultValue: "Detected events",
-          })}
-
-          {draftsLoading ? (
-            <span className="ev-tab-spinner" />
-          ) : draftCount > 0 ? (
-            <span className="ev-tab-badge">{draftCount}</span>
-          ) : null}
-        </button>
-
-        <button
-          type="button"
-          className={`ev-tab ${
-            activeTab === TAB_CONFIRMED ? "ev-tab-active" : ""
-          }`}
-          onClick={() => setActiveTab(TAB_CONFIRMED)}
-        >
-          {upcoming
-            ? t("eventsPage.tabUpcomingConfirmed", {
-                defaultValue: "Upcoming confirmed",
-              })
-            : t("eventsPage.tabConfirmed", {
-                defaultValue: "Confirmed events",
+      {!showCreate && (
+        <>
+          <div className="ev-tabs">
+            <button
+              type="button"
+              className={`ev-tab ${
+                activeTab === TAB_DETECTED ? "ev-tab-active" : ""
+              }`}
+              onClick={() => setActiveTab(TAB_DETECTED)}
+            >
+              {t("eventsPage.tabDetected", {
+                defaultValue: "Detected events",
               })}
-        </button>
 
-        {activeTab === TAB_CONFIRMED && (
-          <div className="ev-tabs-right">
-            <div className="events-toggle">
-              <button
-                type="button"
-                className={`seg-btn ${!upcoming ? "active" : ""}`}
-                onClick={() => setUpcoming(false)}
-              >
-                {t("eventsPage.btnAllConfirmed", {
-                  defaultValue: "All confirmed",
-                })}
-              </button>
+              {draftsLoading ? (
+                <span className="ev-tab-spinner" />
+              ) : draftCount > 0 ? (
+                <span className="ev-tab-badge">{draftCount}</span>
+              ) : null}
+            </button>
 
-              <button
-                type="button"
-                className={`seg-btn ${upcoming ? "active" : ""}`}
-                onClick={() => setUpcoming(true)}
-              >
-                {t("eventsPage.btnUpcoming")}
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`ev-tab ${
+                activeTab === TAB_CONFIRMED ? "ev-tab-active" : ""
+              }`}
+              onClick={() => setActiveTab(TAB_CONFIRMED)}
+            >
+              {upcoming
+                ? t("eventsPage.tabUpcomingConfirmed", {
+                    defaultValue: "Upcoming confirmed",
+                  })
+                : t("eventsPage.tabConfirmed", {
+                    defaultValue: "Confirmed events",
+                  })}
+            </button>
+
+            {activeTab === TAB_CONFIRMED && (
+              <div className="ev-tabs-right">
+                <div className="events-toggle">
+                  <button
+                    type="button"
+                    className={`seg-btn ${!upcoming ? "active" : ""}`}
+                    onClick={() => setUpcoming(false)}
+                  >
+                    {t("eventsPage.btnAllConfirmed", {
+                      defaultValue: "All confirmed",
+                    })}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`seg-btn ${upcoming ? "active" : ""}`}
+                    onClick={() => setUpcoming(true)}
+                  >
+                    {t("eventsPage.btnUpcoming")}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── Tab: Detected Events ── */}
-      {activeTab === TAB_DETECTED && (
-        <Card
-          title={
-            draftsLoading
-              ? t("eventsPage.detectedCardTitle", {
-                  defaultValue: "Detected events",
-                })
-              : draftCount > 0
-              ? t("eventsPage.detectedCardTitleCount", {
-                  count: draftCount,
-                  defaultValue: `${draftCount} detected event(s)`,
-                })
-              : t("eventsPage.detectedCardTitleEmpty", {
-                  defaultValue: "No detected events",
-                })
-          }
-          subtitle={t("eventsPage.detectedCardSub", {
-            defaultValue:
-              "Review AI-detected events. Confirm useful ones or dismiss the ones you do not need.",
-          })}
-        >
-          {draftsLoading ? (
-            <DraftsSkeleton />
-          ) : draftCount === 0 ? (
-            <div className="events-empty">
-              <div className="events-empty-title">
-                {t("eventsPage.detectedEmptyTitle", {
-                  defaultValue: "No detected events",
-                })}
-              </div>
-              <div className="events-empty-subtitle">
-                {t("eventsPage.detectedEmptySubtitle", {
-                  defaultValue:
-                    "When AIMOPS detects possible events from your sales data, they will appear here.",
-                })}
-              </div>
-            </div>
-          ) : (
-            <>
-              {selectedDraftCount > 0 && (
-                <div className="drafts-selection-bar">
-                  <div className="drafts-selection-text">
-                    {t("eventsPage.detectedSelected", {
-                      count: selectedDraftCount,
-                      defaultValue: `${selectedDraftCount} selected`,
+          {activeTab === TAB_DETECTED && (
+            <Card
+              title={
+                draftsLoading
+                  ? t("eventsPage.detectedCardTitle", {
+                      defaultValue: "Detected events",
+                    })
+                  : draftCount > 0
+                    ? t("eventsPage.detectedCardTitleCount", {
+                        count: draftCount,
+                        defaultValue: `${draftCount} detected event(s)`,
+                      })
+                    : t("eventsPage.detectedCardTitleEmpty", {
+                        defaultValue: "No detected events",
+                      })
+              }
+              subtitle={t("eventsPage.detectedCardSub", {
+                defaultValue:
+                  "Review AI-detected events. Confirm useful ones or dismiss the ones you do not need.",
+              })}
+            >
+              {draftsLoading ? (
+                <DraftsSkeleton />
+              ) : draftCount === 0 ? (
+                <div className="events-empty">
+                  <div className="events-empty-title">
+                    {t("eventsPage.detectedEmptyTitle", {
+                      defaultValue: "No detected events",
                     })}
                   </div>
 
-                  <div className="drafts-selection-actions">
-                    <button
-                      type="button"
-                      className="drafts-secondary-btn"
-                      onClick={clearDraftSelection}
-                      disabled={dismissing}
-                    >
-                      {t("eventsPage.clearSelection", {
-                        defaultValue: "Clear selection",
-                      })}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="drafts-dismiss-selected-btn"
-                      onClick={requestDismissSelectedDrafts}
-                      disabled={dismissing}
-                    >
-                      {dismissing
-                        ? t("eventsPage.dismissingSelected", {
-                            defaultValue: "Dismissing...",
-                          })
-                        : t("eventsPage.dismissSelected", {
-                            count: selectedDraftCount,
-                            defaultValue: `Dismiss selected (${selectedDraftCount})`,
-                          })}
-                    </button>
+                  <div className="events-empty-subtitle">
+                    {t("eventsPage.detectedEmptySubtitle", {
+                      defaultValue:
+                        "When AIMOPS detects possible events from your sales data, they will appear here.",
+                    })}
                   </div>
                 </div>
+              ) : (
+                <>
+                  {selectedDraftCount > 0 && (
+                    <div className="drafts-selection-bar">
+                      <div className="drafts-selection-text">
+                        {t("eventsPage.detectedSelected", {
+                          count: selectedDraftCount,
+                          defaultValue: `${selectedDraftCount} selected`,
+                        })}
+                      </div>
+
+                      <div className="drafts-selection-actions">
+                        <button
+                          type="button"
+                          className="drafts-secondary-btn"
+                          onClick={clearDraftSelection}
+                          disabled={dismissing}
+                        >
+                          {t("eventsPage.clearSelection", {
+                            defaultValue: "Clear selection",
+                          })}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="drafts-dismiss-selected-btn"
+                          onClick={requestDismissSelectedDrafts}
+                          disabled={dismissing}
+                        >
+                          {dismissing
+                            ? t("eventsPage.dismissingSelected", {
+                                defaultValue: "Dismissing...",
+                              })
+                            : t("eventsPage.dismissSelected", {
+                                count: selectedDraftCount,
+                                defaultValue: `Dismiss selected (${selectedDraftCount})`,
+                              })}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <DraftsTable
+                    drafts={drafts}
+                    selectedIds={selectedDraftIds}
+                    dismissingIds={dismissingIds}
+                    onToggleOne={toggleOneDraft}
+                    onToggleAll={toggleAllDrafts}
+                    onReview={setActiveDraft}
+                  />
+                </>
               )}
-
-              <DraftsTable
-                drafts={drafts}
-                selectedIds={selectedDraftIds}
-                dismissingIds={dismissingIds}
-                onToggleOne={toggleOneDraft}
-                onToggleAll={toggleAllDrafts}
-                onReview={setActiveDraft}
-              />
-            </>
+            </Card>
           )}
-        </Card>
+
+          {activeTab === TAB_CONFIRMED && (
+            <Card
+              title={
+                upcoming
+                  ? t("eventsPage.cardTitleUpcomingConfirmed", {
+                      defaultValue: "Upcoming confirmed events",
+                    })
+                  : t("eventsPage.cardTitleConfirmed", {
+                      defaultValue: "Confirmed events",
+                    })
+              }
+              subtitle={t("eventsPage.confirmedCardSubtitle", {
+                defaultValue:
+                  "Only confirmed events are shown here. Detected events stay in the detected tab until confirmed or dismissed.",
+              })}
+            >
+              {loading ? (
+                <EventsListSkeleton />
+              ) : events.length === 0 ? (
+                <div className="events-empty">
+                  <div className="events-empty-title">
+                    {t("eventsPage.emptyConfirmedTitle", {
+                      defaultValue: "No confirmed events yet",
+                    })}
+                  </div>
+
+                  <div className="events-empty-subtitle">
+                    {t("eventsPage.emptyConfirmedSubtitle", {
+                      defaultValue:
+                        "Confirmed events will appear here after you create or confirm them.",
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <EventsTable
+                  events={events}
+                  onOpen={(id) => navigate(`/app/events/${id}`)}
+                />
+              )}
+            </Card>
+          )}
+        </>
       )}
 
-      {/* ── Tab: Confirmed Events ── */}
-      {activeTab === TAB_CONFIRMED && (
-        <Card
-          title={
-            upcoming
-              ? t("eventsPage.cardTitleUpcomingConfirmed", {
-                  defaultValue: "Upcoming confirmed events",
-                })
-              : t("eventsPage.cardTitleConfirmed", {
-                  defaultValue: "Confirmed events",
-                })
-          }
-          subtitle={t("eventsPage.confirmedCardSubtitle", {
-            defaultValue:
-              "Only confirmed events are shown here. Detected events stay in the detected tab until confirmed or dismissed.",
+      {dismissConfirmCount > 0 && (
+        <ConfirmDialog
+          title={t("eventsPage.dismissConfirmTitle", {
+            defaultValue: "Dismiss detected events?",
           })}
-        >
-          {loading ? (
-            <EventsListSkeleton />
-          ) : events.length === 0 ? (
-            <div className="events-empty">
-              <div className="events-empty-title">
-                {t("eventsPage.emptyConfirmedTitle", {
-                  defaultValue: "No confirmed events yet",
-                })}
-              </div>
-              <div className="events-empty-subtitle">
-                {t("eventsPage.emptyConfirmedSubtitle", {
-                  defaultValue:
-                    "Confirmed events will appear here after you create or confirm them.",
-                })}
-              </div>
-            </div>
-          ) : (
-            <EventsTable
-              events={events}
-              onOpen={(id) => navigate(`/app/events/${id}`)}
-            />
-          )}
-        </Card>
+          message={t("eventsPage.dismissConfirmMessage", {
+            count: dismissConfirmCount,
+            defaultValue: `This will remove ${dismissConfirmCount} selected detected event(s) from the review list. This action cannot be undone.`,
+          })}
+          cancelLabel={t("eventsPage.dismissConfirmCancel", {
+            defaultValue: "Cancel",
+          })}
+          confirmLabel={t("eventsPage.dismissConfirmAction", {
+            count: dismissConfirmCount,
+            defaultValue: `Dismiss ${dismissConfirmCount}`,
+          })}
+          onCancel={closeDismissConfirm}
+          onConfirm={() => dismissSelectedDrafts(dismissConfirmDrafts)}
+        />
       )}
-{dismissConfirmCount > 0 && (
-  <ConfirmDialog
-    title={t("eventsPage.dismissConfirmTitle", {
-      defaultValue: "Dismiss detected events?",
-    })}
-    message={t("eventsPage.dismissConfirmMessage", {
-      count: dismissConfirmCount,
-      defaultValue: `This will remove ${dismissConfirmCount} selected detected event(s) from the review list. This action cannot be undone.`,
-    })}
-    cancelLabel={t("eventsPage.dismissConfirmCancel", {
-      defaultValue: "Cancel",
-    })}
-    confirmLabel={t("eventsPage.dismissConfirmAction", {
-      count: dismissConfirmCount,
-      defaultValue: `Dismiss ${dismissConfirmCount}`,
-    })}
-    onCancel={closeDismissConfirm}
-    onConfirm={() => dismissSelectedDrafts(dismissConfirmDrafts)}
-  />
-)}
+
       {activeDraft && (
         <DraftEventModal
           event={activeDraft}
