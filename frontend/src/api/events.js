@@ -28,6 +28,7 @@ export async function analyzeEvent(eventId, payload) {
  */
 export async function updateEvent(eventId, payload) {
   const id = encodeURIComponent(String(eventId));
+
   try {
     const res = await api.put(`/api/events/${id}`, payload);
     return res.data;
@@ -36,8 +37,19 @@ export async function updateEvent(eventId, payload) {
       const res = await api.patch(`/api/events/${id}`, payload);
       return res.data;
     }
+
     throw err;
   }
+}
+
+/**
+ * DELETE /api/events/{event_id}
+ * Deletes a confirmed event.
+ */
+export async function deleteEvent(eventId) {
+  const id = encodeURIComponent(String(eventId));
+  const res = await api.delete(`/api/events/${id}`);
+  return res.data;
 }
 
 // ── Draft events ─────────────────────────────────────────────────────────────
@@ -65,8 +77,6 @@ export async function confirmDraftEvent(eventId, payload) {
  * POST /api/events/drafts/{id}/dismiss
  * Dismisses a draft event — it won't affect forecasts.
  */
-
-
 export async function dismissDraftEvent(id) {
   const { data } = await api.post(`/api/events/drafts/${id}/dismiss`, {});
   return data;

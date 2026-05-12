@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/components/UploadCard.jsx
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
 
@@ -10,8 +11,10 @@ const kbToMb = (kb) => {
 
 const fmtDate = (s) => {
   if (!s) return "-";
+
   const d = new Date(s);
-  if (isNaN(d.getTime())) return "-";
+  if (Number.isNaN(d.getTime())) return "-";
+
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -21,9 +24,38 @@ const fmtDate = (s) => {
 
 const statusVariant = (s) => {
   const v = String(s || "").toLowerCase();
-  if (["processed", "done", "success"].includes(v)) return "ok";
-  if (["pending", "mapping"].includes(v)) return "warn";
+
+  if (
+    [
+      "processed",
+      "done",
+      "success",
+      "completed",
+      "confirmed",
+      "imported",
+    ].includes(v)
+  ) {
+    return "ok";
+  }
+
+  if (
+    [
+      "pending",
+      "mapping",
+      "mapped",
+      "mapping_confirmed",
+      "mappings_confirmed",
+      "products_pending",
+      "products_ready",
+      "review",
+      "review_required",
+    ].includes(v)
+  ) {
+    return "warn";
+  }
+
   if (["failed", "error", "rejected"].includes(v)) return "err";
+
   return "gray";
 };
 
@@ -34,7 +66,9 @@ function StatusDot({ status }) {
 
 export default function UploadRow({
   upload,
-  hasLocalMapping,
+  canOpenReview = false,
+  isCompleted = false,
+  onCompletedOpen,
   onOpenMapping,
   onReview,
   onDelete,
@@ -51,11 +85,17 @@ export default function UploadRow({
   const handleClick = () => {
     if (deleting) return;
 
-    if (hasLocalMapping) {
+    if (isCompleted) {
+  onCompletedOpen?.(upload);
+  return;
+}
+
+    if (canOpenReview) {
       onReview?.(batchId);
-    } else {
-      onOpenMapping?.(batchId);
+      return;
     }
+
+    onOpenMapping?.(batchId);
   };
 
   const handleSelectChange = (e) => {
@@ -70,6 +110,14 @@ export default function UploadRow({
       }`}
       onClick={handleClick}
       aria-selected={selected}
+      title={
+        isCompleted
+          ? t("uploadsList.completedOpenProducts", {
+              defaultValue:
+                "This upload is completed. Open the Products page to view imported products.",
+            })
+          : undefined
+      }
     >
       <div
         className="ul-select-cell"
@@ -93,6 +141,7 @@ export default function UploadRow({
         <div className="ul-title" title={fileName}>
           {fileName}
         </div>
+
         <div className="ul-sub">
           {fmtDate(upload?.uploadedAt)} · {kbToMb(upload?.fileSizeKb)}
         </div>

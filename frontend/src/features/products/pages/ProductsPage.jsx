@@ -1,6 +1,7 @@
 // frontend/src/features/products/pages/ProductsPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
@@ -28,10 +29,13 @@ const getDateTime = (value) => {
 
 export default function ProductsPage() {
   const { t } = useTranslation("products");
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [info, setInfo] = useState(null);
+  const [redirectNotice, setRedirectNotice] = useState(null);
 
   const [products, setProducts] = useState([]);
 
@@ -58,6 +62,16 @@ export default function ProductsPage() {
   const [delBusy, setDelBusy] = useState(false);
 
   const loadRef = useRef(0);
+
+  useEffect(() => {
+    if (!location.state?.completedUploadRedirect) return;
+
+    setRedirectNotice({
+      fileName: location.state?.completedUploadFileName || "",
+    });
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate]);
 
   const loadProducts = async () => {
     const seq = ++loadRef.current;
@@ -180,7 +194,7 @@ export default function ProductsPage() {
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(sorted.length / pageSize)),
-    [sorted.length, pageSize]
+    [sorted.length, pageSize],
   );
 
   const pageSafe = Math.min(page, totalPages);
@@ -252,7 +266,7 @@ export default function ProductsPage() {
     const primary = Number(mergePrimary);
 
     const merges = Array.from(new Set(mergeIds.map(Number))).filter(
-      (x) => x && x !== primary
+      (x) => x && x !== primary,
     );
 
     if (!primary || merges.length === 0) {
@@ -309,7 +323,7 @@ export default function ProductsPage() {
   const anySelectedHasSales = useMemo(
     () =>
       selectedProducts.some((p) => Number(p?.stats?.total_sales || 0) > 0),
-    [selectedProducts]
+    [selectedProducts],
   );
 
   const doDelete = async () => {
@@ -339,6 +353,10 @@ export default function ProductsPage() {
       setDelBusy(false);
     }
   };
+
+  const redirectMessage = redirectNotice?.fileName
+    ? `“${redirectNotice.fileName}” is already completed, so we brought you to Products. You can view and manage the products imported from that file here.`
+    : "This upload is already completed, so we brought you to Products. You can view and manage the imported products here.";
 
   return (
     <div className="products-page">
@@ -380,6 +398,12 @@ export default function ProductsPage() {
       />
 
       <Card>
+        {redirectNotice && (
+          <div style={{ marginBottom: 12 }}>
+            <InfoMessage type="info">{redirectMessage}</InfoMessage>
+          </div>
+        )}
+
         {err && (
           <div style={{ marginBottom: 12 }}>
             <InfoMessage type="error">{err}</InfoMessage>

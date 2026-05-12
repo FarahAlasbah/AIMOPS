@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/pages/UploadsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -14,15 +15,7 @@ import {
 import ConfirmDialog from "../components/ConfirmDialog";
 import UploadStep from "../components/UploadStep";
 import UploadsList from "../components/UploadsList";
-import {
-  MAX_MB,
-  getFileKey,
-  readDedupeSet,
-  removeDedupeKeysForFileName,
-  validateSelectedFile,
-  writeDedupeSet,
-} from "../utils/fileUtils";
-import { clearCachedAnalysis, getCachedAnalysis } from "../utils/analysisCache";
+import { MAX_MB, validateSelectedFile } from "../utils/fileUtils";
 
 import "../components/UploadCard.css";
 
@@ -37,15 +30,21 @@ const normalizeUpload = (u) => ({
   uploadedAt: u?.uploaded_at ?? u?.uploadedAt,
   validRows: u?.valid_rows ?? u?.validRows,
   rejectedRows: u?.rejected_rows ?? u?.rejectedRows,
-});
 
-const LS_CONFIRMED_KEY = (batchId) => `sales_confirmed_mappings_v1_${batchId}`;
-const LS_MAPPING_DRAFT_KEY = (batchId) => `sales_mapping_draft_v1_${batchId}`;
-const LS_EXTRACTED_PRODUCTS_KEY = (batchId) =>
-  `sales_extracted_products_v1_${batchId}`;
-const LS_PRODUCTS_DRAFT_KEY = (batchId) => `sales_products_draft_v1_${batchId}`;
-const LS_CONFIRMED_PRODUCTS_KEY = (batchId) =>
-  `sales_confirmed_products_v1_${batchId}`;
+  confirmedMappingsCount:
+    u?.confirmed_mappings_count ??
+    u?.confirmedMappingsCount ??
+    u?.mappings_count ??
+    u?.mappingsCount ??
+    null,
+
+  productCount:
+    u?.product_count ??
+    u?.products_count ??
+    u?.productCount ??
+    u?.productsCount ??
+    null,
+});
 
 const extractApiError = (err, fallback) => {
   const data = err?.response?.data;
@@ -79,8 +78,24 @@ const extractApiError = (err, fallback) => {
 };
 
 const getExistingBatchIdFrom409 = (err) => {
-  const id = err?.response?.data?.detail?.existing_batch?.batch_id;
-  return typeof id === "number" || typeof id === "string" ? String(id) : "";
+  const detail = err?.response?.data?.detail;
+
+  const candidates = [
+    detail?.existing_batch?.batch_id,
+    detail?.existing_batch?.batchId,
+    detail?.batch_id,
+    detail?.batchId,
+    err?.response?.data?.existing_batch?.batch_id,
+    err?.response?.data?.existing_batch?.batchId,
+    err?.response?.data?.batch_id,
+    err?.response?.data?.batchId,
+  ];
+
+  const found = candidates.find(
+    (id) => typeof id === "number" || typeof id === "string",
+  );
+
+  return found == null ? "" : String(found);
 };
 
 const cleanStr = (v) => String(v ?? "").trim();
@@ -117,6 +132,49 @@ function useDebouncedValue(value, delay = 350) {
   return debouncedValue;
 }
 
+const isCompletedUpload = (status) => {
+  const value = String(status || "").trim().toLowerCase();
+
+  return [
+    "processed",
+    "done",
+    "success",
+    "completed",
+    "confirmed",
+    "imported",
+  ].includes(value);
+};
+
+const isReviewStatus = (status) => {
+  const value = String(status || "").trim().toLowerCase();
+
+  return [
+    "mapped",
+    "mapping_confirmed",
+    "mappings_confirmed",
+    "products_pending",
+    "products_ready",
+    "review",
+    "review_required",
+  ].includes(value);
+};
+
+const canOpenReviewForUpload = (upload) => {
+  if (!upload) return false;
+
+  if (isCompletedUpload(upload.status)) return false;
+
+  if (isReviewStatus(upload.status)) return true;
+
+  const mappingsCount = Number(upload.confirmedMappingsCount);
+  if (Number.isFinite(mappingsCount) && mappingsCount > 0) return true;
+
+  const productCount = Number(upload.productCount);
+  if (Number.isFinite(productCount) && productCount > 0) return true;
+
+  return false;
+};
+
 export default function UploadsPage() {
   const { t } = useTranslation("upload");
   const navigate = useNavigate();
@@ -125,7 +183,6 @@ export default function UploadsPage() {
   const [warning, setWarning] = useState("");
 
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [selectedCampaign, setSelectedCampaign] = useState("");
 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -149,15 +206,6 @@ export default function UploadsPage() {
   const [confirmTarget, setConfirmTarget] = useState(null);
 
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
-
-  const campaignOptions = useMemo(
-    () => [
-      { value: "1", label: "Summer Sale 2025" },
-      { value: "2", label: "Ramadan Special" },
-      { value: "3", label: "Back to School" },
-    ],
-    [],
-  );
 
   const sortOptions = useMemo(
     () => [
@@ -220,9 +268,11 @@ export default function UploadsPage() {
         overlap?.from_date ??
         overlap?.start_date,
     );
+
     const to = cleanStr(
       overlap?.to ?? overlap?.end ?? overlap?.to_date ?? overlap?.end_date,
     );
+
     const deleted =
       overlap?.deleted_rows ??
       overlap?.deletedRows ??
@@ -255,7 +305,7 @@ export default function UploadsPage() {
   };
 
   const fetchUploads = useCallback(
-    async (nextOffset = offset) => {
+    async (nextOffset = 0) => {
       setUploadsLoading(true);
       setError("");
 
@@ -287,7 +337,7 @@ export default function UploadsPage() {
         setUploadsLoading(false);
       }
     },
-    [dateFrom, dateTo, debouncedSearchQuery, offset, sortBy, t],
+    [dateFrom, dateTo, debouncedSearchQuery, sortBy, t],
   );
 
   useEffect(() => {
@@ -300,7 +350,7 @@ export default function UploadsPage() {
     if (offset !== 0) {
       setOffset(0);
     }
-  }, [sortBy, debouncedSearchQuery, dateFrom, dateTo, offset]);
+  }, [sortBy, debouncedSearchQuery, dateFrom, dateTo]);
 
   const selectedBatchIdSet = useMemo(
     () => new Set(selectedBatchIds.map(String)),
@@ -379,15 +429,6 @@ export default function UploadsPage() {
       return;
     }
 
-    const fileKey = getFileKey(file);
-    const dedupe = readDedupeSet();
-
-    if (dedupe.has(fileKey)) {
-      setUploadedFile(null);
-      setError(t("uploadsPage.errorDuplicateFile"));
-      return;
-    }
-
     setUploadedFile(file);
   };
 
@@ -406,18 +447,17 @@ export default function UploadsPage() {
 
       const uploadRes = await uploadSalesData({
         file: uploadedFile,
-        campaignId: selectedCampaign || undefined,
         onProgress: setProgress,
       });
-
-      const dedupe = readDedupeSet();
-      dedupe.add(getFileKey(uploadedFile));
-      writeDedupeSet(dedupe);
 
       const newBatchId = uploadRes?.batch_id ?? uploadRes?.batchId;
 
       const overlapWarning = extractOverlapWarning(uploadRes);
       if (overlapWarning) setWarning(overlapWarning);
+
+      setUploadedFile(null);
+      setProgress(0);
+      setFileInputKey((key) => key + 1);
 
       if (newBatchId) {
         navigate(`/app/data-upload/map/${newBatchId}`);
@@ -426,20 +466,10 @@ export default function UploadsPage() {
 
       setOffset(0);
       await fetchUploads(0);
-
-      setUploadedFile(null);
-      setProgress(0);
-      setFileInputKey((key) => key + 1);
     } catch (err) {
       if (err?.response?.status === 409) {
         const existingId = getExistingBatchIdFrom409(err);
         const msg = extractApiError(err, t("uploadsPage.errorUploadDuplicate"));
-
-        try {
-          const dedupe = readDedupeSet();
-          dedupe.add(getFileKey(uploadedFile));
-          writeDedupeSet(dedupe);
-        } catch {}
 
         setUploadedFile(null);
         setProgress(0);
@@ -460,28 +490,6 @@ export default function UploadsPage() {
     } finally {
       setUploading(false);
     }
-  };
-
-  const hasLocalMapping = (batchId) => {
-    try {
-      return !!localStorage.getItem(LS_CONFIRMED_KEY(batchId));
-    } catch {
-      return false;
-    }
-  };
-
-  const hasCachedAnalysis = (batchId) => !!getCachedAnalysis(batchId);
-
-  const clearLocalForBatch = (batchId) => {
-    clearCachedAnalysis(batchId);
-
-    try {
-      localStorage.removeItem(LS_CONFIRMED_KEY(batchId));
-      localStorage.removeItem(LS_MAPPING_DRAFT_KEY(batchId));
-      localStorage.removeItem(LS_EXTRACTED_PRODUCTS_KEY(batchId));
-      localStorage.removeItem(LS_PRODUCTS_DRAFT_KEY(batchId));
-      localStorage.removeItem(LS_CONFIRMED_PRODUCTS_KEY(batchId));
-    } catch {}
   };
 
   const requestDelete = (upload) => {
@@ -535,10 +543,6 @@ export default function UploadsPage() {
       for (const upload of targets) {
         try {
           await deleteUploadBatch(upload.batchId);
-
-          clearLocalForBatch(upload.batchId);
-          removeDedupeKeysForFileName(upload?.fileName);
-
           deletedIds.push(String(upload.batchId));
         } catch (err) {
           failures.push({ upload, err });
@@ -612,13 +616,13 @@ export default function UploadsPage() {
   const confirmMsg = isBulkConfirm
     ? t("uploadsPage.bulkDeleteDialogMessage", {
         count: confirmCount,
-        defaultValue: `Delete ${confirmCount} selected upload(s)? This will also remove their saved mapping and review cache.`,
+        defaultValue: `Delete ${confirmCount} selected upload(s)? This will remove them from AIMOPS.`,
       })
     : confirmTarget?.uploads?.[0]
-    ? t("uploadsPage.deleteDialogMessage", {
-        fileName: confirmTarget.uploads[0].fileName || "file",
-      })
-    : "";
+      ? t("uploadsPage.deleteDialogMessage", {
+          fileName: confirmTarget.uploads[0].fileName || "file",
+        })
+      : "";
 
   return (
     <div className="data-upload-page">
@@ -643,9 +647,14 @@ export default function UploadsPage() {
                   "Click an uploaded file to continue mapping columns or reviewing extracted products depending on its progress.",
               },
               {
-                title: "4. Delete carefully",
+                title: "4. Completed uploads",
                 description:
-                  "Deleting an upload also removes its saved mapping and review cache from the browser.",
+                  "When an upload is completed, products are available from the Products page instead of reopening the upload review.",
+              },
+              {
+                title: "5. Delete carefully",
+                description:
+                  "Deleting an upload removes that upload batch from AIMOPS.",
               },
             ]}
             note="Tip: If a report or forecast is empty, make sure your sales data was uploaded and fully processed first."
@@ -680,11 +689,6 @@ export default function UploadsPage() {
         ) : null}
 
         <UploadStep
-          campaignOptions={campaignOptions}
-          selectedCampaign={selectedCampaign}
-          onCampaignChange={(event) =>
-            setSelectedCampaign(normalizeSelectValue(event))
-          }
           onFileSelect={handleFileSelect}
           uploading={uploading}
           progress={progress}
@@ -826,17 +830,22 @@ export default function UploadsPage() {
           <UploadsList
             uploads={uploads}
             loading={uploadsLoading}
-            limit={LIMIT}
             offset={offset}
             totalCount={totalCount}
             hasNext={hasNext}
             onPrev={() => setOffset((prev) => Math.max(0, prev - LIMIT))}
             onNext={() => setOffset((prev) => prev + LIMIT)}
-            hasLocalMapping={hasLocalMapping}
-            hasCachedAnalysis={hasCachedAnalysis}
-            onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}
+            canOpenReview={canOpenReviewForUpload}
+            isCompletedUpload={(upload) => isCompletedUpload(upload?.status)}
+onCompletedOpen={(upload) =>
+  navigate("/app/products", {
+    state: {
+      completedUploadRedirect: true,
+      completedUploadFileName: upload?.fileName || "",
+    },
+  })
+}            onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}
             onReview={(id) => navigate(`/app/data-upload/review/${id}`)}
-            onClearLocal={clearLocalForBatch}
             onDelete={requestDelete}
             deletingIds={deletingIds}
             selectedIds={selectedBatchIdSet}

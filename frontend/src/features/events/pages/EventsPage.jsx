@@ -10,9 +10,10 @@ import {
 } from "../../../shared/components";
 import PageHelp from "../../../shared/components/PageHelp";
 import {
-  getEvents,
-  getDraftEvents,
+  deleteEvent,
   dismissDraftEvent,
+  getDraftEvents,
+  getEvents,
 } from "../../../api/events";
 import EventForm from "../components/EventForm";
 import EventsTable from "../components/EventsTable";
@@ -48,6 +49,16 @@ const extractApiError = (err, fallback) => {
   }
 
   return fallback;
+};
+
+const getEventTitle = (event) => {
+  return (
+    event?.event_name ||
+    event?.event_name_ar ||
+    event?.title ||
+    event?.name ||
+    `Event #${event?.event_id ?? ""}`.trim()
+  );
 };
 
 function DraftsSkeleton() {
@@ -92,21 +103,21 @@ function DraftsTable({
 
   const selectedSet = useMemo(
     () => new Set((Array.isArray(selectedIds) ? selectedIds : []).map(String)),
-    [selectedIds]
+    [selectedIds],
   );
 
   const dismissingSet = useMemo(
     () =>
       new Set(
-        (Array.isArray(dismissingIds) ? dismissingIds : []).map(String)
+        (Array.isArray(dismissingIds) ? dismissingIds : []).map(String),
       ),
-    [dismissingIds]
+    [dismissingIds],
   );
 
   const visibleIds = drafts.map((d) => normalizeId(d.event_id)).filter(Boolean);
 
   const selectedVisibleCount = visibleIds.filter((id) =>
-    selectedSet.has(id)
+    selectedSet.has(id),
   ).length;
 
   const allSelected =
@@ -305,7 +316,6 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [events, setEvents] = useState([]);
-  const [dismissConfirmDrafts, setDismissConfirmDrafts] = useState([]);
 
   const [drafts, setDrafts] = useState([]);
   const [draftsLoading, setDraftsLoading] = useState(true);
@@ -313,8 +323,14 @@ export default function EventsPage() {
 
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
   const [dismissingIds, setDismissingIds] = useState([]);
+  const [dismissConfirmDrafts, setDismissConfirmDrafts] = useState([]);
+
+  const [selectedEventIds, setSelectedEventIds] = useState([]);
+  const [deletingEventIds, setDeletingEventIds] = useState([]);
+  const [deleteConfirmEvents, setDeleteConfirmEvents] = useState([]);
 
   const dismissing = dismissingIds.length > 0;
+  const deleting = deletingEventIds.length > 0;
 
   async function load() {
     setLoading(true);
@@ -368,9 +384,17 @@ export default function EventsPage() {
     const existing = new Set(drafts.map((d) => normalizeId(d.event_id)));
 
     setSelectedDraftIds((prev) =>
-      prev.filter((id) => existing.has(String(id)))
+      prev.filter((id) => existing.has(String(id))),
     );
   }, [drafts]);
+
+  useEffect(() => {
+    const existing = new Set(events.map((event) => normalizeId(event.event_id)));
+
+    setSelectedEventIds((prev) =>
+      prev.filter((id) => existing.has(String(id))),
+    );
+  }, [events]);
 
   useEffect(() => {
     const draftId = searchParams.get("draftEvent");
@@ -388,7 +412,7 @@ export default function EventsPage() {
           next.delete("draftEvent");
           return next;
         },
-        { replace: true }
+        { replace: true },
       );
     }
   }, [searchParams, drafts, draftsLoading, setSearchParams]);
@@ -399,8 +423,17 @@ export default function EventsPage() {
     return drafts.filter((draft) => set.has(normalizeId(draft.event_id)));
   }, [drafts, selectedDraftIds]);
 
+  const selectedEvents = useMemo(() => {
+    const set = new Set(selectedEventIds.map(String));
+
+    return events.filter((event) => set.has(normalizeId(event.event_id)));
+  }, [events, selectedEventIds]);
+
   const selectedDraftCount = selectedDrafts.length;
+  const selectedEventCount = selectedEvents.length;
+
   const dismissConfirmCount = dismissConfirmDrafts.length;
+  const deleteConfirmCount = deleteConfirmEvents.length;
 
   const toggleOneDraft = (eventId, checked) => {
     if (dismissing) return;
@@ -486,12 +519,12 @@ export default function EventsPage() {
 
       setDrafts((prev) =>
         prev.filter(
-          (draft) => !dismissedIds.includes(normalizeId(draft.event_id))
-        )
+          (draft) => !dismissedIds.includes(normalizeId(draft.event_id)),
+        ),
       );
 
       setSelectedDraftIds((prev) =>
-        prev.filter((id) => !dismissedIds.includes(String(id)))
+        prev.filter((id) => !dismissedIds.includes(String(id))),
       );
 
       if (failures.length === 0) {
@@ -499,14 +532,14 @@ export default function EventsPage() {
           t("eventsPage.dismissSelectedSuccess", {
             count: dismissedIds.length,
             defaultValue: `${dismissedIds.length} detected event(s) dismissed.`,
-          })
+          }),
         );
       } else {
         const message = extractApiError(
           failures[0]?.err,
           t("draftModal.errorDismissFailed", {
             defaultValue: "Failed to dismiss detected event.",
-          })
+          }),
         );
 
         setError(
@@ -514,12 +547,12 @@ export default function EventsPage() {
             failed: failures.length,
             total: targets.length,
             defaultValue: `${failures.length} of ${targets.length} detected event(s) could not be dismissed.`,
-          }) + ` ${message}`
+          }) + ` ${message}`,
         );
       }
 
       const remainingCount = drafts.filter(
-        (draft) => !dismissedIds.includes(normalizeId(draft.event_id))
+        (draft) => !dismissedIds.includes(normalizeId(draft.event_id)),
       ).length;
 
       if (remainingCount <= 0) {
@@ -530,19 +563,151 @@ export default function EventsPage() {
     }
   };
 
+  const toggleOneEvent = (eventId, checked) => {
+    if (deleting) return;
+
+    const id = normalizeId(eventId);
+    if (!id) return;
+
+    setSelectedEventIds((prev) => {
+      const set = new Set(prev.map(String));
+
+      if (checked) {
+        set.add(id);
+      } else {
+        set.delete(id);
+      }
+
+      return Array.from(set);
+    });
+  };
+
+  const toggleAllEvents = (checked) => {
+    if (deleting) return;
+
+    const ids = events.map((event) => normalizeId(event.event_id)).filter(Boolean);
+
+    setSelectedEventIds((prev) => {
+      const set = new Set(prev.map(String));
+
+      ids.forEach((id) => {
+        if (checked) {
+          set.add(id);
+        } else {
+          set.delete(id);
+        }
+      });
+
+      return Array.from(set);
+    });
+  };
+
+  const clearEventSelection = () => {
+    if (deleting) return;
+    setSelectedEventIds([]);
+  };
+
+  const requestDeleteEvents = (targets = []) => {
+    if (deleting) return;
+
+    const list = Array.isArray(targets) && targets.length > 0
+      ? targets
+      : selectedEvents;
+
+    if (list.length === 0) return;
+
+    setDeleteConfirmEvents(list);
+  };
+
+  const closeDeleteConfirm = () => {
+    if (deleting) return;
+    setDeleteConfirmEvents([]);
+  };
+
+  const deleteConfirmedEvents = async (eventsToDelete = []) => {
+    const targets =
+      Array.isArray(eventsToDelete) && eventsToDelete.length > 0
+        ? eventsToDelete
+        : selectedEvents;
+
+    if (targets.length === 0 || deleting) return;
+
+    const targetIds = targets
+      .map((event) => normalizeId(event.event_id))
+      .filter(Boolean);
+
+    const deletedIds = [];
+    const failures = [];
+
+    setDeleteConfirmEvents([]);
+    setError("");
+    setNotice("");
+    setDeletingEventIds(targetIds);
+
+    try {
+      for (const event of targets) {
+        try {
+          await deleteEvent(event.event_id);
+          deletedIds.push(normalizeId(event.event_id));
+        } catch (err) {
+          failures.push({ event, err });
+        }
+      }
+
+      setEvents((prev) =>
+        prev.filter(
+          (event) => !deletedIds.includes(normalizeId(event.event_id)),
+        ),
+      );
+
+      setSelectedEventIds((prev) =>
+        prev.filter((id) => !deletedIds.includes(String(id))),
+      );
+
+      if (failures.length === 0) {
+        setNotice(
+          t("eventsPage.deleteSelectedSuccess", {
+            count: deletedIds.length,
+            defaultValue:
+              deletedIds.length === 1
+                ? "Event deleted successfully."
+                : `${deletedIds.length} events deleted successfully.`,
+          }),
+        );
+      } else {
+        const message = extractApiError(
+          failures[0]?.err,
+          t("eventsPage.deleteSelectedFailed", {
+            defaultValue: "Failed to delete event.",
+          }),
+        );
+
+        setError(
+          t("eventsPage.deleteSelectedPartialFailed", {
+            failed: failures.length,
+            total: targets.length,
+            defaultValue: `${failures.length} of ${targets.length} event(s) could not be deleted.`,
+          }) + ` ${message}`,
+        );
+      }
+    } finally {
+      setDeletingEventIds([]);
+    }
+  };
+
   const handleDraftConfirmed = (res, draftEvent) => {
     setNotice(
       res?.message ||
         t("eventsPage.draftConfirmedNotice", {
           name: res?.event_name || "",
-        })
+        }),
     );
 
     const next = drafts.filter((d) => d.event_id !== draftEvent.event_id);
 
     setDrafts(next);
     setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id))
+      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -556,7 +721,7 @@ export default function EventsPage() {
 
     setDrafts(next);
     setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id))
+      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -620,15 +785,12 @@ export default function EventsPage() {
         </Button>
       </div>
     ),
-    [navigate, showCreate, t]
+    [navigate, showCreate, t],
   );
 
   return (
     <div className="events-page">
-      <PageHeader
-        
-        actions={headerActions}
-      />
+      <PageHeader actions={headerActions} />
 
       {notice && <InfoMessage type="success">{notice}</InfoMessage>}
       {error && <InfoMessage type="error">{error}</InfoMessage>}
@@ -843,10 +1005,59 @@ export default function EventsPage() {
                   </div>
                 </div>
               ) : (
-                <EventsTable
-                  events={events}
-                  onOpen={(id) => navigate(`/app/events/${id}`)}
-                />
+                <>
+                  {selectedEventCount > 0 && (
+                    <div className="confirmed-selection-bar">
+                      <div className="confirmed-selection-text">
+                        {t("eventsPage.confirmedSelected", {
+                          count: selectedEventCount,
+                          defaultValue: `${selectedEventCount} selected`,
+                        })}
+                      </div>
+
+                      <div className="confirmed-selection-actions">
+                        <button
+                          type="button"
+                          className="confirmed-secondary-btn"
+                          onClick={clearEventSelection}
+                          disabled={deleting}
+                        >
+                          {t("eventsPage.clearSelection", {
+                            defaultValue: "Clear selection",
+                          })}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="confirmed-delete-selected-btn"
+                          onClick={() => requestDeleteEvents()}
+                          disabled={deleting}
+                        >
+                          {deleting
+                            ? t("eventsPage.deletingSelected", {
+                                defaultValue: "Deleting...",
+                              })
+                            : t("eventsPage.deleteSelected", {
+                                count: selectedEventCount,
+                                defaultValue: `Delete selected (${selectedEventCount})`,
+                              })}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <EventsTable
+                    events={events}
+                    onOpen={(id) => navigate(`/app/events/${id}`)}
+                    selectable
+                    selectedIds={selectedEventIds}
+                    deletingIds={deletingEventIds}
+                    onToggleOne={toggleOneEvent}
+                    onToggleAll={toggleAllEvents}
+                    onDeleteOne={(event) => requestDeleteEvents([event])}
+                    selectionDisabled={deleting}
+                  />
+                </>
               )}
             </Card>
           )}
@@ -871,6 +1082,40 @@ export default function EventsPage() {
           })}
           onCancel={closeDismissConfirm}
           onConfirm={() => dismissSelectedDrafts(dismissConfirmDrafts)}
+        />
+      )}
+
+      {deleteConfirmCount > 0 && (
+        <ConfirmDialog
+          title={t("eventsPage.deleteConfirmTitle", {
+            defaultValue:
+              deleteConfirmCount === 1
+                ? "Delete this event?"
+                : "Delete selected events?",
+          })}
+          message={t("eventsPage.deleteConfirmMessage", {
+            count: deleteConfirmCount,
+            name:
+              deleteConfirmCount === 1
+                ? getEventTitle(deleteConfirmEvents[0])
+                : "",
+            defaultValue:
+              deleteConfirmCount === 1
+                ? `This will permanently delete "${getEventTitle(deleteConfirmEvents[0])}". This action cannot be undone.`
+                : `This will permanently delete ${deleteConfirmCount} selected event(s). This action cannot be undone.`,
+          })}
+          cancelLabel={t("eventsPage.deleteConfirmCancel", {
+            defaultValue: "Cancel",
+          })}
+          confirmLabel={t("eventsPage.deleteConfirmAction", {
+            count: deleteConfirmCount,
+            defaultValue:
+              deleteConfirmCount === 1
+                ? "Delete event"
+                : `Delete ${deleteConfirmCount}`,
+          })}
+          onCancel={closeDeleteConfirm}
+          onConfirm={() => deleteConfirmedEvents(deleteConfirmEvents)}
         />
       )}
 
