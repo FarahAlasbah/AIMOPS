@@ -60,6 +60,7 @@ const CampaignList = () => {
 
   useEffect(() => {
     loadCampaigns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredCampaigns = useMemo(() => {
@@ -181,40 +182,34 @@ const CampaignList = () => {
   return (
     <div className="campaign-list-page">
       <PageHeader
-        
         actions={
           <div className="campaign-list-header-actions" style={{ marginBottom: 0 }}>
             <PageHelp
-              title="How to use Campaigns"
-              buttonLabel="Open campaigns help"
+              title={t("help.list.title")}
+              buttonLabel={t("help.list.buttonLabel")}
               items={[
                 {
-                  title: "1. Review campaign status",
-                  description:
-                    "Planned campaigns are saved but not active yet. Active campaigns are published. Completed campaigns are finished campaigns kept for review.",
+                  title: t("help.list.items.status.title"),
+                  description: t("help.list.items.status.description"),
                 },
                 {
-                  title: "2. Use filters",
-                  description:
-                    "Search by campaign name, filter by status, or filter by campaign type to find campaigns faster.",
+                  title: t("help.list.items.filters.title"),
+                  description: t("help.list.items.filters.description"),
                 },
                 {
-                  title: "3. Open campaign details",
-                  description:
-                    "Click the campaign name or View to see selected products, dates, budget, forecast impact, and business advice.",
+                  title: t("help.list.items.details.title"),
+                  description: t("help.list.items.details.description"),
                 },
                 {
-                  title: "4. Publish planned campaigns",
-                  description:
-                    "Publishing changes a planned campaign into an active campaign. Use this when the campaign is ready to run.",
+                  title: t("help.list.items.publish.title"),
+                  description: t("help.list.items.publish.description"),
                 },
                 {
-                  title: "5. Delete carefully",
-                  description:
-                    "Delete a campaign only when it is wrong or no longer needed, because removing it can affect campaign tracking and reports.",
+                  title: t("help.list.items.delete.title"),
+                  description: t("help.list.items.delete.description"),
                 },
               ]}
-              note="Tip: Create campaigns after your products and forecasts are ready, so AIMOPS can give better campaign insights."
+              note={t("help.list.note")}
             />
 
             <button

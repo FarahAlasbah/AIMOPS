@@ -17,17 +17,20 @@ function RolePills({ value, onChange, disabled }) {
         {ROLE_DEFS.map((r) => {
           const active = current === r.value;
           const isSkip = r.value === "skip";
+
           return (
             <button
               key={r.value}
               type="button"
-              className={`role-pill ${active ? "active" : ""} ${isSkip ? "skip" : ""}`}
+              className={`role-pill ${active ? "active" : ""} ${
+                isSkip ? "skip" : ""
+              }`}
               onClick={() => !disabled && onChange(r.value)}
               aria-pressed={active}
               disabled={!!disabled}
               title={disabled ? t("mapping.lockedBatch") : ""}
             >
-              {r.label}
+              {roleLabel(r.value, t)}
             </button>
           );
         })}
@@ -49,7 +52,9 @@ function RolePickerWithConfirm({
   const committed = normalizeRole(value);
   const sug = normalizeRole(suggested);
 
-  const pendingRole = pendingMap?.[colIndex] ? normalizeRole(pendingMap[colIndex]) : "";
+  const pendingRole = pendingMap?.[colIndex]
+    ? normalizeRole(pendingMap[colIndex])
+    : "";
   const displayRole = pendingRole || committed;
 
   const commitNow = (role) => {
@@ -58,6 +63,7 @@ function RolePickerWithConfirm({
       delete copy[colIndex];
       return copy;
     });
+
     onCommitRole?.(colIndex, role);
   };
 
@@ -86,7 +92,8 @@ function RolePickerWithConfirm({
 
       {!disabled && !hasPending && sug && committed !== sug && (
         <div className="role-warn">
-          {t("mapping.notSuggestedRole")} <strong>{roleLabel(sug)}</strong>
+          {t("mapping.notSuggestedRole")}{" "}
+          <strong>{roleLabel(sug, t)}</strong>
         </div>
       )}
 
@@ -96,8 +103,8 @@ function RolePickerWithConfirm({
             className="role-change-text"
             dangerouslySetInnerHTML={{
               __html: t("mapping.roleChangePrompt", {
-                selected: roleLabel(pendingRole),
-                suggested: roleLabel(sug || "skip"),
+                selected: roleLabel(pendingRole, t),
+                suggested: roleLabel(sug || "skip", t),
               }),
             }}
           />
@@ -140,7 +147,8 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
 
   return (
     <div className="mapping-card">
-      
+      <div className="mapping-title">{t("mapping.highConfidence.title")}</div>
+      <div className="mapping-sub">{t("mapping.highConfidence.sub")}</div>
 
       {highConfidence.map((c) => {
         const current = columnMap?.[c.index] || {};
@@ -149,18 +157,25 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
         return (
           <div key={c.index} className="verify-item">
             <div className="verify-head">
-              <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
+              <div style={{ fontWeight: 700, color: "var(--c-text)" }}>
+                {c.name}
+              </div>
 
               <button
                 type="button"
                 className="link-button"
-                onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
+                onClick={() =>
+                  setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))
+                }
               >
                 {isOpen ? t("mapping.hideDetails") : t("mapping.showDetails")}
               </button>
             </div>
 
-            <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
+            <div
+              className="mapping-row"
+              style={{ marginTop: 10, alignItems: "flex-start" }}
+            >
               <div className="role-label" style={{ marginTop: 8 }}>
                 {t("mapping.role")}
               </div>
@@ -184,7 +199,13 @@ function HighConfidenceCard({ highConfidence, columnMap, onSetRole, disabled }) 
   );
 }
 
-function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissingMap, onPick, disabled }) {
+function RequiredMissingCard({
+  requiredMissing,
+  allColumnsOptions,
+  requiredMissingMap,
+  onPick,
+  disabled,
+}) {
   const { t } = useTranslation("upload");
 
   if (!Array.isArray(requiredMissing) || requiredMissing.length === 0) return null;
@@ -196,12 +217,24 @@ function RequiredMissingCard({ requiredMissing, allColumnsOptions, requiredMissi
 
       {requiredMissing.map((r) => (
         <div key={r.role} style={{ marginTop: 10 }}>
-          <div style={{ fontWeight: 600, color: "var(--c-text)", marginBottom: 6 }}>
+          <div
+            style={{
+              fontWeight: 600,
+              color: "var(--c-text)",
+              marginBottom: 6,
+            }}
+          >
             {r.name} {t("mapping.requiredMissing.required")}
           </div>
 
           {r.user_prompt && (
-            <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginBottom: 8 }}>
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--c-text-muted)",
+                marginBottom: 8,
+              }}
+            >
               {r.user_prompt}
             </div>
           )}
@@ -236,15 +269,26 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
 
         return (
           <div key={c.index} style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
+            <div style={{ fontWeight: 700, color: "var(--c-text)" }}>
+              {c.name}
+            </div>
 
             {c.user_prompt && (
-              <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--c-text-muted)",
+                  marginTop: 4,
+                }}
+              >
                 {c.user_prompt}
               </div>
             )}
 
-            <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
+            <div
+              className="mapping-row"
+              style={{ marginTop: 10, alignItems: "flex-start" }}
+            >
               <div className="role-label" style={{ marginTop: 8 }}>
                 {t("mapping.role")}
               </div>
@@ -268,17 +312,27 @@ function NeedsMappingCard({ needsMapping, columnMap, onSetRole, disabled }) {
   );
 }
 
-function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConfirmVerified, disabled }) {
+function NeedsVerificationCard({
+  needsVerification,
+  columnMap,
+  onSetRole,
+  onConfirmVerified,
+  disabled,
+}) {
   const { t } = useTranslation("upload");
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState({});
   const [pendingMap, setPendingMap] = useState({});
   const pageSize = 5;
 
-  if (!Array.isArray(needsVerification) || needsVerification.length === 0) return null;
+  if (!Array.isArray(needsVerification) || needsVerification.length === 0) {
+    return null;
+  }
 
   const total = needsVerification.length;
-  const confirmed = needsVerification.filter((c) => !!columnMap?.[c.index]?.verified).length;
+  const confirmed = needsVerification.filter(
+    (c) => !!columnMap?.[c.index]?.verified,
+  ).length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const safeSetPage = (p) => setPage(Math.min(Math.max(1, p), totalPages));
@@ -294,13 +348,23 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
       <div className="mapping-sub">{t("mapping.needsVerification.sub")}</div>
 
       <div className="mapping-pager">
-        <button className="pager-btn" onClick={() => safeSetPage(page - 1)} disabled={page === 1}>
+        <button
+          className="pager-btn"
+          onClick={() => safeSetPage(page - 1)}
+          disabled={page === 1}
+        >
           {t("mapping.needsVerification.prev")}
         </button>
+
         <div className="pager-page">
           {t("mapping.needsVerification.page", { page, totalPages })}
         </div>
-        <button className="pager-btn" onClick={() => safeSetPage(page + 1)} disabled={page === totalPages}>
+
+        <button
+          className="pager-btn"
+          onClick={() => safeSetPage(page + 1)}
+          disabled={page === totalPages}
+        >
           {t("mapping.needsVerification.next")}
         </button>
       </div>
@@ -314,16 +378,27 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
           return (
             <div key={c.index} className="verify-item">
               <div className="verify-head">
-                <div style={{ fontWeight: 700, color: "var(--c-text)" }}>{c.name}</div>
+                <div style={{ fontWeight: 700, color: "var(--c-text)" }}>
+                  {c.name}
+                </div>
               </div>
 
               {c.user_prompt && (
-                <div style={{ fontSize: 13, color: "var(--c-text-muted)", marginTop: 6 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--c-text-muted)",
+                    marginTop: 6,
+                  }}
+                >
                   {c.user_prompt}
                 </div>
               )}
 
-              <div className="mapping-row" style={{ marginTop: 10, alignItems: "flex-start" }}>
+              <div
+                className="mapping-row"
+                style={{ marginTop: 10, alignItems: "flex-start" }}
+              >
                 <div className="role-label" style={{ marginTop: 8 }}>
                   {t("mapping.role")}
                 </div>
@@ -349,8 +424,8 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
                     disabled
                       ? t("mapping.lockedBatch")
                       : hasPending
-                      ? t("mapping.confirmRoleChangeFirst")
-                      : ""
+                        ? t("mapping.confirmRoleChangeFirst")
+                        : ""
                   }
                   style={{ alignSelf: "flex-start" }}
                 >
@@ -362,7 +437,9 @@ function NeedsVerificationCard({ needsVerification, columnMap, onSetRole, onConf
                 <button
                   type="button"
                   className="link-button"
-                  onClick={() => setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))}
+                  onClick={() =>
+                    setExpanded((p) => ({ ...p, [c.index]: !p[c.index] }))
+                  }
                   style={{ alignSelf: "flex-start", marginTop: 8 }}
                 >
                   {isOpen ? t("mapping.hideDetails") : t("mapping.showDetails")}
@@ -421,9 +498,7 @@ function SuggestedSkipCard({
             {!isIncluded ? (
               <div className="skip-state-row" style={{ marginTop: 12 }}>
                 <span className="skip-state-badge">
-                  {t("mapping.suggestedSkip.skipped", {
-                    defaultValue: "Skipped",
-                  })}
+                  {t("mapping.suggestedSkip.skipped")}
                 </span>
 
                 <button
@@ -433,9 +508,7 @@ function SuggestedSkipCard({
                   disabled={!!disabled}
                   title={disabled ? t("mapping.lockedBatch") : ""}
                 >
-                  {t("mapping.suggestedSkip.includeColumn", {
-                    defaultValue: "Include this column",
-                  })}
+                  {t("mapping.suggestedSkip.includeColumn")}
                 </button>
               </div>
             ) : (
@@ -450,9 +523,7 @@ function SuggestedSkipCard({
                   disabled={!!disabled}
                   title={disabled ? t("mapping.lockedBatch") : ""}
                 >
-                  {t("mapping.suggestedSkip.skipThisColumn", {
-                    defaultValue: "Skip this column",
-                  })}
+                  {t("mapping.suggestedSkip.skipThisColumn")}
                 </button>
 
                 <div style={{ flex: "1 1 auto", minWidth: 260 }}>
@@ -547,12 +618,12 @@ export default function MappingStep({
         />
 
         <SuggestedSkipCard
-  suggestedSkip={suggestedSkip}
-  columnMap={columnMap}
-  onToggleInclude={onToggleInclude}
-  onSetRole={onSetRole}
-  disabled={alreadyConfirmed}
-/>
+          suggestedSkip={suggestedSkip}
+          columnMap={columnMap}
+          onToggleInclude={onToggleInclude}
+          onSetRole={onSetRole}
+          disabled={alreadyConfirmed}
+        />
       </div>
 
       <FormActions>
@@ -568,8 +639,8 @@ export default function MappingStep({
           {alreadyConfirmed
             ? t("mapping.continue")
             : confirming
-            ? t("mapping.confirming")
-            : t("mapping.confirmMappings")}
+              ? t("mapping.confirming")
+              : t("mapping.confirmMappings")}
         </Button>
       </FormActions>
 

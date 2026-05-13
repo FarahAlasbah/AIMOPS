@@ -1,64 +1,89 @@
 {
+  "stub": {
+    "title": "لوحة التحكم",
+    "body": "مرحباً بك في لوحة تحكم AIMOPS.",
+    "totalCampaigns": "إجمالي الحملات",
+    "activeForecasts": "التوقعات النشطة",
+    "feedbackItems": "عناصر التغذية الراجعة"
+  },
   "roles": {
     "admin": {
-      "title": "مرحباً بك في AIMOPS"
-    },
-    "marketing": {
-      "title": "مرحباً بك في AIMOPS"
+      "title": "نظرة عامة للمدير"
     },
     "owner": {
-      "title": "مرحباً بك في AIMOPS"
+      "title": "نظرة عامة على العمل"
+    },
+    "marketing": {
+      "title": "نظرة عامة للتسويق"
     },
     "default": {
-      "title": "لوحة التحكم",
-      "subtitle": "نظرة عامة"
+      "title": "نظرة عامة"
     }
   },
+  "errorLoadFailed": "فشل تحميل بيانات لوحة التحكم.",
   "stats": {
-    "usersCount": "إجمالي المستخدمين",
-    "uploadsCount": "رفعات البيانات",
+    "uploadsCount": "ملفات البيانات",
     "productsCount": "المنتجات",
     "campaignsCount": "الحملات",
-    "forecastsReady": "التنبؤات الجاهزة"
+    "forecastsReady": "التوقعات الجاهزة"
   },
   "helpers": {
-    "uploadsHelper": "جميع دفعات بيانات المبيعات المرفوعة",
-    "productsHelper": "المنتجات المتاحة في النظام",
-    "campaignsHelper": "{{active}} حملة نشطة حالياً",
-    "forecastsHelper": "{{total}} منتجاً ضمن التنبؤ"
-  },
-  "charts": {
-    "uploadsByStatus": "الرفعات حسب الحالة",
-    "uploadsOverTime": "الرفعات عبر الزمن",
-    "topProductsRevenue": "أعلى المنتجات إيراداً",
-    "forecastStatus": "نظرة عامة على حالات التنبؤ",
-    "recentActivity": "النشاط الأخير للرفعات",
-    "loading": "جارٍ التحميل…",
-    "noUploads": "لا توجد بيانات رفع بعد.",
-    "noProducts": "لا توجد بيانات منتجات بعد.",
-    "noForecasts": "لا توجد بيانات تنبؤ بعد.",
-    "noRecentUploads": "لا توجد رفعات حديثة بعد.",
-    "uploadsDatasetLabel": "الرفعات",
-    "revenueDatasetLabel": "الإيراد",
-    "forecastDatasetLabel": "التنبؤات",
-    "total": "الإجمالي"
+    "uploadsHelper": "ملفات تم رفعها للتحليل وتخطيط المنتجات.",
+    "productsHelper": "المنتجات المتاحة حالياً في مساحة العمل.",
+    "campaignsHelper": "{{active}} حملات نشطة حالياً.",
+    "forecastsHelper": "{{total}} سجل توقع يتم تتبعه."
   },
   "statusLabels": {
-    "processed": "مُعالجة",
-    "mapping": "مطابقة",
+    "processed": "تمت المعالجة",
+    "mapping": "بحاجة إلى مطابقة",
     "pending": "قيد الانتظار",
-    "failed": "فشلت",
-    "unknown": "غير معروفة"
+    "failed": "فشل",
+    "unknown": "غير معروف"
   },
   "forecastStatus": {
     "ready": "جاهز",
-    "training": "قيد المعالجة",
+    "training": "قيد التدريب",
     "failed": "فشل",
     "idle": "غير نشط"
   },
+  "campaignStatus": {
+    "active": "نشطة",
+    "planned": "مخططة",
+    "completed": "مكتملة",
+    "draft": "مسودة",
+    "other": "أخرى"
+  },
   "labels": {
     "unnamedProduct": "منتج بدون اسم",
+    "untitledCampaign": "حملة بدون عنوان",
     "uploadFile": "ملف مرفوع"
   },
-  "errorLoadFailed": "فشل تحميل بيانات لوحة التحكم."
+  "charts": {
+    "loading": "جارٍ تحميل بيانات الرسم...",
+    "total": "الإجمالي",
+    "uploadsOverTime": "الملفات المرفوعة عبر الوقت",
+    "uploadsDatasetLabel": "الملفات المرفوعة",
+    "uploadsByStatus": "الملفات حسب الحالة",
+    "forecastStatus": "جاهزية التوقعات",
+    "productRevenueRank": "ترتيب المنتجات حسب الإيراد",
+    "revenueDatasetLabel": "الإيراد",
+    "campaignPortfolio": "محفظة الحملات",
+    "campaignsDatasetLabel": "الحملات",
+    "campaignStatus": "حالة الحملات",
+    "recentActivity": "النشاط الأخير",
+    "noUploads": "لا توجد بيانات رفع متاحة.",
+    "noForecasts": "لا توجد بيانات توقع متاحة.",
+    "noProducts": "لا توجد بيانات إيرادات للمنتجات.",
+    "noCampaigns": "لا توجد بيانات حملات متاحة.",
+    "noRecentUploads": "لا توجد ملفات مرفوعة حديثاً.",
+    "axis": {
+      "budget": "الميزانية",
+      "roi": "العائد"
+    },
+    "tooltip": {
+      "budget": "الميزانية",
+      "roi": "العائد",
+      "revenue": "الإيراد"
+    }
+  }
 }

@@ -1,6 +1,6 @@
-// frontend/src/features/consultation/components/ConsultationDrawer.jsx
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import ConsultationPanel from "./ConsultationPanel";
 import { useConsultation } from "../hooks/useConsultation";
 
@@ -12,6 +12,8 @@ function getIsMobile() {
 }
 
 export default function ConsultationDrawer() {
+  const { t } = useTranslation("consultation");
+
   const { isDrawerOpen, isDrawerExpanded, closeDrawer, ensureHistoryLoaded } =
     useConsultation();
 
@@ -73,7 +75,7 @@ export default function ConsultationDrawer() {
         <button
           type="button"
           className="consultation-drawer-overlay"
-          aria-label="Close consultation drawer"
+          aria-label={t("drawer.closeAria")}
           onClick={closeDrawer}
         />
       ) : null}
@@ -82,7 +84,7 @@ export default function ConsultationDrawer() {
         className={`consultation-drawer ${isDrawerExpanded ? "expanded" : ""}`}
         role="dialog"
         aria-modal={isMobile ? "true" : "false"}
-        aria-label="AI Consultation"
+        aria-label={t("drawer.ariaLabel")}
       >
         <ConsultationPanel mode="drawer" />
       </aside>

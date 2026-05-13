@@ -1,0 +1,51 @@
+{
+  "banner": {
+    "title": "أكمل الملف التجاري",
+    "description": "أضف اسم العمل، المجال، والمدينة لتحسين التحليلات والتوقعات وتوصيات الذكاء الاصطناعي.",
+    "action": "إعداد الملف"
+  },
+  "overview": {
+    "title": "الملف التجاري",
+    "loading": "جارٍ تحميل الملف التجاري...",
+    "incompleteTitle": "الملف التجاري غير مكتمل",
+    "incompleteAdmin": "أضف اسم العمل، المجال، والمدينة لتحسين سياق لوحة التحكم والتوقعات وجودة الاستشارة الذكية.",
+    "incompleteReadonly": "فقط المدير يمكنه إكمال أو تحديث الملف التجاري.",
+    "activeAdmin": "سياق العمل مفعل في مساحة العمل.",
+    "activeReadonly": "سياق العمل مفعل في مساحة العمل. لديك صلاحية مشاهدة فقط.",
+    "setUpProfile": "إعداد الملف",
+    "viewProfile": "عرض الملف",
+    "manageProfile": "إدارة الملف",
+    "industry": "المجال",
+    "city": "المدينة",
+    "created": "تاريخ الإنشاء"
+  },
+  "summary": {
+    "title": "الملف التجاري",
+    "name": "الاسم",
+    "industry": "المجال",
+    "city": "المدينة"
+  },
+  "context": {
+    "loadFailed": "فشل تحميل الملف التجاري.",
+    "saveFailed": "فشل حفظ الملف التجاري."
+  },
+  "page": {
+    "cardTitle": "معلومات العمل",
+    "loading": "جارٍ تحميل الملف التجاري...",
+    "readonlyTitle": "عرض فقط",
+    "readonlyMessage": "يمكنك عرض الملف التجاري هنا. التعديلات يمكن أن يقوم بها المدير فقط.",
+    "businessName": "اسم العمل",
+    "businessNamePlaceholder": "مثال: متجر AIMOPS",
+    "industry": "المجال",
+    "industryPlaceholder": "مثال: Retail / تجارة التجزئة",
+    "city": "المدينة",
+    "cityPlaceholder": "مثال: Bethlehem / بيت لحم",
+    "updatedSuccess": "تم تحديث الملف التجاري بنجاح.",
+    "createdSuccess": "تم إنشاء الملف التجاري بنجاح.",
+    "adminOnlyTitle": "فقط المدير يمكنه تحديث الملف التجاري.",
+    "adminOnlyButton": "للمدير فقط",
+    "saving": "جارٍ الحفظ...",
+    "updateProfile": "تحديث الملف",
+    "createProfile": "إنشاء الملف"
+  }
+}

@@ -32,6 +32,7 @@ export default function ProductsTable({
                 }
                 onChange={onTogglePageAll}
                 disabled={loading || pageItems.length === 0}
+                aria-label={t("table.selectPage")}
               />
             </th>
 
@@ -44,7 +45,7 @@ export default function ProductsTable({
             </th>
 
             <th className="click" onClick={() => onToggleSort("suspicious")}>
-              {t("table.colNeedsReview", { defaultValue: "Needs review" })}
+              {t("table.colNeedsReview")}
             </th>
 
             <th className="click" onClick={() => onToggleSort("sales")}>
@@ -93,6 +94,9 @@ export default function ProductsTable({
                       type="checkbox"
                       checked={selected.has(id)}
                       onChange={() => onToggleOne(id)}
+                      aria-label={t("table.selectProduct", {
+                        name: p.product_name || id,
+                      })}
                     />
                   </td>
 
@@ -116,9 +120,7 @@ export default function ProductsTable({
                     {isSuspicious ? (
                       <div className="flag">
                         <span className="chip chip-warn">
-                          {t("table.chipNeedsReview", {
-                            defaultValue: "Needs review",
-                          })}
+                          {t("table.chipNeedsReview")}
                         </span>
 
                         <div className="sub muted" title={reason || ""}>
@@ -134,9 +136,9 @@ export default function ProductsTable({
 
                   <td>{sales}</td>
 
-                  <td>{money(p?.stats?.total_revenue)}</td>
+                  <td>{money(p?.stats?.total_revenue, i18n.language)}</td>
 
-                  <td>{dateText(p?.stats?.last_sale)}</td>
+                  <td>{dateText(p?.stats?.last_sale, i18n.language)}</td>
 
                   <td className="actions">
                     <Button

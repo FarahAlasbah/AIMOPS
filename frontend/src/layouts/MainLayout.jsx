@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Menu } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import AdminSidebar from "./components/AdminSidebar";
 import NotificationBell from "./components/NotificationBell";
@@ -15,6 +16,7 @@ import ConsultationDrawer from "../features/consultation/components/Consultation
 import "./MainLayout.css";
 
 function MainLayoutFrame() {
+  const { t } = useTranslation("common");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { isDrawerOpen, isDrawerExpanded } = useConsultation();
 
@@ -32,7 +34,7 @@ function MainLayoutFrame() {
             type="button"
             onClick={() => setSidebarOpen((value) => !value)}
             className="menu-button"
-            aria-label="Toggle sidebar"
+            aria-label={t("layout.toggleSidebar")}
           >
             <Menu size={24} />
           </button>

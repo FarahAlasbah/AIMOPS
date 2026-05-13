@@ -975,11 +975,15 @@ html[dir="rtl"] .consultation-drawer {
 }
 
 /* Modal */
+/* Modal */
 
 .consultation-modal-layer {
   position: fixed;
   inset: 0;
   z-index: 1450;
+  display: grid;
+  place-items: center;
+  padding: 12px;
 }
 
 .consultation-modal-overlay {
@@ -990,17 +994,16 @@ html[dir="rtl"] .consultation-drawer {
 }
 
 .consultation-modal {
-  position: absolute;
-  inset-inline-start: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(560px, calc(100vw - 24px));
+  position: relative;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 24px);
   background: #ffffff;
   border-radius: 22px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
   overflow: hidden;
   z-index: 1460;
+  direction: inherit;
 }
 
 .consultation-modal-header {
@@ -1037,6 +1040,10 @@ html[dir="rtl"] .consultation-drawer {
   justify-content: flex-end;
   gap: 10px;
   padding: 0 20px 20px;
+}
+
+html[dir="rtl"] .consultation-modal-actions {
+  justify-content: flex-start;
 }
 
 /* Responsive */
@@ -1126,9 +1133,14 @@ html[dir="rtl"] .consultation-drawer {
     padding: 12px;
   }
 
-  .consultation-modal {
-    width: calc(100vw - 20px);
-  }
+ .consultation-modal-layer {
+  padding: 10px;
+}
+
+.consultation-modal {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 20px);
+}
 }
 
 @media (max-width: 520px) {

@@ -418,12 +418,7 @@ export default function ForecastDetailsPage() {
       setForecast(null);
 
       if (getApiStatus(e) === 404) {
-        setDetailsWarn(
-          t("messages.forecastNotFound", {
-            defaultValue:
-              "No forecast is available for this product yet. Generate a forecast first.",
-          }),
-        );
+        setDetailsWarn(t("messages.forecastNotFound"));
         return null;
       }
 
@@ -511,7 +506,9 @@ export default function ForecastDetailsPage() {
         text:
           res?.message ||
           t("messages.generateAccepted", {
-            name: status?.product_name || `#${productId}`,
+            name:
+              status?.product_name ||
+              t("details.productFallback", { id: productId }),
           }),
       });
 
@@ -526,7 +523,9 @@ export default function ForecastDetailsPage() {
       setStatusErr(
         e?.message ||
           t("messages.generateFailed", {
-            name: status?.product_name || `#${productId}`,
+            name:
+              status?.product_name ||
+              t("details.productFallback", { id: productId }),
           }),
       );
     } finally {
@@ -811,17 +810,13 @@ export default function ForecastDetailsPage() {
         type: "datetime",
         labels: { datetimeUTC: false },
         title: {
-          text: t("details.axisDailyX", {
-            defaultValue: "Forecast date",
-          }),
+          text: t("details.axisDailyX"),
         },
       },
       yaxis: {
         forceNiceScale: true,
         title: {
-          text: t("details.axisDailyY", {
-            defaultValue: "Predicted quantity",
-          }),
+          text: t("details.axisDailyY"),
         },
         labels: {
           formatter: (value) => fmtNumber(value, locale),
@@ -931,17 +926,13 @@ export default function ForecastDetailsPage() {
         type: "datetime",
         labels: { datetimeUTC: false },
         title: {
-          text: t("details.axisWeeklyX", {
-            defaultValue: "Week start date",
-          }),
+          text: t("details.axisWeeklyX"),
         },
       },
       yaxis: [
         {
           title: {
-            text: t("details.yAxes.quantity", {
-              defaultValue: "Weekly quantity",
-            }),
+            text: t("details.yAxes.quantity"),
           },
           labels: {
             formatter: (value) => fmtNumber(value, locale),
@@ -950,9 +941,7 @@ export default function ForecastDetailsPage() {
         {
           opposite: true,
           title: {
-            text: t("details.yAxes.revenue", {
-              defaultValue: "Predicted revenue",
-            }),
+            text: t("details.yAxes.revenue"),
           },
           labels: {
             formatter: (value) => fmtMoney(value, locale),
@@ -1017,7 +1006,9 @@ export default function ForecastDetailsPage() {
   const noForecastInRange = visibleDaily.length === 0;
 
   const productDisplayName =
-    status?.product_name || forecast?.product_name || `Product #${productId}`;
+    status?.product_name ||
+    forecast?.product_name ||
+    t("details.productFallback", { id: productId });
 
   const productCategory = forecast?.category || status?.category || "—";
 
@@ -1034,12 +1025,14 @@ export default function ForecastDetailsPage() {
       </div>
 
       <Card className="forecast-product-card">
-        <div className="forecast-product-label">Product</div>
+        <div className="forecast-product-label">{t("details.metaProduct")}</div>
+
         <div className="forecast-product-name">
           <bdi>{productDisplayName}</bdi>
         </div>
+
         <div className="forecast-product-category">
-          Category: <bdi>{productCategory}</bdi>
+          {t("details.metaCategory")}: <bdi>{productCategory}</bdi>
         </div>
       </Card>
 
@@ -1220,7 +1213,7 @@ export default function ForecastDetailsPage() {
 
               <div className="forecast-selected-range">
                 <div className="forecast-selected-range-label">
-                  Selected Range
+                  {t("details.selectedRange")}
                 </div>
 
                 <div className="forecast-selected-range-value">
@@ -1241,10 +1234,7 @@ export default function ForecastDetailsPage() {
 
             <div className="forecast-chart-warning">
               <InfoMessage type="warning">
-                {t("details.chartWarning", {
-                  defaultValue:
-                    "Forecast values are estimates based on the available sales history. Use them as planning guidance, not as guaranteed demand.",
-                })}
+                {t("details.chartWarning")}
               </InfoMessage>
             </div>
 
@@ -1256,8 +1246,6 @@ export default function ForecastDetailsPage() {
                 <div className="forecast-chart-subtitle">
                   {t("details.dailySubtitle")}
                 </div>
-
-                
 
                 <div className="forecast-chart-box">
                   {noForecastInRange ? (
@@ -1283,8 +1271,6 @@ export default function ForecastDetailsPage() {
                   {t("details.weeklySubtitle")}
                 </div>
 
-                
-
                 <div className="forecast-chart-box small">
                   {weeklyBuckets.length === 0 ? (
                     <InfoMessage type="info">
@@ -1305,7 +1291,9 @@ export default function ForecastDetailsPage() {
 
           <div className="forecast-explanation">
             <div className="forecast-explanation-head">
-              <div className="forecast-explanation-title">AI Explanation</div>
+              <div className="forecast-explanation-title">
+                {t("details.aiExplanation.title")}
+              </div>
 
               {!hasFetchedExplanation ? (
                 <Button
@@ -1313,7 +1301,9 @@ export default function ForecastDetailsPage() {
                   onClick={handleExplainWithAi}
                   disabled={explanationLoading}
                 >
-                  {explanationLoading ? "Generating..." : "Explain with AI"}
+                  {explanationLoading
+                    ? t("details.aiExplanation.generating")
+                    : t("details.aiExplanation.explain")}
                 </Button>
               ) : (
                 <Button
@@ -1323,21 +1313,21 @@ export default function ForecastDetailsPage() {
                   disabled={explanationLoading}
                 >
                   {explanationLoading
-                    ? "Regenerating..."
-                    : "Re-explain with AI"}
+                    ? t("details.aiExplanation.regenerating")
+                    : t("details.aiExplanation.reExplain")}
                 </Button>
               )}
             </div>
 
             {!hasFetchedExplanation && !explanationLoading ? (
               <div className="forecast-explanation-text">
-                AI explanation is generated only when requested.
+                {t("details.aiExplanation.requestOnly")}
               </div>
             ) : null}
 
             {explanationLoading ? (
               <div className="forecast-explanation-text">
-                Generating explanation...
+                {t("details.aiExplanation.generatingText")}
               </div>
             ) : null}
 
@@ -1345,8 +1335,7 @@ export default function ForecastDetailsPage() {
               <div className="forecast-ai-body">
                 {isExplanationStale ? (
                   <div className="forecast-ai-stale">
-                    This explanation is older than the current forecast.
-                    Re-explain to refresh it.
+                    {t("details.aiExplanation.stale")}
                   </div>
                 ) : null}
 
@@ -1354,7 +1343,9 @@ export default function ForecastDetailsPage() {
 
                 {explanationDrivers.length > 0 ? (
                   <div className="forecast-ai-drivers-card">
-                    <div className="forecast-drivers-title">Key Drivers</div>
+                    <div className="forecast-drivers-title">
+                      {t("details.aiExplanation.keyDrivers")}
+                    </div>
 
                     <div className="forecast-ai-drivers">
                       {explanationDrivers.map((driver, index) => (
@@ -1374,8 +1365,12 @@ export default function ForecastDetailsPage() {
 
             {hasFetchedExplanation && explanationData?.generated_at ? (
               <div className="forecast-note" style={{ marginTop: 10 }}>
-                Generated at: {fmtDateTime(explanationData.generated_at, locale)}
-                {explanationData?.cached ? " • Cached" : ""}
+                {t("details.aiExplanation.generatedAt", {
+                  date: fmtDateTime(explanationData.generated_at, locale),
+                })}
+                {explanationData?.cached
+                  ? ` • ${t("details.aiExplanation.cached")}`
+                  : ""}
               </div>
             ) : null}
 

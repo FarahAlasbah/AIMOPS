@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { Card, PageHeader } from "../../../shared/components";
+import { Button, Card, FormActions, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import PageHelp from "../../../shared/components/PageHelp";
 
@@ -69,6 +69,52 @@ const isMappingConfirmedStatus = (status) => {
     "confirmed",
     "imported",
   ].includes(value);
+};
+
+const isCompletedUploadStatus = (status) => {
+  const value = String(status || "").trim().toLowerCase();
+
+  return [
+    "processed",
+    "done",
+    "success",
+    "completed",
+    "confirmed",
+    "imported",
+  ].includes(value);
+};
+
+const isCompletedAnalyzeError = (err) => {
+  const message = extractApiError(err, "");
+  const lower = String(message || "").toLowerCase();
+
+  return (
+    lower.includes("batch already completed") ||
+    lower.includes("cannot re-analyze")
+  );
+};
+
+const isBackendFileTypeError = (err) => {
+  const message = extractApiError(err, "");
+  const lower = String(message || "").toLowerCase();
+
+  return (
+    lower.includes("failed to detect file type") ||
+    lower.includes("utf-8") ||
+    lower.includes("codec can't decode")
+  );
+};
+
+const getFriendlyMappingError = (err, fallback, t) => {
+  if (isBackendFileTypeError(err)) {
+    return t("mappingPage.friendlyFileTypeError", { defaultValue: fallback });
+  }
+
+  if (isCompletedAnalyzeError(err)) {
+    return t("mappingPage.friendlyCompletedError", { defaultValue: fallback });
+  }
+
+  return extractApiError(err, fallback);
 };
 
 const extractConfirmedMappingsFromDetails = (details) => {
@@ -381,6 +427,7 @@ export default function MappingPage() {
 
   const [confirming, setConfirming] = useState(false);
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+  const [completedNotice, setCompletedNotice] = useState(false);
 
   const { pct: analyzePct, finish: finishAnalyzePct } =
     useFakeProgress(analysisLoading);
@@ -392,18 +439,41 @@ export default function MappingPage() {
       if (!batchId) return;
 
       setError("");
+      setCompletedNotice(false);
       setAnalysisLoading(true);
 
       try {
-        const [rawAnalysis, detailsPayload] = await Promise.all([
+        const [analysisResult, detailsResult] = await Promise.allSettled([
           analyzeSalesBatch(batchId),
-          getUploadDetails(batchId).catch(() => null),
+          getUploadDetails(batchId),
         ]);
 
         if (cancelled) return;
 
-        const normalizedAnalysis = normalizeAnalysisResponse(rawAnalysis);
-        const details = unwrapUploadDetails(detailsPayload);
+        const details =
+          detailsResult.status === "fulfilled"
+            ? unwrapUploadDetails(detailsResult.value)
+            : null;
+
+        const completedByStatus = isCompletedUploadStatus(details?.status);
+        const completedByAnalyzeError =
+          analysisResult.status === "rejected" &&
+          isCompletedAnalyzeError(analysisResult.reason);
+
+        if (completedByStatus || completedByAnalyzeError) {
+          setAnalysis(null);
+          setColumnMap({});
+          setRequiredMissingMap({});
+          setAlreadyConfirmed(true);
+          setCompletedNotice(true);
+          return;
+        }
+
+        if (analysisResult.status === "rejected") {
+          throw analysisResult.reason;
+        }
+
+        const normalizedAnalysis = normalizeAnalysisResponse(analysisResult.value);
         const confirmedFromDetails = buildConfirmResultFromDetails(details);
 
         setAnalysis(normalizedAnalysis);
@@ -431,7 +501,9 @@ export default function MappingPage() {
       } catch (err) {
         if (!cancelled) {
           const fallback = t("mappingPage.errorAnalyzeFailed");
-          setError(extractApiError(err, fallback));
+          setError(getFriendlyMappingError(err, fallback, t));
+          setAnalysis(null);
+          setCompletedNotice(false);
         }
       } finally {
         if (!cancelled) {
@@ -589,7 +661,7 @@ export default function MappingPage() {
       });
     } catch (err) {
       const fallback = t("mappingPage.errorConfirmFailed");
-      setError(extractApiError(err, fallback));
+      setError(getFriendlyMappingError(err, fallback, t));
     } finally {
       setConfirming(false);
     }
@@ -600,30 +672,30 @@ export default function MappingPage() {
       <PageHeader
         actions={
           <PageHelp
-            title="How to use Column Mapping"
+            title={t("mappingPage.help.title")}
             items={[
               {
-                title: "1. Review suggested roles",
-                description:
-                  "AIMOPS suggests a role for each column, such as Date, Product name, Quantity, Unit price, or Total amount.",
+                title: t("mappingPage.help.items.reviewRoles.title"),
+                description: t("mappingPage.help.items.reviewRoles.description"),
               },
               {
-                title: "2. Confirm uncertain columns",
-                description:
-                  "Columns that need verification must be confirmed before you can continue. Use the sample values to decide if the suggestion is correct.",
+                title: t("mappingPage.help.items.confirmUncertain.title"),
+                description: t(
+                  "mappingPage.help.items.confirmUncertain.description",
+                ),
               },
               {
-                title: "3. Fix missing required fields",
-                description:
-                  "If a required field is missing, choose the correct column manually from the dropdown.",
+                title: t("mappingPage.help.items.fixRequired.title"),
+                description: t("mappingPage.help.items.fixRequired.description"),
               },
               {
-                title: "4. Skip irrelevant columns",
-                description:
-                  "Columns that are not useful for sales analysis can stay skipped. Only include columns that help reports, forecasts, and product analysis.",
+                title: t("mappingPage.help.items.skipIrrelevant.title"),
+                description: t(
+                  "mappingPage.help.items.skipIrrelevant.description",
+                ),
               },
             ]}
-            note="You can continue only when all required mappings and verification items are resolved."
+            note={t("mappingPage.help.note")}
           />
         }
       />
@@ -635,7 +707,7 @@ export default function MappingPage() {
           </div>
         )}
 
-        {alreadyConfirmed && (
+        {alreadyConfirmed && !completedNotice && (
           <div style={{ marginBottom: 16 }}>
             <InfoMessage type="success">
               {t("mappingPage.alreadyConfirmedInfo")}
@@ -643,7 +715,28 @@ export default function MappingPage() {
           </div>
         )}
 
-        {analysisLoading ? (
+        {completedNotice ? (
+          <>
+            <InfoMessage type="success">
+              <strong>{t("mappingPage.completedNoticeTitle")}</strong>
+              <br />
+              {t("mappingPage.completedNoticeMessage")}
+            </InfoMessage>
+
+            <FormActions>
+              <Button
+                variant="secondary"
+                onClick={() => navigate("/app/data-upload/uploads")}
+              >
+                {t("mappingPage.backToUploads")}
+              </Button>
+
+              <Button variant="primary" onClick={() => navigate("/app/products")}>
+                {t("mappingPage.viewProducts")}
+              </Button>
+            </FormActions>
+          </>
+        ) : analysisLoading ? (
           <AnalyzeProgress percent={analyzePct} />
         ) : (
           <MappingStep

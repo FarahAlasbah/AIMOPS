@@ -1,8 +1,8 @@
-// frontend/src/features/business-profile/pages/BusinessProfilePage.jsx
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BriefcaseBusiness, Building2, Lock, MapPin } from "lucide-react";
 
-import { Card, PageHeader } from "../../../shared/components";
+import { Card } from "../../../shared/components";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import { isAdminUser } from "../../../shared/permissions/rolePermissions";
 import { useBusinessProfile } from "../hooks/useBusinessProfile";
@@ -301,6 +301,7 @@ function getPickedValue(option, currentInput) {
 }
 
 export default function BusinessProfilePage() {
+  const { t } = useTranslation("businessProfile");
   const { user } = useAuth();
   const canEditBusinessProfile = isAdminUser(user);
 
@@ -384,8 +385,8 @@ export default function BusinessProfilePage() {
     if (result.success) {
       setSuccessMessage(
         wasExisting
-          ? "Business profile updated successfully."
-          : "Business profile created successfully.",
+          ? t("page.updatedSuccess")
+          : t("page.createdSuccess"),
       );
     }
   }
@@ -394,13 +395,11 @@ export default function BusinessProfilePage() {
 
   return (
     <div className="business-profile-page">
-      
-
       <div className="business-profile-grid">
-        <Card title="Business information">
+        <Card title={t("page.cardTitle")}>
           {loading ? (
             <div className="business-profile-loading">
-              Loading business profile...
+              {t("page.loading")}
             </div>
           ) : (
             <form className="business-profile-form" onSubmit={handleSubmit}>
@@ -408,16 +407,14 @@ export default function BusinessProfilePage() {
                 <div className="business-profile-readonly-alert">
                   <Lock size={16} />
                   <div>
-                    <strong>Read-only access</strong>
-                    <p>
-  You can view the business profile here. Changes can only be made by an admin.
-</p>
+                    <strong>{t("page.readonlyTitle")}</strong>
+                    <p>{t("page.readonlyMessage")}</p>
                   </div>
                 </div>
               ) : null}
 
               <label className="business-profile-field">
-                <span>Business Name</span>
+                <span>{t("page.businessName")}</span>
 
                 <div
                   className={`business-profile-input-wrap ${
@@ -431,7 +428,7 @@ export default function BusinessProfilePage() {
                     name="business_name"
                     value={form.business_name}
                     onChange={handleChange}
-                    placeholder="e.g. AIMOPS Shop"
+                    placeholder={t("page.businessNamePlaceholder")}
                     disabled={disabled}
                     readOnly={!canEditBusinessProfile}
                   />
@@ -439,7 +436,7 @@ export default function BusinessProfilePage() {
               </label>
 
               <div className="business-profile-field">
-                <span>Industry</span>
+                <span>{t("page.industry")}</span>
 
                 <div className="business-profile-suggest-wrap">
                   <div
@@ -465,7 +462,7 @@ export default function BusinessProfilePage() {
                           120,
                         );
                       }}
-                      placeholder="e.g. Retail / تجارة التجزئة"
+                      placeholder={t("page.industryPlaceholder")}
                       autoComplete="off"
                       aria-expanded={showIndustrySuggestions}
                       disabled={disabled}
@@ -499,7 +496,7 @@ export default function BusinessProfilePage() {
               </div>
 
               <div className="business-profile-field">
-                <span>City</span>
+                <span>{t("page.city")}</span>
 
                 <div className="business-profile-suggest-wrap">
                   <div
@@ -525,7 +522,7 @@ export default function BusinessProfilePage() {
                           120,
                         );
                       }}
-                      placeholder="e.g. Bethlehem / بيت لحم"
+                      placeholder={t("page.cityPlaceholder")}
                       autoComplete="off"
                       aria-expanded={showCitySuggestions}
                       disabled={disabled}
@@ -573,16 +570,16 @@ export default function BusinessProfilePage() {
                   title={
                     canEditBusinessProfile
                       ? undefined
-                      : "Only administrators can update the business profile."
+                      : t("page.adminOnlyTitle")
                   }
                 >
                   {!canEditBusinessProfile
-                    ? "Admin only"
+                    ? t("page.adminOnlyButton")
                     : saving
-                      ? "Saving..."
+                      ? t("page.saving")
                       : hasProfile
-                        ? "Update Profile"
-                        : "Create Profile"}
+                        ? t("page.updateProfile")
+                        : t("page.createProfile")}
                 </button>
               </div>
             </form>

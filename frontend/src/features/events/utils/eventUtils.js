@@ -9,9 +9,11 @@ export function isoToDate(iso) {
 export function toIsoDate(d) {
   const dt = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(dt.getTime())) return "";
+
   const y = dt.getFullYear();
   const m = String(dt.getMonth() + 1).padStart(2, "0");
   const day = String(dt.getDate()).padStart(2, "0");
+
   return `${y}-${m}-${day}`;
 }
 
@@ -27,20 +29,23 @@ export function pickEventTitle(ev) {
 
 export function validateEventPayload(p) {
   if (!p?.event_name || String(p.event_name).trim().length < 2) {
-    return "Event name (English) is required.";
+    return "validation.eventNameRequired";
   }
-  if (!p?.event_type) return "Event type is required.";
-  if (!p?.start_date) return "Start date is required.";
-  if (!p?.end_date) return "End date is required.";
+
+  if (!p?.event_type) return "validation.eventTypeRequired";
+  if (!p?.start_date) return "validation.startDateRequired";
+  if (!p?.end_date) return "validation.endDateRequired";
 
   const s = isoToDate(p.start_date);
   const e = isoToDate(p.end_date);
-  if (!s || !e) return "Invalid start/end date.";
-  if (e.getTime() < s.getTime()) return "End date must be on or after start date.";
 
-  if (p.is_recurring) {
-    if (!p.recurrence_type) return "Recurrence type is required for recurring events.";
+  if (!s || !e) return "validation.invalidDateRange";
+  if (e.getTime() < s.getTime()) return "validation.endBeforeStart";
+
+  if (p.is_recurring && !p.recurrence_type) {
+    return "validation.recurrenceRequired";
   }
+
   return "";
 }
 
@@ -54,9 +59,14 @@ export function addMonths(d, n) {
   return new Date(dt.getFullYear(), dt.getMonth() + Number(n || 0), 1);
 }
 
-export function monthLabel(d) {
+export function monthLabel(d, locale = "en") {
   const dt = d instanceof Date ? d : new Date(d);
-  return dt.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const safeLocale = String(locale || "").startsWith("ar") ? "ar" : "en";
+
+  return dt.toLocaleString(safeLocale, {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 export function daysGridForMonth(monthDate) {
@@ -67,14 +77,15 @@ export function daysGridForMonth(monthDate) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
 
-  // Sunday-based week (0..6)
-  const startOffset = firstDay.getDay(); // 0=Sun
+  const startOffset = firstDay.getDay();
   const gridStart = new Date(year, month, 1 - startOffset);
 
   const days = [];
-  for (let i = 0; i < 42; i++) {
+
+  for (let i = 0; i < 42; i += 1) {
     const d = new Date(gridStart);
     d.setDate(gridStart.getDate() + i);
+
     days.push({
       date: d,
       inMonth: d.getMonth() === month,
@@ -82,11 +93,13 @@ export function daysGridForMonth(monthDate) {
       isEnd: sameDay(d, lastDay),
     });
   }
+
   return days;
 }
 
 export function sameDay(a, b) {
   if (!a || !b) return false;
+
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
@@ -98,5 +111,6 @@ export function inRangeInclusive(day, start, end) {
   const t = day.setHours(0, 0, 0, 0);
   const s = new Date(start).setHours(0, 0, 0, 0);
   const e = new Date(end).setHours(0, 0, 0, 0);
+
   return t >= s && t <= e;
 }

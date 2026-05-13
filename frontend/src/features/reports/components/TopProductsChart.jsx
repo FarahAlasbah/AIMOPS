@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Card } from "../../../shared/components";
 import { CHART_COLORS } from "../constants";
@@ -12,6 +13,9 @@ import {
 } from "../utils/reportUtils";
 
 export function TopProductsChart({ loading, topProducts }) {
+  const { t, i18n } = useTranslation("reports");
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
   const chartProducts = useMemo(() => {
     return [...topProducts]
       .sort((a, b) => toNumber(b.total_revenue) - toNumber(a.total_revenue))
@@ -35,7 +39,7 @@ export function TopProductsChart({ loading, topProducts }) {
       },
       dataLabels: {
         enabled: true,
-        formatter: (value) => formatCurrency(value),
+        formatter: (value) => formatCurrency(value, locale),
         style: {
           fontSize: "11px",
           fontWeight: 800,
@@ -47,41 +51,42 @@ export function TopProductsChart({ loading, topProducts }) {
       },
       xaxis: {
         categories: chartProducts.map(
-          (product) => product.product_name || "Unnamed product",
+          (product) =>
+            product.product_name || t("charts.topProducts.unnamedProduct"),
         ),
         labels: {
-          formatter: (value) => formatNumber(value, 0),
+          formatter: (value) => formatNumber(value, 0, locale),
         },
       },
       tooltip: {
         y: {
-          formatter: (value) => formatCurrency(value),
+          formatter: (value) => formatCurrency(value, locale),
         },
       },
     };
-  }, [chartProducts]);
+  }, [chartProducts, t, locale]);
 
   return (
-    <Card title="Top products by revenue">
+    <Card title={t("charts.topProducts.title")}>
       <div className="reports-card-action-row">
         <p className="reports-muted">
-          Horizontal bars are easiest to read for product names.
+          {t("charts.topProducts.description")}
         </p>
 
         <button
           type="button"
           className="reports-small-btn"
-          onClick={() => exportProductsExcel(topProducts)}
+          onClick={() => exportProductsExcel(topProducts, t)}
           disabled={!topProducts.length}
         >
           <Download size={15} />
-          Excel
+          {t("actions.excel")}
         </button>
       </div>
 
       <div className="reports-chart-box reports-chart-box-large">
         {loading ? (
-          <div className="reports-empty">Loading chart...</div>
+          <div className="reports-empty">{t("charts.topProducts.loading")}</div>
         ) : chartProducts.length ? (
           <ReactApexChart
             type="bar"
@@ -89,7 +94,7 @@ export function TopProductsChart({ loading, topProducts }) {
             options={options}
             series={[
               {
-                name: "Revenue",
+                name: t("charts.topProducts.revenue"),
                 data: chartProducts.map((product) =>
                   toNumber(product.total_revenue, 0),
                 ),
@@ -97,7 +102,7 @@ export function TopProductsChart({ loading, topProducts }) {
             ]}
           />
         ) : (
-          <div className="reports-empty">No product data available.</div>
+          <div className="reports-empty">{t("charts.topProducts.empty")}</div>
         )}
       </div>
     </Card>

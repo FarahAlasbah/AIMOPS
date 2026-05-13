@@ -1,5 +1,6 @@
 // frontend/src/shared/contexts/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { loginUser as apiLogin, logoutUser as apiLogout } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
 import { getRoleName, mergePermissions } from "../permissions/rolePermissions";
@@ -18,6 +19,7 @@ const buildFieldErrorsFromFastApi = (detail) => {
   if (!Array.isArray(detail)) return null;
 
   const fieldErrors = {};
+
   for (const item of detail) {
     const loc = Array.isArray(item?.loc) ? item.loc : [];
     const field = loc[loc.length - 1];
@@ -31,7 +33,7 @@ const buildFieldErrorsFromFastApi = (detail) => {
   return Object.keys(fieldErrors).length ? fieldErrors : null;
 };
 
-const normalizeLoginError = (err) => {
+const normalizeLoginError = (err, t) => {
   const status = err?.response?.status;
   const data = err?.response?.data;
 
@@ -44,16 +46,16 @@ const normalizeLoginError = (err) => {
 
   const fieldErrors = buildFieldErrorsFromFastApi(data?.detail);
 
-  let message = "Login failed. Please try again.";
+  let message = t("auth.loginErrors.failed");
 
   if (status === 401 || status === 403) {
-    message = "Invalid username or password.";
+    message = t("auth.loginErrors.invalidCredentials");
   } else if (status === 422) {
-    message = "Please check your input and try again.";
+    message = t("auth.loginErrors.checkInput");
   } else if (status === 429) {
-    message = "Too many attempts. Please wait a bit and try again.";
+    message = t("auth.loginErrors.tooManyAttempts");
   } else if (!err?.response) {
-    message = "Cannot reach the server. Please check your connection and try again.";
+    message = t("auth.loginErrors.serverUnavailable");
   } else if (typeof detail === "string" && detail.trim()) {
     message = detail;
   }
@@ -61,7 +63,9 @@ const normalizeLoginError = (err) => {
   const e = new Error(message);
   e.status = status;
   e.data = data;
+
   if (fieldErrors) e.fieldErrors = fieldErrors;
+
   return e;
 };
 
@@ -81,6 +85,7 @@ const normalizeUser = (rawUser) => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const { t } = useTranslation("common");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -91,8 +96,10 @@ export const AuthProvider = ({ children }) => {
 
     if (token && userData) {
       const parsed = safeParse(userData);
-      if (parsed) setUser(normalizeUser(parsed));
-      else {
+
+      if (parsed) {
+        setUser(normalizeUser(parsed));
+      } else {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
       }
@@ -114,7 +121,7 @@ export const AuthProvider = ({ children }) => {
       navigate("/app/overview", { replace: true });
       return response;
     } catch (err) {
-      throw normalizeLoginError(err);
+      throw normalizeLoginError(err, t);
     }
   };
 
@@ -153,6 +160,10 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+
+  if (!ctx) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
   return ctx;
 };

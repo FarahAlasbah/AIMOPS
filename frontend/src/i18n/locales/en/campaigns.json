@@ -58,6 +58,9 @@
     "sortNameDesc": "Name (Z-A)",
     "sortCategory": "Category"
   },
+  "toolbar": {
+    "refresh": "Refresh"
+  },
   "summary": {
     "total": "Total Campaigns",
     "active": "Published",
@@ -71,7 +74,7 @@
     "customCampaignTypeName": "Custom Campaign Type Name",
     "customCampaignTypeNamePlaceholder": "Example: Clearance Push",
     "budget": "Budget",
-    "budgetPlaceholder": "Enter budget",
+    "budgetPlaceholder": "0 (optional)",
     "notes": "Notes",
     "notesPlaceholder": "Add campaign notes or business context",
     "description": "Description",
@@ -137,6 +140,8 @@
   "insights": {
     "dateSuggestions": "Date Suggestions",
     "dateSuggestionsSubtitle": "Returned directly from the backend after campaign creation.",
+    "yourProposedDates": "Your proposed dates",
+    "noForecastData": "No forecast data available — generate forecasts first",
     "forecastImpact": "Forecast Impact",
     "businessAdvice": "Business Advice",
     "forecastQuantity": "Forecast Quantity",
@@ -149,7 +154,19 @@
     "additionalRevenue": "Additional Revenue",
     "estimatedRoi": "Estimated ROI",
     "baseQuantity": "Base Quantity",
-    "adjustedQuantity": "Adjusted Quantity"
+    "adjustedQuantity": "Adjusted Quantity",
+    "confidenceLevels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "unknown": "Unknown"
+    },
+    "riskLevels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "unknown": "Unknown"
+    }
   },
   "validation": {
     "campaignNameRequired": "Campaign name is required.",
@@ -157,6 +174,7 @@
     "endDateRequired": "End date is required.",
     "endDateInvalid": "End date cannot be before start date.",
     "budgetRequired": "Budget must be greater than 0.",
+    "budgetInvalid": "Budget cannot be negative.",
     "customTypeRequired": "Please enter a custom campaign type name.",
     "channelsRequired": "Select at least one channel.",
     "productsRequired": "Select at least one product.",
@@ -187,13 +205,102 @@
   "picker": {
     "selectedProductsLabel": "Selected products",
     "selectedCountText": "{{count}} selected",
+    "pendingCountText": "{{count}} pending",
     "selectedEmpty": "Choose products from the selector, then configure quantity and discount below.",
     "selectedPreviewWithMore": "{{names}}, and {{count}} more",
     "modalTitle": "Select products",
     "modalSubtitle": "Search, filter, and add products to this campaign."
   },
   "dialogs": {
-  "publishTitle": "Publish this campaign?",
-  "deleteTitle": "Delete this campaign?"
-}
+    "publishTitle": "Publish this campaign?",
+    "deleteTitle": "Delete this campaign?"
+  },
+  "help": {
+    "list": {
+      "title": "How to use Campaigns",
+      "buttonLabel": "Open campaigns help",
+      "items": {
+        "status": {
+          "title": "1. Review campaign status",
+          "description": "Planned campaigns are saved but not active yet. Active campaigns are published. Completed campaigns are finished campaigns kept for review."
+        },
+        "filters": {
+          "title": "2. Use filters",
+          "description": "Search by campaign name, filter by status, or filter by campaign type to find campaigns faster."
+        },
+        "details": {
+          "title": "3. Open campaign details",
+          "description": "Click the campaign name or View to see selected products, dates, budget, forecast impact, and business advice."
+        },
+        "publish": {
+          "title": "4. Publish planned campaigns",
+          "description": "Publishing changes a planned campaign into an active campaign. Use this when the campaign is ready to run."
+        },
+        "delete": {
+          "title": "5. Delete carefully",
+          "description": "Delete a campaign only when it is wrong or no longer needed, because removing it can affect campaign tracking and reports."
+        }
+      },
+      "note": "Tip: Create campaigns after your products and forecasts are ready, so AIMOPS can give better campaign insights."
+    },
+    "calendar": {
+      "title": "How to use Campaign Calendar",
+      "buttonLabel": "Open campaign calendar help",
+      "items": {
+        "range": {
+          "title": "1. Choose a date range",
+          "description": "Use the start and end date filters to decide which campaign period you want to view."
+        },
+        "grouping": {
+          "title": "2. Understand campaign grouping",
+          "description": "Campaigns are grouped by their start date, so you can quickly see what begins on each day."
+        },
+        "status": {
+          "title": "3. Check campaign status",
+          "description": "Use the status badge to know whether the campaign is planned, active, or completed."
+        },
+        "productsBudget": {
+          "title": "4. Review products and budget",
+          "description": "Each card shows the campaign products count, date range, and budget to help with planning."
+        },
+        "details": {
+          "title": "5. Open details",
+          "description": "Click View to open the full campaign details page, including forecast impact and selected products."
+        }
+      },
+      "note": "Tip: This page is for campaign planning. The main calendar can also show business events."
+    },
+    "new": {
+      "title": "How to create a campaign",
+      "buttonLabel": "Open new campaign help",
+      "items": {
+        "details": {
+          "title": "1. Enter campaign details",
+          "description": "Give the campaign a clear name, choose the type, and add notes that explain the campaign goal."
+        },
+        "schedule": {
+          "title": "2. Choose a valid schedule",
+          "description": "Pick a start date and end date. The end date must be after or equal to the start date."
+        },
+        "channels": {
+          "title": "3. Select channels",
+          "description": "Choose where the campaign will run, such as social media, email, SMS, or in-store."
+        },
+        "products": {
+          "title": "4. Select products",
+          "description": "Choose the products included in the campaign, then enter target quantity and discount percentage when needed."
+        },
+        "savePublish": {
+          "title": "5. Save or publish",
+          "description": "Save as Planned if you are still preparing. Create and Publish when the campaign is ready to become active."
+        }
+      },
+      "note": "Tip: Generate forecasts before creating campaigns to get better date suggestions, uplift estimates, ROI, and business advice."
+    }
+  },
+  "utils": {
+    "unnamedProduct": "Unnamed Product",
+    "uncategorized": "Uncategorized",
+    "customCampaignTypeName": "Custom campaign type name"
+  }
 }

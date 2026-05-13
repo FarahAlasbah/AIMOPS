@@ -211,33 +211,23 @@ export default function UploadsPage() {
     () => [
       {
         value: "newest",
-        label: t("uploadsPage.sortNewest", {
-          defaultValue: "Newest first",
-        }),
+        label: t("uploadsPage.sortNewest"),
       },
       {
         value: "oldest",
-        label: t("uploadsPage.sortOldest", {
-          defaultValue: "Oldest first",
-        }),
+        label: t("uploadsPage.sortOldest"),
       },
       {
         value: "name_asc",
-        label: t("uploadsPage.sortNameAsc", {
-          defaultValue: "File name A–Z",
-        }),
+        label: t("uploadsPage.sortNameAsc"),
       },
       {
         value: "name_desc",
-        label: t("uploadsPage.sortNameDesc", {
-          defaultValue: "File name Z–A",
-        }),
+        label: t("uploadsPage.sortNameDesc"),
       },
       {
         value: "status",
-        label: t("uploadsPage.sortStatus", {
-          defaultValue: "Status",
-        }),
+        label: t("uploadsPage.sortStatus"),
       },
     ],
     [t],
@@ -421,7 +411,7 @@ export default function UploadsPage() {
       return;
     }
 
-    const validation = validateSelectedFile(file);
+    const validation = validateSelectedFile(file, t);
 
     if (!validation.ok) {
       setUploadedFile(null);
@@ -571,12 +561,10 @@ export default function UploadsPage() {
           failures.length === targets.length
             ? t("uploadsPage.bulkDeleteFailed", {
                 count: failures.length,
-                defaultValue: `Could not delete ${failures.length} selected upload(s).`,
               })
             : t("uploadsPage.bulkDeletePartialFailed", {
                 failed: failures.length,
                 total: targets.length,
-                defaultValue: `${failures.length} of ${targets.length} selected upload(s) could not be deleted.`,
               });
 
         setError(`${prefix} ${baseMessage}`);
@@ -602,25 +590,20 @@ export default function UploadsPage() {
     : 0;
 
   const confirmTitle = isBulkConfirm
-    ? t("uploadsPage.bulkDeleteDialogTitle", {
-        defaultValue: "Delete selected uploads?",
-      })
+    ? t("uploadsPage.bulkDeleteDialogTitle")
     : t("uploadsPage.deleteDialogTitle");
 
   const confirmText = isBulkConfirm
-    ? t("uploadsPage.bulkDeleteDialogConfirm", {
-        defaultValue: "Delete selected",
-      })
+    ? t("uploadsPage.bulkDeleteDialogConfirm")
     : t("uploadsPage.deleteDialogConfirm");
 
   const confirmMsg = isBulkConfirm
     ? t("uploadsPage.bulkDeleteDialogMessage", {
         count: confirmCount,
-        defaultValue: `Delete ${confirmCount} selected upload(s)? This will remove them from AIMOPS.`,
       })
     : confirmTarget?.uploads?.[0]
       ? t("uploadsPage.deleteDialogMessage", {
-          fileName: confirmTarget.uploads[0].fileName || "file",
+          fileName: confirmTarget.uploads[0].fileName || t("uploadsPage.file"),
         })
       : "";
 
@@ -629,35 +612,38 @@ export default function UploadsPage() {
       <PageHeader
         actions={
           <PageHelp
-            title="How to use Data Upload"
+            title={t("uploadsPage.help.title")}
             items={[
               {
-                title: "1. Upload a sales file",
-                description:
-                  "Choose a CSV or Excel file that contains sales data such as date, product name, quantity, price, and total amount.",
+                title: t("uploadsPage.help.items.uploadFile.title"),
+                description: t("uploadsPage.help.items.uploadFile.description"),
               },
               {
-                title: "2. Check previous uploads",
-                description:
-                  "Use the uploads table to find older files, filter by date, search by file name, or sort by status.",
+                title: t("uploadsPage.help.items.checkUploads.title"),
+                description: t(
+                  "uploadsPage.help.items.checkUploads.description",
+                ),
               },
               {
-                title: "3. Continue the workflow",
-                description:
-                  "Click an uploaded file to continue mapping columns or reviewing extracted products depending on its progress.",
+                title: t("uploadsPage.help.items.continueWorkflow.title"),
+                description: t(
+                  "uploadsPage.help.items.continueWorkflow.description",
+                ),
               },
               {
-                title: "4. Completed uploads",
-                description:
-                  "When an upload is completed, products are available from the Products page instead of reopening the upload review.",
+                title: t("uploadsPage.help.items.completedUploads.title"),
+                description: t(
+                  "uploadsPage.help.items.completedUploads.description",
+                ),
               },
               {
-                title: "5. Delete carefully",
-                description:
-                  "Deleting an upload removes that upload batch from AIMOPS.",
+                title: t("uploadsPage.help.items.deleteCarefully.title"),
+                description: t(
+                  "uploadsPage.help.items.deleteCarefully.description",
+                ),
               },
             ]}
-            note="Tip: If a report or forecast is empty, make sure your sales data was uploaded and fully processed first."
+            note={t("uploadsPage.help.note")}
           />
         }
       />
@@ -727,9 +713,7 @@ export default function UploadsPage() {
           <div className="uploads-tools">
             <div className="uploads-field uploads-field-search">
               <label htmlFor="uploads-search" className="uploads-label">
-                {t("uploadsPage.searchLabel", {
-                  defaultValue: "Search file name",
-                })}
+                {t("uploadsPage.searchLabel")}
               </label>
 
               <input
@@ -738,16 +722,14 @@ export default function UploadsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={t("uploadsPage.searchPlaceholder", {
-                  defaultValue: "Search by file name...",
-                })}
+                placeholder={t("uploadsPage.searchPlaceholder")}
                 disabled={uploadsLoading}
               />
             </div>
 
             <div className="uploads-field">
               <FormCalendar
-                label={t("uploadsPage.dateFrom", { defaultValue: "From" })}
+                label={t("uploadsPage.dateFrom")}
                 value={dateFrom}
                 onChange={(event) => setDateFrom(event.target.value)}
                 max={dateTo || undefined}
@@ -758,7 +740,7 @@ export default function UploadsPage() {
 
             <div className="uploads-field">
               <FormCalendar
-                label={t("uploadsPage.dateTo", { defaultValue: "To" })}
+                label={t("uploadsPage.dateTo")}
                 value={dateTo}
                 onChange={(event) => setDateTo(event.target.value)}
                 min={dateFrom || undefined}
@@ -769,7 +751,7 @@ export default function UploadsPage() {
 
             <div className="uploads-field">
               <FormSelect
-                label={t("uploadsPage.sortBy", { defaultValue: "Sort by" })}
+                label={t("uploadsPage.sortBy")}
                 value={sortBy}
                 onChange={(event) => setSortBy(normalizeSelectValue(event))}
                 options={sortOptions}
@@ -784,9 +766,7 @@ export default function UploadsPage() {
                 onClick={clearFilters}
                 disabled={!hasActiveFilters || uploadsLoading}
               >
-                {t("uploadsPage.clearFilters", {
-                  defaultValue: "Clear filters",
-                })}
+                {t("uploadsPage.clearFilters")}
               </button>
             </div>
           </div>
@@ -796,7 +776,6 @@ export default function UploadsPage() {
               <div className="uploads-selection-text">
                 {t("uploadsPage.selectedUploads", {
                   count: selectedCount,
-                  defaultValue: `${selectedCount} selected`,
                 })}
               </div>
 
@@ -807,9 +786,7 @@ export default function UploadsPage() {
                   onClick={clearSelection}
                   disabled={isDeleting}
                 >
-                  {t("uploadsPage.clearSelection", {
-                    defaultValue: "Clear selection",
-                  })}
+                  {t("uploadsPage.clearSelection")}
                 </button>
 
                 <button
@@ -820,7 +797,6 @@ export default function UploadsPage() {
                 >
                   {t("uploadsPage.deleteSelected", {
                     count: selectedCount,
-                    defaultValue: `Delete selected (${selectedCount})`,
                   })}
                 </button>
               </div>
@@ -837,14 +813,15 @@ export default function UploadsPage() {
             onNext={() => setOffset((prev) => prev + LIMIT)}
             canOpenReview={canOpenReviewForUpload}
             isCompletedUpload={(upload) => isCompletedUpload(upload?.status)}
-onCompletedOpen={(upload) =>
-  navigate("/app/products", {
-    state: {
-      completedUploadRedirect: true,
-      completedUploadFileName: upload?.fileName || "",
-    },
-  })
-}            onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}
+            onCompletedOpen={(upload) =>
+              navigate("/app/products", {
+                state: {
+                  completedUploadRedirect: true,
+                  completedUploadFileName: upload?.fileName || "",
+                },
+              })
+            }
+            onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}
             onReview={(id) => navigate(`/app/data-upload/review/${id}`)}
             onDelete={requestDelete}
             deletingIds={deletingIds}

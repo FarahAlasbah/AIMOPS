@@ -16,11 +16,13 @@
     "userManagement": "User Management",
     "support": "Support",
     "consultation": "AI Consultation",
-    "businessProfile": "Business Profile"
+    "businessProfile": "Business Profile",
+    "activityHistory": "Activity History"
   },
   "actions": {
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "notifications": {
     "title": "Notifications",
@@ -36,12 +38,22 @@
     "loadError": "Failed to load notifications.",
     "create": "New",
     "createTitle": "Create notification",
+    "createDialog": "Create notification",
     "target": "Send to",
     "targetAll": "All users",
     "targetUser": "Single user",
     "targetRole": "Users by role",
     "role": "Role",
     "user": "User",
+    "clearTab": "Clear",
+    "clearTabTitle": "Clear this tab",
+    "clearAll": "Clear all",
+    "clearAllTitle": "Clear everything",
+    "clearOne": "Clear item",
+    "notificationDetails": "Notification",
+    "noMessage": "No message content.",
+    "unknownUser": "User",
+    "selectPlaceholder": "—",
     "fields": {
       "title": "Title",
       "message": "Message",
@@ -73,6 +85,9 @@
   },
   "shared": {
     "confirmDialog": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "close": "Close",
       "deleting": "Deleting..."
     },
     "fileUpload": {
@@ -81,18 +96,73 @@
       "or": "OR",
       "browseFiles": "Browse Files",
       "fileSizeExceeds": "File size exceeds {{maxSize}}MB limit",
-      "infoText": "Your file can have any column names or language. AIMOPS will help you map them automatically in the next step."
+      "infoText": "Your file can have any column names or language. AIMOPS will help you map them automatically in the next step.",
+      "removeFile": "Remove file",
+      "helpBanner": "Your file can have any column names or language. AIMOPS will help you map them automatically in the next step."
     },
     "formCalendar": {
       "openCalendar": "Open calendar",
       "prevMonth": "Previous month",
       "nextMonth": "Next month",
+      "monthAndYear": "Month and year",
       "yearAriaLabel": "Year",
       "clear": "Clear",
-      "today": "Today"
+      "today": "Today",
+      "placeholder": "YYYY-MM-DD",
+      "weekdays": {
+        "sun": "Su",
+        "mon": "Mo",
+        "tue": "Tu",
+        "wed": "We",
+        "thu": "Th",
+        "fri": "Fr",
+        "sat": "Sa"
+      }
+    },
+    "formSelect": {
+      "placeholder": "Select...",
+      "noOptions": "No options"
     },
     "formSection": {
       "optional": "Optional"
+    },
+    "pageHelp": {
+      "defaultTitle": "How to use this page",
+      "defaultEyebrow": "Page guide",
+      "defaultButtonLabel": "Open page help",
+      "closeHelp": "Close help"
     }
+  },
+  "auth": {
+    "tagline": "AI-driven Marketing and Operations Predicting System",
+    "footer": "© 2025 AIMOPS. All rights reserved.",
+    "loginErrors": {
+      "failed": "Login failed. Please try again.",
+      "invalidCredentials": "Invalid username or password.",
+      "checkInput": "Please check your input and try again.",
+      "tooManyAttempts": "Too many attempts. Please wait a bit and try again.",
+      "serverUnavailable": "Cannot reach the server. Please check your connection and try again."
+    }
+  },
+  "denied": {
+    "title": "Access Denied",
+    "subtitle": "You don’t have permission to view that page.",
+    "message": "Your account doesn’t have the required permissions."
+  },
+  "layout": {
+    "toggleSidebar": "Toggle sidebar",
+    "goToDashboard": "Go to dashboard",
+    "logout": "Logout",
+    "logoutConfirm": {
+      "title": "Log out of AIMOPS?",
+      "messageWithName": "{{name}}, you will need to sign in again to continue using your workspace.",
+      "message": "You will need to sign in again to continue using your workspace.",
+      "cancel": "Stay signed in",
+      "confirm": "Yes, log out"
+    }
+  },
+  "lang": {
+    "switchToEnglish": "Switch to English",
+    "switchToArabic": "Switch to Arabic"
   }
 }
