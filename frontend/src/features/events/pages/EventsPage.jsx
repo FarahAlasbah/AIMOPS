@@ -28,6 +28,7 @@ const normalizeId = (id) => String(id ?? "").trim();
 
 const isConfirmedEvent = (event) => {
   const status = String(event?.status || "").trim().toLowerCase();
+
   return status === "confirmed";
 };
 
@@ -51,21 +52,23 @@ const extractApiError = (err, fallback) => {
   return fallback;
 };
 
-const getEventTitle = (event) => {
+const getEventTitle = (event, t) => {
   return (
     event?.event_name ||
     event?.event_name_ar ||
     event?.title ||
     event?.name ||
-    `Event #${event?.event_id ?? ""}`.trim()
+    t("eventsPage.eventFallbackName", {
+      id: event?.event_id ?? "",
+    })
   );
 };
 
 function DraftsSkeleton() {
   return (
     <div className="drafts-skeleton">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="drafts-sk-row">
+      {[0, 1, 2].map((index) => (
+        <div key={index} className="drafts-sk-row">
           <div className="drafts-sk-cell drafts-sk-check" />
           <div className="drafts-sk-cell drafts-sk-wide" />
           <div className="drafts-sk-cell drafts-sk-mid" />
@@ -79,17 +82,28 @@ function DraftsSkeleton() {
 }
 
 const IMPACT_META = {
-  very_high: { label: "Very High", cls: "dimp-veryhigh" },
-  high: { label: "High", cls: "dimp-high" },
-  medium: { label: "Medium", cls: "dimp-medium" },
-  low: { label: "Low", cls: "dimp-low" },
+  very_high: { labelKey: "impact.levels.very_high", cls: "dimp-veryhigh" },
+  high: { labelKey: "impact.levels.high", cls: "dimp-high" },
+  medium: { labelKey: "impact.levels.medium", cls: "dimp-medium" },
+  low: { labelKey: "impact.levels.low", cls: "dimp-low" },
 };
 
-const impactMeta = (level) =>
-  IMPACT_META[String(level || "").toLowerCase()] || {
-    label: level || "—",
-    cls: "dimp-low",
+const impactMeta = (level, t) => {
+  const key = String(level || "").toLowerCase();
+  const meta = IMPACT_META[key];
+
+  if (!meta) {
+    return {
+      label: level || "—",
+      cls: "dimp-low",
+    };
+  }
+
+  return {
+    label: t(meta.labelKey),
+    cls: meta.cls,
   };
+};
 
 function DraftsTable({
   drafts,
@@ -114,7 +128,7 @@ function DraftsTable({
     [dismissingIds],
   );
 
-  const visibleIds = drafts.map((d) => normalizeId(d.event_id)).filter(Boolean);
+  const visibleIds = drafts.map((draft) => normalizeId(draft.event_id)).filter(Boolean);
 
   const selectedVisibleCount = visibleIds.filter((id) =>
     selectedSet.has(id),
@@ -140,9 +154,7 @@ function DraftsTable({
                   if (el) el.indeterminate = someSelected && !allSelected;
                 }}
                 onChange={(e) => onToggleAll?.(e.target.checked)}
-                aria-label={t("draftsTable.selectAll", {
-                  defaultValue: "Select all detected events",
-                })}
+                aria-label={t("draftsTable.selectAll")}
               />
             </th>
 
@@ -157,16 +169,20 @@ function DraftsTable({
         <tbody>
           {drafts.map((draft) => {
             const id = normalizeId(draft.event_id);
-            const meta = impactMeta(draft.max_impact_level);
+            const meta = impactMeta(draft.max_impact_level, t);
             const checked = selectedSet.has(id);
             const dismissing = dismissingSet.has(id);
 
             const productNames = Array.isArray(draft.impacts)
               ? draft.impacts
-                  .map((i) => i.product_name)
+                  .map((impact) => impact.product_name)
                   .filter(Boolean)
                   .join(", ")
               : "—";
+
+            const suggestedTypeKey = String(
+              draft.suggested_event_type || "",
+            ).toLowerCase();
 
             return (
               <tr
@@ -184,9 +200,7 @@ function DraftsTable({
                     onChange={(e) =>
                       onToggleOne?.(draft.event_id, e.target.checked)
                     }
-                    aria-label={t("draftsTable.selectOne", {
-                      defaultValue: "Select detected event",
-                    })}
+                    aria-label={t("draftsTable.selectOne")}
                   />
                 </td>
 
@@ -218,7 +232,11 @@ function DraftsTable({
 
                 <td>
                   <span className="drafts-type">
-                    {draft.suggested_event_type || "—"}
+                    {suggestedTypeKey
+                      ? t(`form.types.${suggestedTypeKey}`, {
+                          defaultValue: draft.suggested_event_type || "—",
+                        })
+                      : "—"}
                   </span>
                 </td>
 
@@ -339,8 +357,8 @@ export default function EventsPage() {
     try {
       const data = await getEvents({ upcoming });
       const allEvents = Array.isArray(data?.events) ? data.events : [];
-
       const confirmedEvents = allEvents.filter(isConfirmedEvent);
+
       setEvents(confirmedEvents);
     } catch (e) {
       setEvents([]);
@@ -381,18 +399,18 @@ export default function EventsPage() {
   }, []);
 
   useEffect(() => {
-    const existing = new Set(drafts.map((d) => normalizeId(d.event_id)));
+    const existing = new Set(drafts.map((draft) => normalizeId(draft.event_id)));
 
-    setSelectedDraftIds((prev) =>
-      prev.filter((id) => existing.has(String(id))),
+    setSelectedDraftIds((previous) =>
+      previous.filter((id) => existing.has(String(id))),
     );
   }, [drafts]);
 
   useEffect(() => {
     const existing = new Set(events.map((event) => normalizeId(event.event_id)));
 
-    setSelectedEventIds((prev) =>
-      prev.filter((id) => existing.has(String(id))),
+    setSelectedEventIds((previous) =>
+      previous.filter((id) => existing.has(String(id))),
     );
   }, [events]);
 
@@ -400,15 +418,15 @@ export default function EventsPage() {
     const draftId = searchParams.get("draftEvent");
     if (!draftId || draftsLoading) return;
 
-    const found = drafts.find((d) => String(d.event_id) === String(draftId));
+    const found = drafts.find((draft) => String(draft.event_id) === String(draftId));
 
     if (found) {
       setActiveTab(TAB_DETECTED);
       setActiveDraft(found);
 
       setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
+        (previous) => {
+          const next = new URLSearchParams(previous);
           next.delete("draftEvent");
           return next;
         },
@@ -441,8 +459,8 @@ export default function EventsPage() {
     const id = normalizeId(eventId);
     if (!id) return;
 
-    setSelectedDraftIds((prev) => {
-      const set = new Set(prev.map(String));
+    setSelectedDraftIds((previous) => {
+      const set = new Set(previous.map(String));
 
       if (checked) {
         set.add(id);
@@ -457,10 +475,10 @@ export default function EventsPage() {
   const toggleAllDrafts = (checked) => {
     if (dismissing) return;
 
-    const ids = drafts.map((d) => normalizeId(d.event_id)).filter(Boolean);
+    const ids = drafts.map((draft) => normalizeId(draft.event_id)).filter(Boolean);
 
-    setSelectedDraftIds((prev) => {
-      const set = new Set(prev.map(String));
+    setSelectedDraftIds((previous) => {
+      const set = new Set(previous.map(String));
 
       ids.forEach((id) => {
         if (checked) {
@@ -497,7 +515,9 @@ export default function EventsPage() {
 
     if (targets.length === 0 || dismissing) return;
 
-    const targetIds = targets.map((d) => normalizeId(d.event_id)).filter(Boolean);
+    const targetIds = targets
+      .map((draft) => normalizeId(draft.event_id))
+      .filter(Boolean);
 
     const dismissedIds = [];
     const failures = [];
@@ -517,37 +537,33 @@ export default function EventsPage() {
         }
       }
 
-      setDrafts((prev) =>
-        prev.filter(
+      setDrafts((previous) =>
+        previous.filter(
           (draft) => !dismissedIds.includes(normalizeId(draft.event_id)),
         ),
       );
 
-      setSelectedDraftIds((prev) =>
-        prev.filter((id) => !dismissedIds.includes(String(id))),
+      setSelectedDraftIds((previous) =>
+        previous.filter((id) => !dismissedIds.includes(String(id))),
       );
 
       if (failures.length === 0) {
         setNotice(
           t("eventsPage.dismissSelectedSuccess", {
             count: dismissedIds.length,
-            defaultValue: `${dismissedIds.length} detected event(s) dismissed.`,
           }),
         );
       } else {
         const message = extractApiError(
           failures[0]?.err,
-          t("draftModal.errorDismissFailed", {
-            defaultValue: "Failed to dismiss detected event.",
-          }),
+          t("draftModal.errorDismissFailed"),
         );
 
         setError(
-          t("eventsPage.dismissSelectedPartialFailed", {
+          `${t("eventsPage.dismissSelectedPartialFailed", {
             failed: failures.length,
             total: targets.length,
-            defaultValue: `${failures.length} of ${targets.length} detected event(s) could not be dismissed.`,
-          }) + ` ${message}`,
+          })} ${message}`,
         );
       }
 
@@ -569,8 +585,8 @@ export default function EventsPage() {
     const id = normalizeId(eventId);
     if (!id) return;
 
-    setSelectedEventIds((prev) => {
-      const set = new Set(prev.map(String));
+    setSelectedEventIds((previous) => {
+      const set = new Set(previous.map(String));
 
       if (checked) {
         set.add(id);
@@ -587,8 +603,8 @@ export default function EventsPage() {
 
     const ids = events.map((event) => normalizeId(event.event_id)).filter(Boolean);
 
-    setSelectedEventIds((prev) => {
-      const set = new Set(prev.map(String));
+    setSelectedEventIds((previous) => {
+      const set = new Set(previous.map(String));
 
       ids.forEach((id) => {
         if (checked) {
@@ -610,9 +626,8 @@ export default function EventsPage() {
   const requestDeleteEvents = (targets = []) => {
     if (deleting) return;
 
-    const list = Array.isArray(targets) && targets.length > 0
-      ? targets
-      : selectedEvents;
+    const list =
+      Array.isArray(targets) && targets.length > 0 ? targets : selectedEvents;
 
     if (list.length === 0) return;
 
@@ -654,40 +669,33 @@ export default function EventsPage() {
         }
       }
 
-      setEvents((prev) =>
-        prev.filter(
+      setEvents((previous) =>
+        previous.filter(
           (event) => !deletedIds.includes(normalizeId(event.event_id)),
         ),
       );
 
-      setSelectedEventIds((prev) =>
-        prev.filter((id) => !deletedIds.includes(String(id))),
+      setSelectedEventIds((previous) =>
+        previous.filter((id) => !deletedIds.includes(String(id))),
       );
 
       if (failures.length === 0) {
         setNotice(
           t("eventsPage.deleteSelectedSuccess", {
             count: deletedIds.length,
-            defaultValue:
-              deletedIds.length === 1
-                ? "Event deleted successfully."
-                : `${deletedIds.length} events deleted successfully.`,
           }),
         );
       } else {
         const message = extractApiError(
           failures[0]?.err,
-          t("eventsPage.deleteSelectedFailed", {
-            defaultValue: "Failed to delete event.",
-          }),
+          t("eventsPage.deleteSelectedFailed"),
         );
 
         setError(
-          t("eventsPage.deleteSelectedPartialFailed", {
+          `${t("eventsPage.deleteSelectedPartialFailed", {
             failed: failures.length,
             total: targets.length,
-            defaultValue: `${failures.length} of ${targets.length} event(s) could not be deleted.`,
-          }) + ` ${message}`,
+          })} ${message}`,
         );
       }
     } finally {
@@ -703,11 +711,11 @@ export default function EventsPage() {
         }),
     );
 
-    const next = drafts.filter((d) => d.event_id !== draftEvent.event_id);
+    const next = drafts.filter((draft) => draft.event_id !== draftEvent.event_id);
 
     setDrafts(next);
-    setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
+    setSelectedDraftIds((previous) =>
+      previous.filter((id) => String(id) !== String(draftEvent.event_id)),
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -717,11 +725,11 @@ export default function EventsPage() {
   };
 
   const handleDraftDismissed = (_res, draftEvent) => {
-    const next = drafts.filter((d) => d.event_id !== draftEvent.event_id);
+    const next = drafts.filter((draft) => draft.event_id !== draftEvent.event_id);
 
     setDrafts(next);
-    setSelectedDraftIds((prev) =>
-      prev.filter((id) => String(id) !== String(draftEvent.event_id)),
+    setSelectedDraftIds((previous) =>
+      previous.filter((id) => String(id) !== String(draftEvent.event_id)),
     );
 
     if (next.length === 0) setActiveTab(TAB_CONFIRMED);
@@ -735,41 +743,35 @@ export default function EventsPage() {
     () => (
       <div className="events-actions">
         <PageHelp
-          title="How to use Events"
-          buttonLabel="Open events help"
+          title={t("eventsPage.pageHelp.title")}
+          buttonLabel={t("eventsPage.pageHelp.buttonLabel")}
           items={[
             {
-              title: "1. Start with detected events",
-              description:
-                "Detected events are suggestions found by AIMOPS from your sales data. Review them before adding them to the official events list.",
+              title: t("eventsPage.pageHelp.items.startTitle"),
+              description: t("eventsPage.pageHelp.items.startDescription"),
             },
             {
-              title: "2. Review before confirming",
-              description:
-                "Click Review to see the detected event period, affected products, and impact level. Confirm only the events that are useful for the business.",
+              title: t("eventsPage.pageHelp.items.reviewTitle"),
+              description: t("eventsPage.pageHelp.items.reviewDescription"),
             },
             {
-              title: "3. Dismiss unwanted detections",
-              description:
-                "If a detected event is not useful, select it and dismiss it. Dismissed detections are removed from the review list.",
+              title: t("eventsPage.pageHelp.items.dismissTitle"),
+              description: t("eventsPage.pageHelp.items.dismissDescription"),
             },
             {
-              title: "4. Use confirmed events for planning",
-              description:
-                "Confirmed events are the official business events. They can be used for calendar planning and impact analysis.",
+              title: t("eventsPage.pageHelp.items.confirmedTitle"),
+              description: t("eventsPage.pageHelp.items.confirmedDescription"),
             },
             {
-              title: "5. Create events manually",
-              description:
-                "Use Create Event when you already know an important occasion, campaign-related date, season, or business event.",
+              title: t("eventsPage.pageHelp.items.manualTitle"),
+              description: t("eventsPage.pageHelp.items.manualDescription"),
             },
             {
-              title: "6. Delete carefully",
-              description:
-                "Delete confirmed events only when they are wrong or no longer needed, because removing them can affect event tracking and future analysis.",
+              title: t("eventsPage.pageHelp.items.deleteTitle"),
+              description: t("eventsPage.pageHelp.items.deleteDescription"),
             },
           ]}
-          note="Tip: Detected events are suggestions. Confirmed events are the ones AIMOPS treats as real business events."
+          note={t("eventsPage.pageHelp.note")}
         />
 
         <Button
@@ -780,13 +782,34 @@ export default function EventsPage() {
           {t("eventsPage.btnViewCalendar")}
         </Button>
 
-        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
+        <Button type="button" onClick={() => setShowCreate((value) => !value)}>
           {showCreate ? t("eventsPage.btnClose") : t("eventsPage.btnCreateEvent")}
         </Button>
       </div>
     ),
     [navigate, showCreate, t],
   );
+
+  const deleteConfirmTitle =
+    deleteConfirmCount === 1
+      ? t("eventsPage.deleteConfirmTitleOne")
+      : t("eventsPage.deleteConfirmTitleMany");
+
+  const deleteConfirmMessage =
+    deleteConfirmCount === 1
+      ? t("eventsPage.deleteConfirmMessageOne", {
+          name: getEventTitle(deleteConfirmEvents[0], t),
+        })
+      : t("eventsPage.deleteConfirmMessageMany", {
+          count: deleteConfirmCount,
+        });
+
+  const deleteConfirmAction =
+    deleteConfirmCount === 1
+      ? t("eventsPage.deleteConfirmActionOne")
+      : t("eventsPage.deleteConfirmActionMany", {
+          count: deleteConfirmCount,
+        });
 
   return (
     <div className="events-page">
@@ -804,13 +827,13 @@ export default function EventsPage() {
           <EventForm
             saving={saving}
             onSavingChange={setSaving}
-            onSuccess={(msg) => {
-              setNotice(msg || t("eventsPage.noticeCreated"));
+            onSuccess={(message) => {
+              setNotice(message || t("eventsPage.noticeCreated"));
               setShowCreate(false);
               load();
             }}
-            onError={(msg) =>
-              setError(msg || t("eventsPage.errorCreateFailed"))
+            onError={(message) =>
+              setError(message || t("eventsPage.errorCreateFailed"))
             }
           />
         </Card>
@@ -826,9 +849,7 @@ export default function EventsPage() {
               }`}
               onClick={() => setActiveTab(TAB_DETECTED)}
             >
-              {t("eventsPage.tabDetected", {
-                defaultValue: "Detected events",
-              })}
+              {t("eventsPage.tabDetected")}
 
               {draftsLoading ? (
                 <span className="ev-tab-spinner" />
@@ -845,12 +866,8 @@ export default function EventsPage() {
               onClick={() => setActiveTab(TAB_CONFIRMED)}
             >
               {upcoming
-                ? t("eventsPage.tabUpcomingConfirmed", {
-                    defaultValue: "Upcoming confirmed",
-                  })
-                : t("eventsPage.tabConfirmed", {
-                    defaultValue: "Confirmed events",
-                  })}
+                ? t("eventsPage.tabUpcomingConfirmed")
+                : t("eventsPage.tabConfirmed")}
             </button>
 
             {activeTab === TAB_CONFIRMED && (
@@ -861,9 +878,7 @@ export default function EventsPage() {
                     className={`seg-btn ${!upcoming ? "active" : ""}`}
                     onClick={() => setUpcoming(false)}
                   >
-                    {t("eventsPage.btnAllConfirmed", {
-                      defaultValue: "All confirmed",
-                    })}
+                    {t("eventsPage.btnAllConfirmed")}
                   </button>
 
                   <button
@@ -882,38 +897,25 @@ export default function EventsPage() {
             <Card
               title={
                 draftsLoading
-                  ? t("eventsPage.detectedCardTitle", {
-                      defaultValue: "Detected events",
-                    })
+                  ? t("eventsPage.detectedCardTitle")
                   : draftCount > 0
                     ? t("eventsPage.detectedCardTitleCount", {
                         count: draftCount,
-                        defaultValue: `${draftCount} detected event(s)`,
                       })
-                    : t("eventsPage.detectedCardTitleEmpty", {
-                        defaultValue: "No detected events",
-                      })
+                    : t("eventsPage.detectedCardTitleEmpty")
               }
-              subtitle={t("eventsPage.detectedCardSub", {
-                defaultValue:
-                  "Review AI-detected events. Confirm useful ones or dismiss the ones you do not need.",
-              })}
+              subtitle={t("eventsPage.detectedCardSub")}
             >
               {draftsLoading ? (
                 <DraftsSkeleton />
               ) : draftCount === 0 ? (
                 <div className="events-empty">
                   <div className="events-empty-title">
-                    {t("eventsPage.detectedEmptyTitle", {
-                      defaultValue: "No detected events",
-                    })}
+                    {t("eventsPage.detectedEmptyTitle")}
                   </div>
 
                   <div className="events-empty-subtitle">
-                    {t("eventsPage.detectedEmptySubtitle", {
-                      defaultValue:
-                        "When AIMOPS detects possible events from your sales data, they will appear here.",
-                    })}
+                    {t("eventsPage.detectedEmptySubtitle")}
                   </div>
                 </div>
               ) : (
@@ -923,7 +925,6 @@ export default function EventsPage() {
                       <div className="drafts-selection-text">
                         {t("eventsPage.detectedSelected", {
                           count: selectedDraftCount,
-                          defaultValue: `${selectedDraftCount} selected`,
                         })}
                       </div>
 
@@ -934,9 +935,7 @@ export default function EventsPage() {
                           onClick={clearDraftSelection}
                           disabled={dismissing}
                         >
-                          {t("eventsPage.clearSelection", {
-                            defaultValue: "Clear selection",
-                          })}
+                          {t("eventsPage.clearSelection")}
                         </button>
 
                         <button
@@ -946,12 +945,9 @@ export default function EventsPage() {
                           disabled={dismissing}
                         >
                           {dismissing
-                            ? t("eventsPage.dismissingSelected", {
-                                defaultValue: "Dismissing...",
-                              })
+                            ? t("eventsPage.dismissingSelected")
                             : t("eventsPage.dismissSelected", {
                                 count: selectedDraftCount,
-                                defaultValue: `Dismiss selected (${selectedDraftCount})`,
                               })}
                         </button>
                       </div>
@@ -975,33 +971,21 @@ export default function EventsPage() {
             <Card
               title={
                 upcoming
-                  ? t("eventsPage.cardTitleUpcomingConfirmed", {
-                      defaultValue: "Upcoming confirmed events",
-                    })
-                  : t("eventsPage.cardTitleConfirmed", {
-                      defaultValue: "Confirmed events",
-                    })
+                  ? t("eventsPage.cardTitleUpcomingConfirmed")
+                  : t("eventsPage.cardTitleConfirmed")
               }
-              subtitle={t("eventsPage.confirmedCardSubtitle", {
-                defaultValue:
-                  "Only confirmed events are shown here. Detected events stay in the detected tab until confirmed or dismissed.",
-              })}
+              subtitle={t("eventsPage.confirmedCardSubtitle")}
             >
               {loading ? (
                 <EventsListSkeleton />
               ) : events.length === 0 ? (
                 <div className="events-empty">
                   <div className="events-empty-title">
-                    {t("eventsPage.emptyConfirmedTitle", {
-                      defaultValue: "No confirmed events yet",
-                    })}
+                    {t("eventsPage.emptyConfirmedTitle")}
                   </div>
 
                   <div className="events-empty-subtitle">
-                    {t("eventsPage.emptyConfirmedSubtitle", {
-                      defaultValue:
-                        "Confirmed events will appear here after you create or confirm them.",
-                    })}
+                    {t("eventsPage.emptyConfirmedSubtitle")}
                   </div>
                 </div>
               ) : (
@@ -1011,7 +995,6 @@ export default function EventsPage() {
                       <div className="confirmed-selection-text">
                         {t("eventsPage.confirmedSelected", {
                           count: selectedEventCount,
-                          defaultValue: `${selectedEventCount} selected`,
                         })}
                       </div>
 
@@ -1022,9 +1005,7 @@ export default function EventsPage() {
                           onClick={clearEventSelection}
                           disabled={deleting}
                         >
-                          {t("eventsPage.clearSelection", {
-                            defaultValue: "Clear selection",
-                          })}
+                          {t("eventsPage.clearSelection")}
                         </button>
 
                         <button
@@ -1034,12 +1015,9 @@ export default function EventsPage() {
                           disabled={deleting}
                         >
                           {deleting
-                            ? t("eventsPage.deletingSelected", {
-                                defaultValue: "Deleting...",
-                              })
+                            ? t("eventsPage.deletingSelected")
                             : t("eventsPage.deleteSelected", {
                                 count: selectedEventCount,
-                                defaultValue: `Delete selected (${selectedEventCount})`,
                               })}
                         </button>
                       </div>
@@ -1066,19 +1044,13 @@ export default function EventsPage() {
 
       {dismissConfirmCount > 0 && (
         <ConfirmDialog
-          title={t("eventsPage.dismissConfirmTitle", {
-            defaultValue: "Dismiss detected events?",
-          })}
+          title={t("eventsPage.dismissConfirmTitle")}
           message={t("eventsPage.dismissConfirmMessage", {
             count: dismissConfirmCount,
-            defaultValue: `This will remove ${dismissConfirmCount} selected detected event(s) from the review list. This action cannot be undone.`,
           })}
-          cancelLabel={t("eventsPage.dismissConfirmCancel", {
-            defaultValue: "Cancel",
-          })}
+          cancelLabel={t("eventsPage.dismissConfirmCancel")}
           confirmLabel={t("eventsPage.dismissConfirmAction", {
             count: dismissConfirmCount,
-            defaultValue: `Dismiss ${dismissConfirmCount}`,
           })}
           onCancel={closeDismissConfirm}
           onConfirm={() => dismissSelectedDrafts(dismissConfirmDrafts)}
@@ -1087,33 +1059,10 @@ export default function EventsPage() {
 
       {deleteConfirmCount > 0 && (
         <ConfirmDialog
-          title={t("eventsPage.deleteConfirmTitle", {
-            defaultValue:
-              deleteConfirmCount === 1
-                ? "Delete this event?"
-                : "Delete selected events?",
-          })}
-          message={t("eventsPage.deleteConfirmMessage", {
-            count: deleteConfirmCount,
-            name:
-              deleteConfirmCount === 1
-                ? getEventTitle(deleteConfirmEvents[0])
-                : "",
-            defaultValue:
-              deleteConfirmCount === 1
-                ? `This will permanently delete "${getEventTitle(deleteConfirmEvents[0])}". This action cannot be undone.`
-                : `This will permanently delete ${deleteConfirmCount} selected event(s). This action cannot be undone.`,
-          })}
-          cancelLabel={t("eventsPage.deleteConfirmCancel", {
-            defaultValue: "Cancel",
-          })}
-          confirmLabel={t("eventsPage.deleteConfirmAction", {
-            count: deleteConfirmCount,
-            defaultValue:
-              deleteConfirmCount === 1
-                ? "Delete event"
-                : `Delete ${deleteConfirmCount}`,
-          })}
+          title={deleteConfirmTitle}
+          message={deleteConfirmMessage}
+          cancelLabel={t("eventsPage.deleteConfirmCancel")}
+          confirmLabel={deleteConfirmAction}
           onCancel={closeDeleteConfirm}
           onConfirm={() => deleteConfirmedEvents(deleteConfirmEvents)}
         />

@@ -1,3 +1,4 @@
+// frontend/src/i18n/index.js
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
@@ -22,6 +23,10 @@ import enCampaigns from "./locales/en/campaigns.json";
 import arCampaigns from "./locales/ar/campaigns.json";
 import enConsultation from "./locales/en/consultation.json";
 import arConsultation from "./locales/ar/consultation.json";
+import enBusinessProfile from "./locales/en/businessProfile.json";
+import arBusinessProfile from "./locales/ar/businessProfile.json";
+import enReports from "./locales/en/reports.json";
+import arReports from "./locales/ar/reports.json";
 
 const resources = {
   en: {
@@ -35,6 +40,8 @@ const resources = {
     forecasting: enForecasting,
     campaigns: enCampaigns,
     consultation: enConsultation,
+    businessProfile: enBusinessProfile,
+    reports: enReports,
   },
   ar: {
     common: arCommon,
@@ -47,6 +54,8 @@ const resources = {
     forecasting: arForecasting,
     campaigns: arCampaigns,
     consultation: arConsultation,
+    businessProfile: arBusinessProfile,
+    reports: arReports,
   },
 };
 

@@ -9,7 +9,7 @@ const formatPercent = (n) => {
 const formatConfidence = (n) => {
   const x = Number(n);
   if (Number.isNaN(x)) return "-";
-  return `${Math.round(x * 100)}%`; // backend sends 0..1
+  return `${Math.round(x * 100)}%`;
 };
 
 const levelChipClass = (level) => {
@@ -20,24 +20,33 @@ const levelChipClass = (level) => {
   return "";
 };
 
-const boolText = (v) => (v ? "Yes" : "No");
+const boolText = (v, t) => {
+  if (typeof t === "function") {
+    return v
+      ? t("common.yes", { defaultValue: "Yes" })
+      : t("common.no", { defaultValue: "No" });
+  }
+
+  return v ? "Yes" : "No";
+};
 
 /**
- * Roles allowed in the UI (NO employee_id, NO other)
+ * Roles allowed in the UI.
+ * Keep the English label as a fallback only.
  */
 export const ROLE_DEFS = [
-  { value: "date", label: "Date" },
-  { value: "product_name", label: "Product name" },
-  { value: "quantity", label: "Quantity" },
-  { value: "unit_price", label: "Unit price" },
-  { value: "total_amount", label: "Total amount" },
-  { value: "category", label: "Category" },
-  { value: "product_code", label: "Product code" },
-  { value: "discount", label: "Discount" },
-  { value: "customer_id", label: "Customer ID" },
-  { value: "location", label: "Location" },
-  { value: "payment_method", label: "Payment method" },
-  { value: "skip", label: "Skip" },
+  { value: "date", label: "Date", labelKey: "roles.date" },
+  { value: "product_name", label: "Product name", labelKey: "roles.product_name" },
+  { value: "quantity", label: "Quantity", labelKey: "roles.quantity" },
+  { value: "unit_price", label: "Unit price", labelKey: "roles.unit_price" },
+  { value: "total_amount", label: "Total amount", labelKey: "roles.total_amount" },
+  { value: "category", label: "Category", labelKey: "roles.category" },
+  { value: "product_code", label: "Product code", labelKey: "roles.product_code" },
+  { value: "discount", label: "Discount", labelKey: "roles.discount" },
+  { value: "customer_id", label: "Customer ID", labelKey: "roles.customer_id" },
+  { value: "location", label: "Location", labelKey: "roles.location" },
+  { value: "payment_method", label: "Payment method", labelKey: "roles.payment_method" },
+  { value: "skip", label: "Skip", labelKey: "roles.skip" },
 ];
 
 const ROLE_LABEL = ROLE_DEFS.reduce((acc, r) => {
@@ -45,14 +54,11 @@ const ROLE_LABEL = ROLE_DEFS.reduce((acc, r) => {
   return acc;
 }, {});
 
-export const roleLabel = (role) => ROLE_LABEL[String(role || "")] || "Skip";
-
 const ALLOWED_ROLE_VALUES = new Set(ROLE_DEFS.map((r) => r.value));
 
 /**
  * Normalize any backend role into something the UI supports.
- * - employee_id -> skip
- * - other/unknown -> skip
+ * Unsupported roles are skipped instead of being sent to the backend.
  */
 export const normalizeRole = (role) => {
   const v = String(role || "").trim();
@@ -60,22 +66,30 @@ export const normalizeRole = (role) => {
   return ALLOWED_ROLE_VALUES.has(v) ? v : "skip";
 };
 
-/**
- * Backwards-compatible helper (if any code still calls it).
- * We no longer build dropdown options; we just return the allowed roles,
- * and we normalize suggested role into skip when it’s unsupported.
- */
-export const buildRoleOptions = (column) => {
+export const roleLabel = (role, t) => {
+  const normalized = normalizeRole(role);
+  const fallback = ROLE_LABEL[normalized] || ROLE_LABEL.skip || "Skip";
+
+  if (typeof t === "function") {
+    return t(`roles.${normalized}`, { defaultValue: fallback });
+  }
+
+  return fallback;
+};
+
+export const buildRoleOptions = (column, t) => {
   const suggested = normalizeRole(column?.role);
-  const alternatives = Array.isArray(column?.alternative_roles) ? column.alternative_roles : [];
+  const alternatives = Array.isArray(column?.alternative_roles)
+    ? column.alternative_roles
+    : [];
 
   const preferred = [suggested, ...alternatives.map(normalizeRole)].filter(Boolean);
 
   const values = [...preferred, ...ROLE_DEFS.map((r) => r.value)].filter(
-    (v, i, arr) => arr.indexOf(v) === i
+    (v, i, arr) => arr.indexOf(v) === i,
   );
 
-  return values.map((v) => ({ value: v, label: roleLabel(v) }));
+  return values.map((v) => ({ value: v, label: roleLabel(v, t) }));
 };
 
 export { formatPercent, formatConfidence, levelChipClass, boolText };

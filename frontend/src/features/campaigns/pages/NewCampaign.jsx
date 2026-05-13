@@ -168,9 +168,7 @@ const NewCampaign = () => {
       formData.budget !== undefined &&
       Number(formData.budget) < 0
     ) {
-      nextErrors.budget = t("validation.budgetInvalid", {
-        defaultValue: "Budget cannot be negative",
-      });
+      nextErrors.budget = t("validation.budgetInvalid");
     }
 
     if (
@@ -296,40 +294,34 @@ const NewCampaign = () => {
   return (
     <div className="new-campaign-page">
       <PageHeader
-        
         actions={
           <div className="new-campaign-top-actions" style={{ marginBottom: 0 }}>
             <PageHelp
-              title="How to create a campaign"
-              buttonLabel="Open new campaign help"
+              title={t("help.new.title")}
+              buttonLabel={t("help.new.buttonLabel")}
               items={[
                 {
-                  title: "1. Enter campaign details",
-                  description:
-                    "Give the campaign a clear name, choose the type, and add notes that explain the campaign goal.",
+                  title: t("help.new.items.details.title"),
+                  description: t("help.new.items.details.description"),
                 },
                 {
-                  title: "2. Choose a valid schedule",
-                  description:
-                    "Pick a start date and end date. The end date must be after or equal to the start date.",
+                  title: t("help.new.items.schedule.title"),
+                  description: t("help.new.items.schedule.description"),
                 },
                 {
-                  title: "3. Select channels",
-                  description:
-                    "Choose where the campaign will run, such as social media, email, SMS, or in-store.",
+                  title: t("help.new.items.channels.title"),
+                  description: t("help.new.items.channels.description"),
                 },
                 {
-                  title: "4. Select products",
-                  description:
-                    "Choose the products included in the campaign, then enter target quantity and discount percentage when needed.",
+                  title: t("help.new.items.products.title"),
+                  description: t("help.new.items.products.description"),
                 },
                 {
-                  title: "5. Save or publish",
-                  description:
-                    "Save as Planned if you are still preparing. Create and Publish when the campaign is ready to become active.",
+                  title: t("help.new.items.savePublish.title"),
+                  description: t("help.new.items.savePublish.description"),
                 },
               ]}
-              note="Tip: Generate forecasts before creating campaigns to get better date suggestions, uplift estimates, ROI, and business advice."
+              note={t("help.new.note")}
             />
 
             <button
@@ -384,9 +376,7 @@ const NewCampaign = () => {
                     const value = e.target.value;
                     updateField("budget", value === "" ? 0 : value);
                   }}
-                  placeholder={t("fields.budgetPlaceholder", {
-                    defaultValue: "0 (optional)",
-                  })}
+                  placeholder={t("fields.budgetPlaceholder")}
                 />
                 {errors.budget ? (
                   <p className="field-error">{errors.budget}</p>

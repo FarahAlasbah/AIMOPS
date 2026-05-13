@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Card } from "../../../shared/components";
 import { CHART_COLORS } from "../constants";
 import {
   exportCampaignsExcel,
   formatCurrency,
-  formatNumber,
   formatPercent,
   getCampaignBudget,
   getCampaignName,
@@ -26,6 +26,9 @@ function escapeHtml(value) {
 }
 
 export function CampaignImpactChart({ loading, campaignPerformance }) {
+  const { t, i18n } = useTranslation("reports");
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
   const chartCampaigns = useMemo(() => {
     return [...campaignPerformance]
       .map((campaign) => {
@@ -35,7 +38,7 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
 
         return {
           campaign,
-          name: getCampaignName(campaign),
+          name: getCampaignName(campaign, t("fallback.untitledCampaign")),
           budget,
           revenue,
           roi,
@@ -44,7 +47,7 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
       })
       .sort((a, b) => b.bubbleSize - a.bubbleSize)
       .slice(0, 12);
-  }, [campaignPerformance]);
+  }, [campaignPerformance, t]);
 
   const options = useMemo(() => {
     return {
@@ -81,18 +84,18 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
       },
       xaxis: {
         title: {
-          text: "Budget",
+          text: t("charts.campaignImpact.budget"),
         },
         labels: {
-          formatter: (value) => formatCurrency(value),
+          formatter: (value) => formatCurrency(value, locale),
         },
       },
       yaxis: {
         title: {
-          text: "ROI",
+          text: t("charts.campaignImpact.roi"),
         },
         labels: {
-          formatter: (value) => formatPercent(value),
+          formatter: (value) => formatPercent(value, locale),
         },
       },
       tooltip: {
@@ -101,38 +104,40 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
 
           return `
             <div class="reports-chart-tooltip">
-              <strong>${escapeHtml(point?.name || "Campaign")}</strong>
-              <span>Budget: ${escapeHtml(formatCurrency(point?.x || 0))}</span>
-              <span>ROI: ${escapeHtml(formatPercent(point?.y || 0))}</span>
-              <span>Revenue: ${escapeHtml(formatCurrency(point?.revenue || 0))}</span>
+              <strong>${escapeHtml(point?.name || t("charts.campaignImpact.campaignFallback"))}</strong>
+              <span>${escapeHtml(t("charts.campaignImpact.budget"))}: ${escapeHtml(formatCurrency(point?.x || 0, locale))}</span>
+              <span>${escapeHtml(t("charts.campaignImpact.roi"))}: ${escapeHtml(formatPercent(point?.y || 0, locale))}</span>
+              <span>${escapeHtml(t("charts.campaignImpact.revenue"))}: ${escapeHtml(formatCurrency(point?.revenue || 0, locale))}</span>
             </div>
           `;
         },
       },
     };
-  }, []);
+  }, [t, locale]);
 
   return (
-    <Card title="Campaign portfolio">
+    <Card title={t("charts.campaignImpact.title")}>
       <div className="reports-card-action-row">
         <p className="reports-muted">
-          Bubble chart compares budget, ROI, and revenue in one view.
+          {t("charts.campaignImpact.description")}
         </p>
 
         <button
           type="button"
           className="reports-small-btn"
-          onClick={() => exportCampaignsExcel(campaignPerformance)}
+          onClick={() => exportCampaignsExcel(campaignPerformance, t)}
           disabled={!campaignPerformance.length}
         >
           <Download size={15} />
-          Excel
+          {t("actions.excel")}
         </button>
       </div>
 
       <div className="reports-chart-box reports-chart-box-xl">
         {loading ? (
-          <div className="reports-empty">Loading chart...</div>
+          <div className="reports-empty">
+            {t("charts.campaignImpact.loading")}
+          </div>
         ) : chartCampaigns.length ? (
           <ReactApexChart
             type="bubble"
@@ -140,7 +145,7 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
             options={options}
             series={[
               {
-                name: "Campaigns",
+                name: t("charts.campaignImpact.campaigns"),
                 data: chartCampaigns.map((item) => ({
                   x: item.budget,
                   y: item.roi,
@@ -153,7 +158,7 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
           />
         ) : (
           <div className="reports-empty">
-            No campaign performance data available.
+            {t("charts.campaignImpact.empty")}
           </div>
         )}
       </div>

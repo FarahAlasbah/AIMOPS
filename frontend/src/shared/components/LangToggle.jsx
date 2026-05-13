@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import "./LangToggle.css";
 
 export default function LangToggle() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("common");
   const isAr = i18n.language?.startsWith("ar");
 
   const toggle = () => i18n.changeLanguage(isAr ? "en" : "ar");
@@ -13,7 +13,7 @@ export default function LangToggle() {
       type="button"
       className="lang-toggle"
       onClick={toggle}
-      aria-label={isAr ? "Switch to English" : "التبديل إلى العربية"}
+      aria-label={isAr ? t("lang.switchToEnglish") : t("lang.switchToArabic")}
     >
       <span className={`lang-opt ${!isAr ? "active" : ""}`}>EN</span>
       <span className="lang-divider" />

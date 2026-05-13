@@ -197,40 +197,34 @@ const CampaignCalendar = () => {
   return (
     <div className="campaign-calendar-page">
       <PageHeader
-        
         actions={
           <div className="campaign-calendar-top-actions" style={{ marginBottom: 0 }}>
             <PageHelp
-              title="How to use Campaign Calendar"
-              buttonLabel="Open campaign calendar help"
+              title={t("help.calendar.title")}
+              buttonLabel={t("help.calendar.buttonLabel")}
               items={[
                 {
-                  title: "1. Choose a date range",
-                  description:
-                    "Use the start and end date filters to decide which campaign period you want to view.",
+                  title: t("help.calendar.items.range.title"),
+                  description: t("help.calendar.items.range.description"),
                 },
                 {
-                  title: "2. Understand campaign grouping",
-                  description:
-                    "Campaigns are grouped by their start date, so you can quickly see what begins on each day.",
+                  title: t("help.calendar.items.grouping.title"),
+                  description: t("help.calendar.items.grouping.description"),
                 },
                 {
-                  title: "3. Check campaign status",
-                  description:
-                    "Use the status badge to know whether the campaign is planned, active, or completed.",
+                  title: t("help.calendar.items.status.title"),
+                  description: t("help.calendar.items.status.description"),
                 },
                 {
-                  title: "4. Review products and budget",
-                  description:
-                    "Each card shows the campaign products count, date range, and budget to help with planning.",
+                  title: t("help.calendar.items.productsBudget.title"),
+                  description: t("help.calendar.items.productsBudget.description"),
                 },
                 {
-                  title: "5. Open details",
-                  description:
-                    "Click View to open the full campaign details page, including forecast impact and selected products.",
+                  title: t("help.calendar.items.details.title"),
+                  description: t("help.calendar.items.details.description"),
                 },
               ]}
-              note="Tip: This page is for campaign planning. The main calendar can also show business events."
+              note={t("help.calendar.note")}
             />
 
             <button
@@ -271,7 +265,7 @@ const CampaignCalendar = () => {
 
           <div className="calendar-toolbar-action">
             <span className="calendar-toolbar-action-spacer">
-              {t("toolbar.refresh", { defaultValue: "Refresh" })}
+              {t("toolbar.refresh")}
             </span>
 
             <button
@@ -279,8 +273,8 @@ const CampaignCalendar = () => {
               className="calendar-refresh-icon-btn"
               onClick={handleRefresh}
               disabled={loading || refreshing}
-              title={t("toolbar.refresh", { defaultValue: "Refresh" })}
-              aria-label={t("toolbar.refresh", { defaultValue: "Refresh" })}
+              title={t("toolbar.refresh")}
+              aria-label={t("toolbar.refresh")}
             >
               <RefreshCw
                 size={18}

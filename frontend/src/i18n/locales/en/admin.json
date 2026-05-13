@@ -3,18 +3,19 @@
     "title": "User Management",
     "subtitle": "Create and manage users",
     "createNewUser": "+ Create New User",
-
+    "buttons": {
+      "createUser": "Create new user"
+    },
     "success": {
       "userCreated": "User \"{{username}}\" created successfully!",
       "userUpdated": "User updated successfully!",
       "userRestored": "User \"{{username}}\" restored successfully!",
       "passwordChanged": "Password changed successfully!"
     },
-
     "errors": {
-      "changePasswordMissing": "changePassword is not available. Update useUsers hook first."
+      "changePasswordMissing": "Password update API is not connected.",
+      "adminOnlyPassword": "Only administrators can change user passwords."
     },
-
     "undo": {
       "deleted": "User {{username}} deleted.",
       "button": "Undo"
@@ -24,107 +25,19 @@
     "title": "Access Denied",
     "usersOnlyAdmins": "You don't have permission to access this page. Only administrators can manage users."
   },
-
   "users": {
     "systemUsers": "System Users",
     "loading": "Loading users...",
     "empty": "No users found. Create your first user!",
-    "unknownRole": "Unknown",
+    "unknownRole": "Unknown role",
+    "unknownUser": "Unknown",
     "edit": "Edit",
-    "editAria": "Edit user"
+    "editAria": "Edit user",
+    "loadErrorTitle": "Could not load users",
+    "retry": "Try again"
   },
-
   "createUser": {
     "title": "Create New User",
-    "labels": {
-      "username": "Username",
-      "email": "Email",
-      "fullName": "Full Name",
-      "password": "Password",
-      "role": "Role"
-    },
-    "placeholders": {
-      "username": "Enter username (e.g., farah_business_owner)",
-      "email": "Enter email (e.g., farah@aimops.com)",
-      "fullName": "Enter full name",
-      "password": "Enter password (min. 6 characters)"
-    },
-    "roles": {
-      "marketing": "Marketing User",
-      "owner": "Business Owner"
-    },
-    "errors": {
-      "usernameRequired": "Username is required",
-      "usernameMin": "Username must be at least 3 characters",
-      "emailRequired": "Email is required",
-      "emailInvalid": "Email is invalid",
-      "fullNameRequired": "Full name is required",
-      "passwordRequired": "Password is required",
-      "passwordMin": "Password must be at least 6 characters",
-      "roleInvalid": "Role is invalid"
-    },
-    "buttons": {
-      "cancel": "Cancel",
-      "create": "Create User",
-      "creating": "Creating User..."
-    }
-  },
-
-  "editUser": {
-    "title": "Edit user",
-    "usernameCantChange": "Username can't be changed",
-    "usernameCantChangeTooltip": "Username can’t be changed",
-
-    "labels": {
-      "username": "Username",
-      "email": "Email",
-      "fullName": "Full name",
-      "role": "Role"
-    },
-
-    "buttons": {
-      "cancel": "Cancel",
-      "saveChanges": "Save changes",
-      "saving": "Saving..."
-    },
-
-    "password": {
-      "title": "Password",
-      "desc": "New password must be at least 8 characters.",
-      "toggleShow": "Hide",
-      "toggleHide": "Change",
-      "current": "Current password",
-      "new": "New password",
-      "update": "Update password",
-      "updating": "Updating...",
-      "errors": {
-        "currentRequired": "Current password is required.",
-        "newRequired": "New password is required.",
-        "newMin": "New password must be at least 8 characters."
-      }
-    },
-
-    "danger": {
-      "title": "Danger zone",
-      "desc": "Deleting a user can be undone for a short time from the Undo bar.",
-      "delete": "Delete user",
-      "deleting": "Deleting...",
-      "cannotDeleteHint": "You can’t delete yourself or the Administrator account."
-    },
-
-    "confirmDelete": {
-      "title": "Delete user?",
-      "description": "This will delete \"{{username}}\". You can undo shortly from the Undo bar.",
-      "confirm": "Delete",
-      "cancel": "Cancel"
-    }
-  ,
-  "createUser": {
-    "title": "Create New User",
-    "roles": {
-      "marketing": "Marketing",
-      "owner": "Owner"
-    },
     "labels": {
       "username": "Username",
       "email": "Email",
@@ -138,6 +51,11 @@
       "fullName": "Enter full name",
       "password": "Enter password"
     },
+    "roles": {
+      "admin": "Administrator",
+      "marketing": "Marketing User",
+      "owner": "Business Owner"
+    },
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameMin": "Username must be at least 3 characters.",
@@ -145,14 +63,160 @@
       "emailInvalid": "Please enter a valid email address.",
       "fullNameRequired": "Full name is required.",
       "passwordRequired": "Password is required.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "roleInvalid": "Invalid role selected."
+      "passwordMin": "Password must be at least 8 characters.",
+      "roleInvalid": "Choose a valid role."
     },
     "buttons": {
       "cancel": "Cancel",
       "create": "Create User",
       "creating": "Creating..."
     }
-  }
+  },
+  "editUser": {
+    "title": "Edit user",
+    "usernameCantChange": "Username cannot be changed.",
+    "usernameCantChangeTooltip": "Username cannot be changed.",
+    "adminRoleLocked": "Administrator role is protected.",
+    "labels": {
+      "username": "Username",
+      "email": "Email",
+      "fullName": "Full name",
+      "role": "Role"
+    },
+    "errors": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Please enter a valid email address.",
+      "fullNameRequired": "Full name is required.",
+      "roleInvalid": "Choose a valid role."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "saveChanges": "Save changes",
+      "saving": "Saving..."
+    },
+    "password": {
+      "title": "Change password",
+      "desc": "Only administrators can update passwords for users.",
+      "toggleShow": "Show",
+      "toggleHide": "Hide",
+      "changePassword": "Change password",
+      "cancelChange": "Cancel password change",
+      "current": "Current password",
+      "new": "New password",
+      "update": "Update password",
+      "updating": "Updating...",
+      "errors": {
+        "adminOnly": "Only administrators can change user passwords.",
+        "currentRequired": "Current password is required.",
+        "newRequired": "New password is required.",
+        "newMin": "New password must be at least 8 characters."
+      }
+    },
+    "danger": {
+      "title": "Danger zone",
+      "desc": "Deleting this user will deactivate their account.",
+      "delete": "Delete user",
+      "deleting": "Deleting...",
+      "cannotDeleteHint": "You cannot delete yourself or a protected administrator account."
+    },
+    "confirmDelete": {
+      "title": "Delete user?",
+      "description": "This will delete \"{{username}}\". You can undo shortly from the Undo bar.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "activityHistory": {
+    "eyebrow": "Admin only",
+    "title": "Activity History",
+    "subtitle": "See important account changes in one place, including who made the change and who was affected.",
+    "refresh": "Refresh",
+    "loading": "Loading activity history",
+    "recentTitle": "Recent activity",
+    "summary": {
+      "totalActivities": "Total activities",
+      "showingNow": "Showing now",
+      "activeFilters": "Active filters"
+    },
+    "actions": {
+      "all": "All actions",
+      "userCreated": "User created",
+      "userUpdated": "User updated",
+      "userDeleted": "User deleted",
+      "userReactivated": "User reactivated",
+      "roleChanged": "Role changed",
+      "passwordChanged": "Password changed"
+    },
+    "actionLabels": {
+      "user_created": "User created",
+      "user_updated": "User updated",
+      "user_deleted": "User deleted",
+      "user_reactivated": "User reactivated",
+      "role_changed": "Role changed",
+      "password_changed": "Password changed"
+    },
+    "filters": {
+      "title": "Filter activity",
+      "action": "Action",
+      "performedBy": "Performed by",
+      "affectedUser": "Affected user",
+      "rowsPerPage": "Rows per page",
+      "anyone": "Anyone",
+      "userIdPlaceholder": "User ID",
+      "apply": "Apply filters",
+      "clear": "Clear filters"
+    },
+    "range": {
+      "records": "{{start}}-{{end}} of {{total}}",
+      "zeroRecords": "0 records"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} of {{totalPages}}"
+    },
+    "empty": {
+      "title": "No activity found",
+      "subtitle": "There are no records for the selected filters yet. Try clearing the filters or checking again after new admin actions happen."
+    },
+    "log": {
+      "performedAction": "performed this action",
+      "affected": "Affected:"
+    },
+    "fallbacks": {
+      "activityRecorded": "Activity recorded",
+      "timeNotAvailable": "Time not available",
+      "userWithId": "User #{{id}}",
+      "unknownUser": "Unknown user",
+      "noAffectedUser": "No affected user",
+      "noExtraDetails": "No extra details were sent for this action."
+    },
+    "errors": {
+      "forbidden": "You do not have permission to view activity history.",
+      "notFound": "The activity history endpoint was not found. Please check the backend route.",
+      "loadFailed": "Could not load activity history. Please try again."
+    }
+  },
+  "apiErrors": {
+    "generic": "Something went wrong.",
+    "timeout": "The request timed out. Please try again.",
+    "cannotConnect": "Cannot connect to the backend. Please check that it is running.",
+    "cannotReach": "Cannot reach the backend. Please try again.",
+    "invalidRequest": "The request is invalid. Please check the entered information.",
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "noPermission": "You do not have permission to perform this action.",
+    "userNotFound": "The requested user was not found.",
+    "conflict": "This user information conflicts with an existing user.",
+    "invalidFields": "Some fields are invalid. Please review the highlighted fields.",
+    "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "serverError": "A server error occurred. Please try again later.",
+    "serverUnavailable": "The backend is temporarily unavailable. Please try again later.",
+    "loadUsers": "Unable to load users.",
+    "createUser": "Unable to create user. Please check the entered information.",
+    "updateRole": "Unable to update the user role.",
+    "updateUser": "Unable to update user information.",
+    "deleteUser": "Unable to delete this user.",
+    "restoreUser": "Unable to restore this user.",
+    "updatePassword": "Unable to update the password."
   }
 }
