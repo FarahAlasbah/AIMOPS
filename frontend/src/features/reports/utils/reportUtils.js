@@ -1,5 +1,9 @@
 import { ALL_TIME_START_DATE } from "../constants";
 
+export function getIntlLocale(locale) {
+  return String(locale || "").startsWith("ar") ? "ar" : "en-US";
+}
+
 export function toDateInputValue(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -53,59 +57,67 @@ export function normalizeStatus(value) {
     .replace(/\s+/g, "-");
 }
 
-export function formatStatus(value) {
-  return normalizeStatus(value).replaceAll("-", " ");
+export function formatStatus(value, t) {
+  const status = normalizeStatus(value);
+
+  if (typeof t === "function") {
+    return t(`status.${status}`, {
+      defaultValue: status.replaceAll("-", " "),
+    });
+  }
+
+  return status.replaceAll("-", " ");
 }
 
-export function formatNumber(value, digits = 1) {
+export function formatNumber(value, digits = 1, locale = "en") {
   const number = toNumber(value, 0);
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     maximumFractionDigits: digits,
   }).format(number);
 }
 
-export function formatCurrency(value) {
+export function formatCurrency(value, locale = "en") {
   const number = toNumber(value, 0);
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(number);
 }
 
-export function formatPercent(value) {
+export function formatPercent(value, locale = "en") {
   if (value == null || value === "") return "-";
 
   const number = toNumber(value, NaN);
   if (!Number.isFinite(number)) return "-";
 
-  return `${new Intl.NumberFormat("en-US", {
+  return `${new Intl.NumberFormat(getIntlLocale(locale), {
     maximumFractionDigits: 1,
   }).format(number)}%`;
 }
 
-export function formatDate(value) {
+export function formatDate(value, locale = "en") {
   if (!value) return "-";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     day: "2-digit",
     month: "short",
     year: "numeric",
   }).format(date);
 }
 
-export function shortDayLabel(value) {
+export function shortDayLabel(value, locale = "en") {
   if (!value) return "";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     day: "2-digit",
     month: "short",
   }).format(date);
@@ -146,6 +158,10 @@ async function downloadExcel(filename, sheetName, rows) {
   XLSX.writeFile(workbook, filename);
 }
 
+function tr(t, key, fallback) {
+  return typeof t === "function" ? t(key, { defaultValue: fallback }) : fallback;
+}
+
 export function getCampaignId(campaign) {
   return (
     campaign?.campaign_id ??
@@ -156,22 +172,17 @@ export function getCampaignId(campaign) {
   );
 }
 
-export function getCampaignName(campaign) {
-  return (
-    campaign?.campaign_name ||
-    campaign?.name ||
-    campaign?.title ||
-    "Untitled campaign"
-  );
+export function getCampaignName(campaign, fallback = "Untitled campaign") {
+  return campaign?.campaign_name || campaign?.name || campaign?.title || fallback;
 }
 
-export function getCampaignType(campaign) {
+export function getCampaignType(campaign, fallback = "-") {
   return (
     campaign?.campaign_type ||
     campaign?.type ||
     campaign?.channel ||
     campaign?.objective ||
-    "-"
+    fallback
   );
 }
 
@@ -234,19 +245,27 @@ export function getUploadCount(uploadActivity, status) {
   return toNumber(uploadActivity?.[status], 0);
 }
 
-export async function exportProductsExcel(topProducts) {
+export async function exportProductsExcel(topProducts, t) {
   const rows = [
     [
-      "Product",
-      "Category",
-      "Revenue",
-      "Quantity sold",
-      "Sales records",
-      "Average daily quantity",
-      "Last sale",
-      "Forecast status",
-      "Forecast next 30 days quantity",
-      "Forecast next 30 days revenue",
+      tr(t, "excel.products.product", "Product"),
+      tr(t, "excel.products.category", "Category"),
+      tr(t, "excel.products.revenue", "Revenue"),
+      tr(t, "excel.products.quantitySold", "Quantity sold"),
+      tr(t, "excel.products.salesRecords", "Sales records"),
+      tr(t, "excel.products.averageDailyQuantity", "Average daily quantity"),
+      tr(t, "excel.products.lastSale", "Last sale"),
+      tr(t, "excel.products.forecastStatus", "Forecast status"),
+      tr(
+        t,
+        "excel.products.forecastNext30Quantity",
+        "Forecast next 30 days quantity",
+      ),
+      tr(
+        t,
+        "excel.products.forecastNext30Revenue",
+        "Forecast next 30 days revenue",
+      ),
     ],
     ...topProducts.map((product) => [
       product.product_name || "",
@@ -265,17 +284,17 @@ export async function exportProductsExcel(topProducts) {
   await downloadExcel("aimops-top-products-report.xlsx", "Top Products", rows);
 }
 
-export async function exportCampaignsExcel(campaignPerformance) {
+export async function exportCampaignsExcel(campaignPerformance, t) {
   const rows = [
     [
-      "Campaign",
-      "Type",
-      "Status",
-      "Budget",
-      "ROI",
-      "Revenue",
-      "Start date",
-      "End date",
+      tr(t, "excel.campaigns.campaign", "Campaign"),
+      tr(t, "excel.campaigns.type", "Type"),
+      tr(t, "excel.campaigns.status", "Status"),
+      tr(t, "excel.campaigns.budget", "Budget"),
+      tr(t, "excel.campaigns.roi", "ROI"),
+      tr(t, "excel.campaigns.revenue", "Revenue"),
+      tr(t, "excel.campaigns.startDate", "Start date"),
+      tr(t, "excel.campaigns.endDate", "End date"),
     ],
     ...campaignPerformance.map((campaign) => [
       getCampaignName(campaign),

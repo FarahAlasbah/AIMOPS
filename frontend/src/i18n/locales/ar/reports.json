@@ -1,0 +1,203 @@
+{
+  "periodOptions": {
+    "last30": "آخر 30 يوم",
+    "last90": "آخر 90 يوم",
+    "last180": "آخر 180 يوم",
+    "lastYear": "آخر سنة",
+    "allTime": "كل الفترة"
+  },
+  "actions": {
+    "openHelp": "فتح مساعدة التقارير",
+    "howToUse": "كيفية استخدام هذه الصفحة",
+    "refresh": "تحديث",
+    "print": "طباعة",
+    "excel": "Excel"
+  },
+  "toolbar": {
+    "title": "فترة التقرير",
+    "description": "يتم تحميل البيانات من تقارير النظام حسب الفترة التي تختارها.",
+    "preset": "الفترة"
+  },
+  "summary": {
+    "totalRevenue": "إجمالي الإيرادات",
+    "averageDailyRevenue": "{{value}} متوسط الإيراد اليومي",
+    "quantitySold": "الكمية المباعة",
+    "salesRecords": "{{value}} سجل مبيعات",
+    "productsSold": "المنتجات المباعة",
+    "uniqueProducts": "منتجات مختلفة لديها مبيعات",
+    "campaigns": "الحملات",
+    "activeCampaigns": "{{value}} حملات نشطة",
+    "forecastModels": "نماذج التوقع",
+    "readyModels": "{{value}} نماذج جاهزة",
+    "uploads": "الملفات المرفوعة",
+    "processedUploads": "{{value}} ملفات تمت معالجتها"
+  },
+  "charts": {
+    "revenueQuantity": {
+      "title": "اتجاه الإيرادات والكمية",
+      "dailyMode": "يومي",
+      "weeklyMode": "أسبوعي",
+      "monthlyMode": "شهري",
+      "dailyDescription": "العرض اليومي يوضح حركة الإيرادات والكمية خلال الفترة المختارة.",
+      "weeklyDescription": "العرض الأسبوعي يجعل قراءة الاتجاه أسهل للفترات الطويلة.",
+      "monthlyDescription": "العرض الشهري يجعل الفترات الطويلة أوضح مع الحفاظ على الاتجاه العام.",
+      "summary": "عرض {{mode}}. {{description}}",
+      "loading": "جارٍ تحميل الرسم...",
+      "empty": "لا توجد بيانات اتجاه المبيعات.",
+      "revenue": "الإيرادات",
+      "quantity": "الكمية",
+      "quantitySold": "الكمية المباعة",
+      "units": "{{value}} وحدة"
+    },
+    "topProducts": {
+      "title": "أعلى المنتجات حسب الإيرادات",
+      "description": "الأشرطة الأفقية أسهل للقراءة عند عرض أسماء المنتجات.",
+      "loading": "جارٍ تحميل الرسم...",
+      "empty": "لا توجد بيانات منتجات.",
+      "revenue": "الإيرادات",
+      "unnamedProduct": "منتج بدون اسم"
+    },
+    "campaignImpact": {
+      "title": "محفظة الحملات",
+      "description": "يقارن الرسم بين الميزانية، العائد، والإيرادات في عرض واحد.",
+      "loading": "جارٍ تحميل الرسم...",
+      "empty": "لا توجد بيانات أداء للحملات.",
+      "campaigns": "الحملات",
+      "campaignFallback": "حملة",
+      "budget": "الميزانية",
+      "roi": "العائد",
+      "revenue": "الإيرادات"
+    },
+    "forecastReadiness": {
+      "title": "جاهزية التوقعات",
+      "description": "هذا العرض مناسب لأن الحالات هي أجزاء من المجموع الكلي.",
+      "loading": "جارٍ تحميل الرسم...",
+      "empty": "لا توجد بيانات لحالات التوقع.",
+      "totalLabel": "النماذج",
+      "labels": {
+        "ready": "جاهز",
+        "training": "قيد التدريب",
+        "failed": "فشل",
+        "idle": "لم يبدأ"
+      }
+    },
+    "uploadActivity": {
+      "title": "نشاط الرفع",
+      "description": "توزيع حالات الملفات بين المعالجة، التعيين، الانتظار، والفشل.",
+      "loading": "جارٍ تحميل الرسم...",
+      "empty": "لا توجد بيانات لنشاط الرفع.",
+      "totalLabel": "الملفات",
+      "labels": {
+        "processed": "تمت المعالجة",
+        "mapping": "قيد التعيين",
+        "pending": "قيد الانتظار",
+        "failed": "فشل"
+      }
+    }
+  },
+  "campaignPerformance": {
+    "title": "أداء الحملات",
+    "description": "ميزانية الحملات، العائد، والإيرادات الناتجة أو المتوقعة.",
+    "summary": {
+      "campaigns": "الحملات",
+      "active": "النشطة",
+      "totalBudget": "إجمالي الميزانية",
+      "expectedRevenue": "الإيرادات المتوقعة",
+      "averageRoi": "متوسط العائد"
+    },
+    "table": {
+      "campaign": "الحملة",
+      "type": "النوع",
+      "status": "الحالة",
+      "budget": "الميزانية",
+      "roi": "العائد",
+      "revenue": "الإيرادات",
+      "dates": "التواريخ",
+      "loading": "جارٍ تحميل الحملات...",
+      "empty": "لا توجد بيانات أداء للحملات."
+    }
+  },
+  "topProductDetails": {
+    "title": "تفاصيل أعلى المنتجات",
+    "table": {
+      "product": "المنتج",
+      "category": "الفئة",
+      "revenue": "الإيرادات",
+      "quantitySold": "الكمية المباعة",
+      "avgDailyQty": "متوسط الكمية اليومي",
+      "forecastStatus": "حالة التوقع",
+      "next30Qty": "كمية الـ 30 يوم القادمة",
+      "next30Revenue": "إيرادات الـ 30 يوم القادمة",
+      "lastSale": "آخر عملية بيع",
+      "loading": "جارٍ تحميل المنتجات...",
+      "empty": "لا توجد بيانات منتجات.",
+      "unnamedProduct": "منتج بدون اسم",
+      "notStarted": "لم يبدأ"
+    }
+  },
+  "help": {
+    "ariaLabel": "مساعدة التقارير",
+    "eyebrow": "دليل الصفحة",
+    "title": "كيفية استخدام التقارير",
+    "close": "إغلاق مساعدة التقارير",
+    "items": {
+      "periodTitle": "1. اختر فترة التقرير",
+      "periodText": "استخدم فلتر الفترة لاختيار المدة التي تريد تحليلها، مثل آخر 30 أو 90 أو 180 يوم.",
+      "summaryTitle": "2. ابدأ ببطاقات الملخص",
+      "summaryText": "ابدأ بإجمالي الإيرادات، الكمية المباعة، المنتجات المباعة، الحملات، نماذج التوقع، والملفات المرفوعة.",
+      "chartsTitle": "3. راجع الرسومات والجداول",
+      "chartsText": "استخدم رسم الاتجاه، أعلى المنتجات، تأثير الحملات، جاهزية التوقعات، نشاط الرفع، والجداول لفهم الأداء بشكل أفضل."
+    },
+    "note": "يمكنك طباعة التقرير أو تصدير جداول المنتجات والحملات كملفات Excel."
+  },
+  "status": {
+    "active": "نشطة",
+    "running": "قيد التشغيل",
+    "ongoing": "مستمرة",
+    "in-progress": "قيد التنفيذ",
+    "in_progress": "قيد التنفيذ",
+    "planned": "مخططة",
+    "scheduled": "مجدولة",
+    "completed": "مكتملة",
+    "done": "منتهية",
+    "cancelled": "ملغاة",
+    "canceled": "ملغاة",
+    "failed": "فشل",
+    "draft": "مسودة",
+    "pending": "قيد الانتظار",
+    "ready": "جاهز",
+    "training": "قيد التدريب",
+    "idle": "لم يبدأ",
+    "unknown": "غير معروف",
+    "processed": "تمت المعالجة",
+    "mapping": "قيد التعيين"
+  },
+  "fallback": {
+    "untitledCampaign": "حملة بدون اسم",
+    "unknownType": "-"
+  },
+  "excel": {
+    "products": {
+      "product": "المنتج",
+      "category": "الفئة",
+      "revenue": "الإيرادات",
+      "quantitySold": "الكمية المباعة",
+      "salesRecords": "سجلات المبيعات",
+      "averageDailyQuantity": "متوسط الكمية اليومي",
+      "lastSale": "آخر عملية بيع",
+      "forecastStatus": "حالة التوقع",
+      "forecastNext30Quantity": "كمية التوقع للـ 30 يوم القادمة",
+      "forecastNext30Revenue": "إيرادات التوقع للـ 30 يوم القادمة"
+    },
+    "campaigns": {
+      "campaign": "الحملة",
+      "type": "النوع",
+      "status": "الحالة",
+      "budget": "الميزانية",
+      "roi": "العائد",
+      "revenue": "الإيرادات",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية"
+    }
+  }
+}

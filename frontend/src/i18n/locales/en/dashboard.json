@@ -1,51 +1,41 @@
 {
+  "stub": {
+    "title": "Dashboard",
+    "body": "Welcome to your AIMOPS dashboard.",
+    "totalCampaigns": "Total Campaigns",
+    "activeForecasts": "Active Forecasts",
+    "feedbackItems": "Feedback Items"
+  },
   "roles": {
     "admin": {
-      "title": "Welcome to AIMOPS"
-    },
-    "marketing": {
-"title": "Welcome to AIMOPS"
+      "title": "Admin Overview"
     },
     "owner": {
-"title": "Welcome to AIMOPS"
+      "title": "Business Overview"
+    },
+    "marketing": {
+      "title": "Marketing Overview"
     },
     "default": {
-      "title": "Dashboard",
-      "subtitle": "Overview"
+      "title": "Overview"
     }
   },
+  "errorLoadFailed": "Failed to load dashboard data.",
   "stats": {
-    "usersCount": "Total Users",
     "uploadsCount": "Data Uploads",
     "productsCount": "Products",
     "campaignsCount": "Campaigns",
-    "forecastsReady": "Forecasts Ready"
+    "forecastsReady": "Ready Forecasts"
   },
   "helpers": {
-    "uploadsHelper": "All uploaded sales batches",
-    "productsHelper": "Available products in the system",
-    "campaignsHelper": "{{active}} active right now",
-    "forecastsHelper": "{{total}} products tracked in forecasting"
-  },
-  "charts": {
-    "uploadsByStatus": "Uploads by status",
-    "uploadsOverTime": "Uploads over time",
-    "topProductsRevenue": "Top products by revenue",
-    "forecastStatus": "Forecasting status overview",
-    "recentActivity": "Recent upload activity",
-    "loading": "Loading…",
-    "noUploads": "No uploads data yet.",
-    "noProducts": "No products data yet.",
-    "noForecasts": "No forecasting data yet.",
-    "noRecentUploads": "No recent uploads yet.",
-    "uploadsDatasetLabel": "Uploads",
-    "revenueDatasetLabel": "Revenue",
-    "forecastDatasetLabel": "Forecasts",
-    "total": "Total"
+    "uploadsHelper": "Files uploaded for analysis and product planning.",
+    "productsHelper": "Products currently available in the workspace.",
+    "campaignsHelper": "{{active}} active campaigns right now.",
+    "forecastsHelper": "{{total}} total forecast records tracked."
   },
   "statusLabels": {
     "processed": "Processed",
-    "mapping": "Mapping",
+    "mapping": "Needs Mapping",
     "pending": "Pending",
     "failed": "Failed",
     "unknown": "Unknown"
@@ -56,9 +46,44 @@
     "failed": "Failed",
     "idle": "Idle"
   },
-  "labels": {
-    "unnamedProduct": "Unnamed Product",
-    "uploadFile": "Upload file"
+  "campaignStatus": {
+    "active": "Active",
+    "planned": "Planned",
+    "completed": "Completed",
+    "draft": "Draft",
+    "other": "Other"
   },
-  "errorLoadFailed": "Failed to load dashboard data."
+  "labels": {
+    "unnamedProduct": "Unnamed product",
+    "untitledCampaign": "Untitled campaign",
+    "uploadFile": "Uploaded file"
+  },
+  "charts": {
+    "loading": "Loading chart data...",
+    "total": "Total",
+    "uploadsOverTime": "Uploads Over Time",
+    "uploadsDatasetLabel": "Uploads",
+    "uploadsByStatus": "Uploads by Status",
+    "forecastStatus": "Forecast readiness",
+    "productRevenueRank": "Product revenue ranking",
+    "revenueDatasetLabel": "Revenue",
+    "campaignPortfolio": "Campaign portfolio",
+    "campaignsDatasetLabel": "Campaigns",
+    "campaignStatus": "Campaign status",
+    "recentActivity": "Recent Activity",
+    "noUploads": "No upload data available.",
+    "noForecasts": "No forecast data available.",
+    "noProducts": "No product revenue data available.",
+    "noCampaigns": "No campaign data available.",
+    "noRecentUploads": "No recent uploads yet.",
+    "axis": {
+      "budget": "Budget",
+      "roi": "ROI"
+    },
+    "tooltip": {
+      "budget": "Budget",
+      "roi": "ROI",
+      "revenue": "Revenue"
+    }
+  }
 }

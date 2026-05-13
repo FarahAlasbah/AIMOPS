@@ -16,11 +16,13 @@
     "userManagement": "إدارة المستخدمين",
     "support": "الدعم",
     "consultation": "الاستشارة الذكية",
-    "businessProfile": "الملف التجاري"
+    "businessProfile": "الملف التجاري",
+    "activityHistory": "سجل النشاط"
   },
   "actions": {
     "save": "حفظ",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "close": "إغلاق"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -36,12 +38,22 @@
     "loadError": "فشل تحميل الإشعارات.",
     "create": "جديد",
     "createTitle": "إنشاء إشعار",
+    "createDialog": "إنشاء إشعار",
     "target": "إرسال إلى",
     "targetAll": "جميع المستخدمين",
     "targetUser": "مستخدم واحد",
     "targetRole": "حسب الدور",
     "role": "الدور",
     "user": "المستخدم",
+    "clearTab": "مسح",
+    "clearTabTitle": "مسح هذا التبويب",
+    "clearAll": "مسح الكل",
+    "clearAllTitle": "مسح كل الإشعارات",
+    "clearOne": "مسح العنصر",
+    "notificationDetails": "إشعار",
+    "noMessage": "لا يوجد محتوى للرسالة.",
+    "unknownUser": "مستخدم",
+    "selectPlaceholder": "—",
     "fields": {
       "title": "العنوان",
       "message": "الرسالة",
@@ -73,6 +85,9 @@
   },
   "shared": {
     "confirmDialog": {
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
       "deleting": "جارٍ الحذف..."
     },
     "fileUpload": {
@@ -81,18 +96,73 @@
       "or": "أو",
       "browseFiles": "تصفح الملفات",
       "fileSizeExceeds": "حجم الملف يتجاوز الحد المسموح به ({{maxSize}} ميغابايت)",
-      "infoText": "يمكن أن يحتوي ملفك على أي أسماء أعمدة أو لغة. سيساعدك AIMOPS على تعيينها تلقائياً في الخطوة التالية."
+      "infoText": "يمكن أن يحتوي ملفك على أي أسماء أعمدة أو لغة. سيساعدك AIMOPS على تعيينها تلقائياً في الخطوة التالية.",
+      "removeFile": "إزالة الملف",
+      "helpBanner": "يمكن أن يحتوي ملفك على أي أسماء أعمدة أو لغة. سيساعدك AIMOPS على تعيينها تلقائياً في الخطوة التالية."
     },
     "formCalendar": {
       "openCalendar": "فتح التقويم",
       "prevMonth": "الشهر السابق",
       "nextMonth": "الشهر التالي",
+      "monthAndYear": "الشهر والسنة",
       "yearAriaLabel": "السنة",
       "clear": "مسح",
-      "today": "اليوم"
+      "today": "اليوم",
+      "placeholder": "YYYY-MM-DD",
+      "weekdays": {
+        "sun": "أح",
+        "mon": "إث",
+        "tue": "ثل",
+        "wed": "أر",
+        "thu": "خم",
+        "fri": "جم",
+        "sat": "سب"
+      }
+    },
+    "formSelect": {
+      "placeholder": "اختر...",
+      "noOptions": "لا توجد خيارات"
     },
     "formSection": {
       "optional": "اختياري"
+    },
+    "pageHelp": {
+      "defaultTitle": "كيفية استخدام هذه الصفحة",
+      "defaultEyebrow": "دليل الصفحة",
+      "defaultButtonLabel": "فتح المساعدة",
+      "closeHelp": "إغلاق المساعدة"
     }
+  },
+  "auth": {
+    "tagline": "نظام ذكي للتسويق والعمليات والتنبؤ",
+    "footer": "© 2025 AIMOPS. جميع الحقوق محفوظة.",
+    "loginErrors": {
+      "failed": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة.",
+      "checkInput": "يرجى التأكد من البيانات والمحاولة مرة أخرى.",
+      "tooManyAttempts": "محاولات كثيرة. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.",
+      "serverUnavailable": "تعذر الاتصال بالنظام. يرجى التحقق من الاتصال والمحاولة مرة أخرى."
+    }
+  },
+  "denied": {
+    "title": "لا يوجد صلاحية",
+    "subtitle": "لا تملك صلاحية لعرض هذه الصفحة.",
+    "message": "حسابك لا يملك الصلاحيات المطلوبة."
+  },
+  "layout": {
+    "toggleSidebar": "فتح أو إغلاق القائمة الجانبية",
+    "goToDashboard": "الانتقال إلى لوحة التحكم",
+    "logout": "تسجيل الخروج",
+    "logoutConfirm": {
+      "title": "تسجيل الخروج من AIMOPS؟",
+      "messageWithName": "{{name}}، ستحتاج إلى تسجيل الدخول مرة أخرى للمتابعة في مساحة العمل.",
+      "message": "ستحتاج إلى تسجيل الدخول مرة أخرى للمتابعة في مساحة العمل.",
+      "cancel": "البقاء مسجلاً",
+      "confirm": "نعم، تسجيل الخروج"
+    }
+  },
+  "lang": {
+    "switchToEnglish": "التبديل إلى الإنجليزية",
+    "switchToArabic": "التبديل إلى العربية"
   }
 }

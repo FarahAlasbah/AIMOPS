@@ -1,7 +1,17 @@
+import i18n from "../../../i18n";
+
+const tCampaigns = (key, options = {}) =>
+  i18n.t(key, {
+    ns: "campaigns",
+    ...options,
+  });
+
+const getLocale = () => i18n.language || "en-US";
+
 export const formatCurrency = (value) => {
   if (value === null || value === undefined || value === "") return "-";
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getLocale(), {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
@@ -11,7 +21,7 @@ export const formatCurrency = (value) => {
 export const formatPercent = (value) => {
   if (value === null || value === undefined || value === "") return "-";
 
-  return `${new Intl.NumberFormat("en-US", {
+  return `${new Intl.NumberFormat(getLocale(), {
     maximumFractionDigits: 1,
   }).format(Number(value))}%`;
 };
@@ -19,7 +29,7 @@ export const formatPercent = (value) => {
 export const formatNumber = (value) => {
   if (value === null || value === undefined || value === "") return "-";
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getLocale(), {
     maximumFractionDigits: 1,
   }).format(Number(value));
 };
@@ -30,7 +40,7 @@ export const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(getLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -41,14 +51,19 @@ export const normalizeProductsResponse = (response) => {
   const raw = Array.isArray(response?.products)
     ? response.products
     : Array.isArray(response)
-    ? response
-    : [];
+      ? response
+      : [];
 
   return raw
     .map((product) => ({
       id: product.product_id ?? product.id,
-      name: product.product_name ?? product.name ?? "Unnamed Product",
-      category: product.category ?? "Uncategorized",
+      name:
+        product.product_name ??
+        product.name ??
+        tCampaigns("utils.unnamedProduct"),
+      category:
+        product.category ??
+        tCampaigns("utils.uncategorized"),
     }))
     .filter((item) => item.id);
 };
@@ -102,7 +117,7 @@ export const buildCampaignPayload = ({ formData, selectedProducts }) => {
     formData.customCampaignTypeName.trim()
   ) {
     notesParts.push(
-      `Custom campaign type name: ${formData.customCampaignTypeName.trim()}`
+      `${tCampaigns("utils.customCampaignTypeName")}: ${formData.customCampaignTypeName.trim()}`,
     );
   }
 

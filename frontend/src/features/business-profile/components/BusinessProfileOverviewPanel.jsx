@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -12,16 +13,17 @@ import { isAdminUser } from "../../../shared/permissions/rolePermissions";
 import { useBusinessProfile } from "../hooks/useBusinessProfile";
 import "../styles/businessProfile.css";
 
-function formatCreatedAt(value) {
+function formatCreatedAt(value, language) {
   if (!value) return "—";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
-  return date.toLocaleString();
+  return date.toLocaleString(language || undefined);
 }
 
 export default function BusinessProfileOverviewPanel() {
+  const { t, i18n } = useTranslation("businessProfile");
   const { user } = useAuth();
   const canEditBusinessProfile = isAdminUser(user);
 
@@ -36,8 +38,8 @@ export default function BusinessProfileOverviewPanel() {
           </div>
 
           <div>
-            <h3>Business Profile</h3>
-            <p>Loading business profile...</p>
+            <h3>{t("overview.title")}</h3>
+            <p>{t("overview.loading")}</p>
           </div>
         </div>
       </section>
@@ -54,11 +56,11 @@ export default function BusinessProfileOverviewPanel() {
             </div>
 
             <div>
-              <h3>Business profile is not complete</h3>
+              <h3>{t("overview.incompleteTitle")}</h3>
               <p>
                 {canEditBusinessProfile
-                  ? "Add your business name, industry, and city to improve dashboard context, forecasting, and AI consultation quality."
-                  : "Only an administrator can complete or update the business profile."}
+                  ? t("overview.incompleteAdmin")
+                  : t("overview.incompleteReadonly")}
               </p>
             </div>
           </div>
@@ -67,7 +69,9 @@ export default function BusinessProfileOverviewPanel() {
             to="/app/business-profile"
             className="business-profile-overview-link"
           >
-            {canEditBusinessProfile ? "Set up profile" : "View profile"}
+            {canEditBusinessProfile
+              ? t("overview.setUpProfile")
+              : t("overview.viewProfile")}
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -84,11 +88,11 @@ export default function BusinessProfileOverviewPanel() {
           </div>
 
           <div>
-            <h3>{profile?.business_name || "Business Profile"}</h3>
+            <h3>{profile?.business_name || t("overview.title")}</h3>
             <p>
               {canEditBusinessProfile
-                ? "Your workspace business context is active."
-                : "Your workspace business context is active. You have read-only access."}
+                ? t("overview.activeAdmin")
+                : t("overview.activeReadonly")}
             </p>
           </div>
         </div>
@@ -97,7 +101,9 @@ export default function BusinessProfileOverviewPanel() {
           to="/app/business-profile"
           className="business-profile-overview-link"
         >
-          {canEditBusinessProfile ? "Manage profile" : "View profile"}
+          {canEditBusinessProfile
+            ? t("overview.manageProfile")
+            : t("overview.viewProfile")}
           <ArrowRight size={16} />
         </Link>
       </div>
@@ -108,7 +114,7 @@ export default function BusinessProfileOverviewPanel() {
             <BriefcaseBusiness size={16} />
           </div>
           <div>
-            <span>Industry</span>
+            <span>{t("overview.industry")}</span>
             <strong>{profile?.industry || "—"}</strong>
           </div>
         </div>
@@ -118,7 +124,7 @@ export default function BusinessProfileOverviewPanel() {
             <MapPin size={16} />
           </div>
           <div>
-            <span>City</span>
+            <span>{t("overview.city")}</span>
             <strong>{profile?.city || "—"}</strong>
           </div>
         </div>
@@ -128,8 +134,8 @@ export default function BusinessProfileOverviewPanel() {
             <Building2 size={16} />
           </div>
           <div>
-            <span>Created</span>
-            <strong>{formatCreatedAt(profile?.created_at)}</strong>
+            <span>{t("overview.created")}</span>
+            <strong>{formatCreatedAt(profile?.created_at, i18n.language)}</strong>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ import "./Login.css";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const MIN_LOADING_MS = 600;
 
-const BgCanvas = () => (
+const BgCanvas = ({ t }) => (
   <svg
     className="login-bg-canvas"
     viewBox="0 0 560 660"
@@ -94,7 +94,11 @@ const BgCanvas = () => (
         width="14"
         height={h}
         rx="3"
-        fill={index === 5 ? "rgba(255,255,255,0.32)" : "rgba(255,255,255,0.14)"}
+        fill={
+          index === 5
+            ? "rgba(255,255,255,0.32)"
+            : "rgba(255,255,255,0.14)"
+        }
         opacity="0.55"
       />
     ))}
@@ -109,7 +113,7 @@ const BgCanvas = () => (
       textAnchor="middle"
       letterSpacing=".08em"
     >
-      CONVERSIONS
+      {t("login.visual.conversions")}
     </text>
 
     <line
@@ -140,7 +144,7 @@ const BgCanvas = () => (
       fontSize="9"
       fontFamily="Inter,sans-serif"
     >
-      Campaign ROI
+      {t("login.visual.campaignRoi")}
     </text>
 
     {[
@@ -234,7 +238,7 @@ const BgCanvas = () => (
       textAnchor="middle"
       letterSpacing=".06em"
     >
-      FORECAST
+      {t("login.visual.forecast")}
     </text>
 
     <line
@@ -407,7 +411,7 @@ const Login = () => {
 
       <main className="login-container">
         <aside className="login-brand">
-          <BgCanvas />
+          <BgCanvas t={t} />
 
           <div className="brand-bottom">
             <div className="brand-top">
@@ -415,28 +419,25 @@ const Login = () => {
                 <span className="brand-wordmark">AIMOPS</span>
               </div>
 
-              <p className="brand-meaning">
-                AI-driven Marketing and Operations Predicting System
-              </p>
+              <p className="brand-meaning">{t("login.brandTagline")}</p>
 
-            
-
-                <h2 className="brand-headline">
-  All your marketing.
-  <br />
-  <em>One platform.</em>
-</h2>
-
-              </div>
+              <h2 className="brand-headline">
+                {t("login.headlineLine1")}
+                <br />
+                <em>{t("login.headlineLine2")}</em>
+              </h2>
             </div>
 
-            <div className="brand-features" aria-label="AIMOPS key features">
-              <span>Import data</span>
-              <span>Predict demand</span>
-              <span>Detect promotions</span>
-              <span>Consult with AI</span>
+            <div
+              className="brand-features"
+              aria-label={t("login.featuresAria")}
+            >
+              <span>{t("login.featureImportData")}</span>
+              <span>{t("login.featurePredictDemand")}</span>
+              <span>{t("login.featureDetectPromotions")}</span>
+              <span>{t("login.featureConsultAI")}</span>
             </div>
-        
+          </div>
         </aside>
 
         <section className="login-form-side">

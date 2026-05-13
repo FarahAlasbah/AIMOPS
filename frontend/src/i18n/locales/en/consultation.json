@@ -1,50 +1,94 @@
 {
   "title": "AI Consultation",
-  "subtitle": "Ask for campaign, forecasting, and operational advice.",
-  "open": "Open AI consultation",
-  "openPage": "Open full page",
-  "expand": "Expand",
-  "collapse": "Collapse",
-  "close": "Close",
-  "clear": "Clear chat",
-  "emptyTitle": "Start a consultation",
-  "emptyDescription": "Ask the assistant for insights, recommendations, or planning help.",
-  "inputPlaceholder": "Type your question...",
+  "subtitle": "Ask AIMOPS for help with campaigns, forecasts, products, risks, and next actions.",
+  "assistantName": "AIMOPS AI",
+
+  "launchButton": "Consult with AI",
+  "inputPlaceholder": "Ask about your campaigns, products, forecasts, or business decisions...",
   "send": "Send",
   "sending": "Sending...",
+
+  "close": "Close",
+  "cancel": "Cancel",
+  "retry": "Retry",
+  "clear": "Clear",
+  "expand": "Expand",
+  "collapse": "Collapse",
+  "openPage": "Open full page",
+
+  "emptyTitle": "How can AIMOPS help?",
+  "emptyDescription": "Ask a question about your campaigns, demand forecasts, product performance, risks, or next best actions.",
+
+  "prompt1": "What product should we promote next month?",
+  "prompt2": "Suggest a bundle campaign based on current demand.",
+  "prompt3": "Summarize forecast opportunities and risks.",
+  "prompt4": "Which active campaigns appear most effective?",
+
   "historyLoading": "Loading conversation...",
-  "summariesTitle": "Saved summaries",
-  "summariesEmpty": "No saved summaries yet.",
-  "saveSummary": "Save summary",
+  "historyLoadError": "Failed to load conversation.",
+  "historyCleared": "Conversation cleared.",
+  "clearError": "Failed to clear conversation.",
+
+  "serviceUnavailable": "AI consultation is temporarily unavailable. Please try again later.",
+  "requestTimedOut": "The request took too long. Please try again.",
+  "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+  "unknownError": "Something went wrong. Please try again.",
+
+  "saveSummary": "Save Summary",
+  "savingSummary": "Saving...",
   "summaryTitle": "Summary title",
   "summaryDefaultTitle": "Consultation Summary",
-  "clearTitle": "Clear consultation?",
-  "clearDescription": "Do you want to save a summary before deleting this conversation?",
-  "deleteWithoutSummary": "Delete without summary",
-  "saveSummaryAndDelete": "Save summary & delete",
-  "cancel": "Cancel",
-  "summaryCreated": "Summary saved successfully.",
-  "historyCleared": "Conversation cleared.",
-  "sendError": "Message failed to send.",
+  "summaryCreated": "Summary saved.",
   "summaryError": "Failed to save summary.",
-  "clearError": "Failed to clear conversation.",
+
+  "clearTitle": "Clear conversation?",
+  "clearDescription": "You can save a summary before deleting the current conversation, or delete it without saving.",
+  "deleteWithoutSummary": "Delete without summary",
+  "saveSummaryAndDelete": "Save summary and delete",
+
+  "summariesTitle": "Saved Summaries",
+  "summariesSubtitle": "Quick notes saved from past chats.",
+  "summariesEmpty": "No saved summaries yet.",
+  "summariesLoadError": "Failed to load summaries.",
+
   "deleteSummary": "Delete summary",
   "deleteSummaryConfirm": "Are you sure you want to delete this summary?",
-  "suggestions": {
-    "title": "Try asking",
-    "products": "What product should we promote next month?",
-    "bundle": "Suggest a bundle campaign based on current demand.",
-    "risks": "Summarize forecast opportunities and risks.",
-    "campaigns": "Which active campaigns appear most effective?",
-    
-  "serviceUnavailable": "AI consultation is temporarily unavailable. Please try again in a moment.",
-  "requestTimedOut": "The consultation request took too long. Please try again.",
-  "tooManyRequests": "Too many requests right now. Please wait a little and try again.",
-  "unknownError": "Something went wrong while sending your message.",
-  "savingSummary": "Saving...",
   "deletingSummary": "Deleting...",
   "summaryDeleted": "Summary deleted.",
-"deleteSummaryError": "Failed to delete summary."
+  "deleteSummaryError": "Failed to delete summary.",
+  "summaryDeleteError": "Failed to delete summary.",
 
+  "drawer": {
+    "ariaLabel": "AI Consultation",
+    "closeAria": "Close consultation drawer"
+  },
+
+  "help": {
+    "title": "How to use AI Consultation",
+    "buttonLabel": "Open consultation help",
+    "items": {
+      "businessQuestions": {
+        "title": "1. Ask business questions",
+        "description": "Use this chat to ask about campaigns, forecasts, product performance, risks, opportunities, and next actions for the business."
+      },
+      "clearPrompts": {
+        "title": "2. Use clear prompts",
+        "description": "The better your question, the better the answer. Mention the product, campaign, date range, or goal you want help with."
+      },
+      "suggestedPrompts": {
+        "title": "3. Use suggested prompts",
+        "description": "If you are not sure what to ask, start with one of the suggested prompt chips shown in the empty chat state."
+      },
+      "saveSummaries": {
+        "title": "4. Save useful summaries",
+        "description": "Use Save Summary when the conversation contains useful recommendations you may want to read again later."
+      },
+      "clearCarefully": {
+        "title": "5. Clear carefully",
+        "description": "Clear removes the current conversation. You can save a summary before deleting the chat history."
+      }
+    },
+    "drawerNote": "Tip: The drawer is best for quick help while working on campaigns. Open the full page if you want more space.",
+    "pageNote": "Tip: Saved summaries appear in the side panel so you can keep important consultation notes."
   }
 }

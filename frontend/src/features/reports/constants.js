@@ -1,11 +1,11 @@
 export const ALL_TIME_START_DATE = "2024-01-01";
 
 export const PERIOD_OPTIONS = [
-  { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last 90 days" },
-  { value: "180", label: "Last 180 days" },
-  { value: "365", label: "Last year" },
-  { value: "all", label: "All time" },
+  { value: "30", labelKey: "periodOptions.last30" },
+  { value: "90", labelKey: "periodOptions.last90" },
+  { value: "180", labelKey: "periodOptions.last180" },
+  { value: "365", labelKey: "periodOptions.lastYear" },
+  { value: "all", labelKey: "periodOptions.allTime" },
 ];
 
 export const FORECAST_STATUS_ORDER = ["ready", "training", "failed", "idle"];

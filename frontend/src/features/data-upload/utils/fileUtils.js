@@ -1,4 +1,5 @@
 // frontend/src/features/data-upload/utils/fileUtils.js
+
 const MAX_MB = 50;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
 const ALLOWED_EXT = new Set(["csv", "xlsx"]);
@@ -10,21 +11,44 @@ const getExt = (filename) => {
   return parts.length > 1 ? parts[parts.length - 1] : "";
 };
 
-const validateSelectedFile = (file) => {
+const translate = (t, key, defaultValue, options = {}) => {
+  if (typeof t === "function") {
+    return t(key, { defaultValue, ...options });
+  }
+
+  return defaultValue;
+};
+
+const validateSelectedFile = (file, t) => {
   if (!file) {
-    return { ok: false, message: "No file selected." };
+    return {
+      ok: false,
+      message: translate(t, "fileValidation.noFile", "No file selected."),
+    };
   }
 
   const ext = getExt(file.name);
 
   if (!ALLOWED_EXT.has(ext)) {
-    return { ok: false, message: "Only .csv and .xlsx files are allowed." };
+    return {
+      ok: false,
+      message: translate(
+        t,
+        "fileValidation.invalidType",
+        "Only .csv and .xlsx files are allowed.",
+      ),
+    };
   }
 
   if (file.size > MAX_BYTES) {
     return {
       ok: false,
-      message: `File is too large. Max size is ${MAX_MB} MB.`,
+      message: translate(
+        t,
+        "fileValidation.tooLarge",
+        `File is too large. Max size is ${MAX_MB} MB.`,
+        { maxMb: MAX_MB },
+      ),
     };
   }
 

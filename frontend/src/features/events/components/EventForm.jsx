@@ -53,26 +53,37 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
     return p;
   }, [form]);
 
-  const set = (k) => (e) => {
-    const v = e?.target?.type === "checkbox" ? e.target.checked : e?.target?.value;
-    setForm((s) => ({ ...s, [k]: v }));
+  const set = (key) => (e) => {
+    const value =
+      e?.target?.type === "checkbox" ? e.target.checked : e?.target?.value;
+
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
   };
 
   async function submit(e) {
     e.preventDefault();
     setLocalError("");
 
-    const err = validateEventPayload(payload);
-    if (err) {
-      setLocalError(err);
+    const validationKey = validateEventPayload(payload);
+
+    if (validationKey) {
+      setLocalError(t(validationKey));
       return;
     }
 
     onSavingChange?.(true);
+
     try {
       const res = await createEvent(payload);
-      if (!res?.success) throw new Error(res?.message || t("eventForm.errorCreateFailed"));
-      onSuccess?.(res?.message || t("eventForm.createEvent"));
+
+      if (!res?.success) {
+        throw new Error(res?.message || t("eventForm.errorCreateFailed"));
+      }
+
+      onSuccess?.(res?.message || t("eventsPage.noticeCreated"));
     } catch (ex) {
       onError?.(ex?.message || t("eventForm.errorCreateApiFailed"));
     } finally {
@@ -140,6 +151,7 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
           onChange={set("start_date")}
           required
         />
+
         <FormCalendar
           label={t("form.endDate")}
           value={form.end_date}

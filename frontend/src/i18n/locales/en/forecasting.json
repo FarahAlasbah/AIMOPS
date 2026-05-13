@@ -23,8 +23,11 @@
     "sortRevenue": "Revenue",
     "sortData": "Available data",
     "sortCategory": "Category",
+    "sortLastSale": "Last sale",
     "refresh": "Refresh",
-    "results": "{{count}} products"
+    "results": "{{count}} products",
+    "refreshing": "Refreshing...",
+    "dateLabel": "Date"
   },
   "summary": {
     "total": "Products",
@@ -66,12 +69,19 @@
     "watchSaved": "We’ll notify you in the bell when these forecasts are ready.",
     "statusFailed": "Failed to load forecast status.",
     "detailsFailed": "Failed to load forecast details.",
+    "forecastNotFound": "No forecast is available for this product yet. Generate a forecast first.",
     "explanationFailed": "Failed to load forecast explanation.",
     "noDataDetected": "No usable sales data was found for this product. Upload new data, then generate the forecast again."
   },
   "details": {
     "pageTitle": "Forecast Details",
     "pageSubtitle": "Review the forecast, charts, and summary for this product.",
+    "productFallback": "Product #{{id}}",
+    "selectedRange": "Selected range",
+    "chartWarning": "Forecast values are estimates based on the available sales history. Use them as planning guidance, not as guaranteed demand.",
+    "axisDailyX": "Forecast date",
+    "axisDailyY": "Predicted quantity",
+    "axisWeeklyX": "Week start date",
     "back": "Back to Forecasting",
     "refresh": "Refresh",
     "notReadyMessage": "This forecast is not ready yet. Start it from here and come back once training finishes.",
@@ -104,15 +114,28 @@
     "summaryRevenue": "Total revenue",
     "summaryConfidence": "Confidence",
     "dailyTitle": "Daily demand forecast",
-    "explanationLoading": "Loading explanation...",
     "dailySubtitle": "Interactive quantity trend with confidence band, zoom, and a peak-day marker.",
     "weeklyTitle": "Weekly outlook",
     "weeklySubtitle": "Weekly quantity and revenue trend for the selected range.",
     "selectionEmpty": "No forecast points are available in the selected date range.",
     "eventBoostsActive": "Contains event-boost days",
     "explanationTitle": "Explanation",
+    "explanationLoading": "Loading explanation...",
     "explanationFallback": "From {{start}} to {{end}}, this forecast expects about {{quantity}} units in total, averaging {{avg}} per day and generating around {{revenue}}. The strongest demand inside this selected window is expected on {{peakDate}}.",
     "keyDriversTitle": "Key drivers",
+    "aiExplanation": {
+      "title": "AI Explanation",
+      "explain": "Explain with AI",
+      "reExplain": "Re-explain with AI",
+      "generating": "Generating...",
+      "regenerating": "Regenerating...",
+      "requestOnly": "AI explanation is generated only when requested.",
+      "generatingText": "Generating explanation...",
+      "stale": "This explanation is older than the current forecast. Re-explain to refresh it.",
+      "keyDrivers": "Key drivers",
+      "generatedAt": "Generated at: {{date}}",
+      "cached": "Cached"
+    },
     "datasets": {
       "quantity": "Predicted quantity",
       "confidenceBand": "Confidence band",
@@ -127,6 +150,39 @@
     "yAxes": {
       "quantity": "Quantity",
       "revenue": "Revenue"
+    }
+  },
+  "help": {
+    "page": {
+      "title": "How to use Forecasting",
+      "buttonLabel": "Open forecasting help",
+      "items": {
+        "readiness": {
+          "title": "1. Check product readiness",
+          "description": "Each product has a forecast status. Not Generated means no forecast exists yet, Training means AIMOPS is generating it, Ready means you can view the forecast, and Failed means you can retry."
+        },
+        "generate": {
+          "title": "2. Generate forecasts",
+          "description": "Click Generate for a product when it has enough sales history. AIMOPS uses uploaded sales data to estimate future demand."
+        },
+        "upload": {
+          "title": "3. Upload data when needed",
+          "description": "If a product has no sales history or not enough usable data, upload sales data first before generating a forecast."
+        },
+        "training": {
+          "title": "4. Wait while training finishes",
+          "description": "Training can take a little time. You can stay on this page, or go back to the dashboard and AIMOPS will notify you when watched forecasts are ready."
+        },
+        "ready": {
+          "title": "5. Open ready forecasts",
+          "description": "When a forecast is Ready, click View to open the forecast details page with charts, summary numbers, confidence, and AI explanation."
+        },
+        "retry": {
+          "title": "6. Retry failed forecasts",
+          "description": "If a forecast fails, check the error message. Retry after uploading better data or after fixing the product sales history."
+        }
+      },
+      "note": "Tip: Forecast quality depends on clean product names and enough sales history. Merge duplicate products before forecasting when needed."
     }
   }
 }

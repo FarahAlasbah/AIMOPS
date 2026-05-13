@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import {
   formatCurrency,
@@ -27,46 +28,59 @@ export function ReportsSummaryCards({
   campaignCount,
   activeCampaignCount,
 }) {
+  const { t, i18n } = useTranslation("reports");
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
   const cards = [
     {
-      label: "Total revenue",
-      value: formatCurrency(summary.total_revenue),
-      helper: `${formatNumber(summary.average_daily_revenue)} average daily revenue`,
+      label: t("summary.totalRevenue"),
+      value: formatCurrency(summary.total_revenue, locale),
+      helper: t("summary.averageDailyRevenue", {
+        value: formatCurrency(summary.average_daily_revenue, locale),
+      }),
       icon: TrendingUp,
       tone: "blue",
     },
     {
-      label: "Quantity sold",
-      value: formatNumber(summary.total_quantity_sold),
-      helper: `${formatNumber(summary.sales_record_count)} sales records`,
+      label: t("summary.quantitySold"),
+      value: formatNumber(summary.total_quantity_sold, 1, locale),
+      helper: t("summary.salesRecords", {
+        value: formatNumber(summary.sales_record_count, 0, locale),
+      }),
       icon: Package,
       tone: "indigo",
     },
     {
-      label: "Products sold",
-      value: formatNumber(summary.products_sold_count),
-      helper: "Unique products with sales",
+      label: t("summary.productsSold"),
+      value: formatNumber(summary.products_sold_count, 0, locale),
+      helper: t("summary.uniqueProducts"),
       icon: Package,
       tone: "emerald",
     },
     {
-      label: "Campaigns",
-      value: formatNumber(campaignCount),
-      helper: `${formatNumber(activeCampaignCount)} active campaigns`,
+      label: t("summary.campaigns"),
+      value: formatNumber(campaignCount, 0, locale),
+      helper: t("summary.activeCampaigns", {
+        value: formatNumber(activeCampaignCount, 0, locale),
+      }),
       icon: Megaphone,
       tone: "violet",
     },
     {
-      label: "Forecast models",
-      value: formatNumber(summary.forecast_models_total),
-      helper: `${formatNumber(summary.forecast_models_ready)} ready models`,
+      label: t("summary.forecastModels"),
+      value: formatNumber(summary.forecast_models_total, 0, locale),
+      helper: t("summary.readyModels", {
+        value: formatNumber(summary.forecast_models_ready, 0, locale),
+      }),
       icon: Activity,
       tone: "blue",
     },
     {
-      label: "Uploads",
-      value: formatNumber(summary.uploads_count),
-      helper: `${formatNumber(summary.processed_uploads_count)} processed uploads`,
+      label: t("summary.uploads"),
+      value: formatNumber(summary.uploads_count, 0, locale),
+      helper: t("summary.processedUploads", {
+        value: formatNumber(summary.processed_uploads_count, 0, locale),
+      }),
       icon: Upload,
       tone: "amber",
     },

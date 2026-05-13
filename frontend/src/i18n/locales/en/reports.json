@@ -1,0 +1,203 @@
+{
+  "periodOptions": {
+    "last30": "Last 30 days",
+    "last90": "Last 90 days",
+    "last180": "Last 180 days",
+    "lastYear": "Last year",
+    "allTime": "All time"
+  },
+  "actions": {
+    "openHelp": "Open reports help",
+    "howToUse": "How to use this page",
+    "refresh": "Refresh",
+    "print": "Print",
+    "excel": "Excel"
+  },
+  "toolbar": {
+    "title": "Report period",
+    "description": "Data is loaded from the reports dashboard using the selected date range.",
+    "preset": "Preset"
+  },
+  "summary": {
+    "totalRevenue": "Total revenue",
+    "averageDailyRevenue": "{{value}} average daily revenue",
+    "quantitySold": "Quantity sold",
+    "salesRecords": "{{value}} sales records",
+    "productsSold": "Products sold",
+    "uniqueProducts": "Unique products with sales",
+    "campaigns": "Campaigns",
+    "activeCampaigns": "{{value}} active campaigns",
+    "forecastModels": "Forecast models",
+    "readyModels": "{{value}} ready models",
+    "uploads": "Uploads",
+    "processedUploads": "{{value}} processed uploads"
+  },
+  "charts": {
+    "revenueQuantity": {
+      "title": "Revenue and quantity trend",
+      "dailyMode": "Daily",
+      "weeklyMode": "Weekly",
+      "monthlyMode": "Monthly",
+      "dailyDescription": "Daily view shows revenue and quantity movement across the selected period.",
+      "weeklyDescription": "Weekly view makes the trend easier to read for longer report periods.",
+      "monthlyDescription": "Monthly view keeps long report periods readable while preserving the overall trend.",
+      "summary": "{{mode}} trend view. {{description}}",
+      "loading": "Loading chart...",
+      "empty": "No sales trend data available.",
+      "revenue": "Revenue",
+      "quantity": "Quantity",
+      "quantitySold": "Quantity sold",
+      "units": "{{value}} units"
+    },
+    "topProducts": {
+      "title": "Top products by revenue",
+      "description": "Horizontal bars are easiest to read for product names.",
+      "loading": "Loading chart...",
+      "empty": "No product data available.",
+      "revenue": "Revenue",
+      "unnamedProduct": "Unnamed product"
+    },
+    "campaignImpact": {
+      "title": "Campaign portfolio",
+      "description": "Bubble chart compares budget, ROI, and revenue in one view.",
+      "loading": "Loading chart...",
+      "empty": "No campaign performance data available.",
+      "campaigns": "Campaigns",
+      "campaignFallback": "Campaign",
+      "budget": "Budget",
+      "roi": "ROI",
+      "revenue": "Revenue"
+    },
+    "forecastReadiness": {
+      "title": "Forecast readiness",
+      "description": "Donut view is better here because statuses are parts of the total.",
+      "loading": "Loading chart...",
+      "empty": "No forecast status data available.",
+      "totalLabel": "Models",
+      "labels": {
+        "ready": "Ready",
+        "training": "Training",
+        "failed": "Failed",
+        "idle": "Not started"
+      }
+    },
+    "uploadActivity": {
+      "title": "Upload activity",
+      "description": "Upload status split across processed, mapping, pending, and failed.",
+      "loading": "Loading chart...",
+      "empty": "No upload activity available.",
+      "totalLabel": "Uploads",
+      "labels": {
+        "processed": "Processed",
+        "mapping": "Mapping",
+        "pending": "Pending",
+        "failed": "Failed"
+      }
+    }
+  },
+  "campaignPerformance": {
+    "title": "Campaign performance",
+    "description": "Campaign budget, ROI, and generated or forecasted revenue.",
+    "summary": {
+      "campaigns": "Campaigns",
+      "active": "Active",
+      "totalBudget": "Total budget",
+      "expectedRevenue": "Expected revenue",
+      "averageRoi": "Average ROI"
+    },
+    "table": {
+      "campaign": "Campaign",
+      "type": "Type",
+      "status": "Status",
+      "budget": "Budget",
+      "roi": "ROI",
+      "revenue": "Revenue",
+      "dates": "Dates",
+      "loading": "Loading campaigns...",
+      "empty": "No campaign performance data available."
+    }
+  },
+  "topProductDetails": {
+    "title": "Top product details",
+    "table": {
+      "product": "Product",
+      "category": "Category",
+      "revenue": "Revenue",
+      "quantitySold": "Quantity sold",
+      "avgDailyQty": "Avg daily qty",
+      "forecastStatus": "Forecast status",
+      "next30Qty": "Next 30d qty",
+      "next30Revenue": "Next 30d revenue",
+      "lastSale": "Last sale",
+      "loading": "Loading products...",
+      "empty": "No product data available.",
+      "unnamedProduct": "Unnamed product",
+      "notStarted": "not started"
+    }
+  },
+  "help": {
+    "ariaLabel": "Reports help",
+    "eyebrow": "Page guide",
+    "title": "How to use Reports",
+    "close": "Close reports help",
+    "items": {
+      "periodTitle": "1. Choose a report period",
+      "periodText": "Use the preset filter to select the date range you want to analyze, such as the last 30, 90, or 180 days.",
+      "summaryTitle": "2. Read the summary cards first",
+      "summaryText": "Start with total revenue, quantity sold, products sold, campaigns, forecast models, and uploads.",
+      "chartsTitle": "3. Check charts and tables",
+      "chartsText": "Use the trend chart, top products, campaign impact, forecast readiness, upload activity, and tables to understand what is performing well."
+    },
+    "note": "You can print the report or export product and campaign tables as Excel files."
+  },
+  "status": {
+    "active": "Active",
+    "running": "Running",
+    "ongoing": "Ongoing",
+    "in-progress": "In progress",
+    "in_progress": "In progress",
+    "planned": "Planned",
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "done": "Done",
+    "cancelled": "Cancelled",
+    "canceled": "Canceled",
+    "failed": "Failed",
+    "draft": "Draft",
+    "pending": "Pending",
+    "ready": "Ready",
+    "training": "Training",
+    "idle": "Not started",
+    "unknown": "Unknown",
+    "processed": "Processed",
+    "mapping": "Mapping"
+  },
+  "fallback": {
+    "untitledCampaign": "Untitled campaign",
+    "unknownType": "-"
+  },
+  "excel": {
+    "products": {
+      "product": "Product",
+      "category": "Category",
+      "revenue": "Revenue",
+      "quantitySold": "Quantity sold",
+      "salesRecords": "Sales records",
+      "averageDailyQuantity": "Average daily quantity",
+      "lastSale": "Last sale",
+      "forecastStatus": "Forecast status",
+      "forecastNext30Quantity": "Forecast next 30 days quantity",
+      "forecastNext30Revenue": "Forecast next 30 days revenue"
+    },
+    "campaigns": {
+      "campaign": "Campaign",
+      "type": "Type",
+      "status": "Status",
+      "budget": "Budget",
+      "roi": "ROI",
+      "revenue": "Revenue",
+      "startDate": "Start date",
+      "endDate": "End date"
+    }
+  }
+}

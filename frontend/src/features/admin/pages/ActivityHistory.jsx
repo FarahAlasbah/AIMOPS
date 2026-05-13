@@ -1,5 +1,6 @@
 // frontend/src/features/admin/pages/ActivityHistory.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
   ChevronLeft,
@@ -19,14 +20,20 @@ import FormSelect from "../../../shared/components/FormSelect";
 
 import "./ActivityHistory.css";
 
-const ACTION_OPTIONS = [
-  { value: "", label: "All actions" },
-  { value: "user_created", label: "User created" },
-  { value: "user_updated", label: "User updated" },
-  { value: "user_deleted", label: "User deleted" },
-  { value: "user_reactivated", label: "User reactivated" },
-  { value: "role_changed", label: "Role changed" },
-  { value: "password_changed", label: "Password changed" },
+const ACTION_OPTION_DEFS = [
+  { value: "", labelKey: "activityHistory.actions.all" },
+  { value: "user_created", labelKey: "activityHistory.actions.userCreated" },
+  { value: "user_updated", labelKey: "activityHistory.actions.userUpdated" },
+  { value: "user_deleted", labelKey: "activityHistory.actions.userDeleted" },
+  {
+    value: "user_reactivated",
+    labelKey: "activityHistory.actions.userReactivated",
+  },
+  { value: "role_changed", labelKey: "activityHistory.actions.roleChanged" },
+  {
+    value: "password_changed",
+    labelKey: "activityHistory.actions.passwordChanged",
+  },
 ];
 
 const LIMIT_OPTIONS = [
@@ -64,14 +71,28 @@ function getObjectName(value) {
   return value?.full_name || value?.name || value?.username || value?.email || "";
 }
 
-function humanizeAction(action) {
-  if (!action) return "Activity recorded";
+function humanizeActionRaw(action) {
+  if (!action) return "";
 
   return String(action)
     .replace(/_/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function humanizeAction(action, t) {
+  if (!action) {
+    return t("activityHistory.fallbacks.activityRecorded", {
+      defaultValue: "Activity recorded",
+    });
+  }
+
+  const key = `activityHistory.actionLabels.${String(action)}`;
+
+  return t(key, {
+    defaultValue: humanizeActionRaw(action),
+  });
 }
 
 function getActionClass(action) {
@@ -96,8 +117,12 @@ function getActionClass(action) {
   return "neutral";
 }
 
-function formatDate(value) {
-  if (!value) return "Time not available";
+function formatDate(value, t, language) {
+  if (!value) {
+    return t("activityHistory.fallbacks.timeNotAvailable", {
+      defaultValue: "Time not available",
+    });
+  }
 
   const date = new Date(value);
 
@@ -105,7 +130,7 @@ function formatDate(value) {
     return String(value);
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(language || undefined, {
     year: "numeric",
     month: "short",
     day: "2-digit",
@@ -160,7 +185,7 @@ function getTargetId(log) {
   );
 }
 
-function getActorName(log, usersById) {
+function getActorName(log, usersById, t) {
   const direct =
     log?.performed_by_name ||
     log?.performedByName ||
@@ -177,12 +202,19 @@ function getActorName(log, usersById) {
   const userName = getUserName(user);
 
   if (userName) return userName;
-  if (id != null) return `User #${id}`;
+  if (id != null) {
+    return t("activityHistory.fallbacks.userWithId", {
+      id,
+      defaultValue: `User #${id}`,
+    });
+  }
 
-  return "Unknown user";
+  return t("activityHistory.fallbacks.unknownUser", {
+    defaultValue: "Unknown user",
+  });
 }
 
-function getTargetName(log, usersById) {
+function getTargetName(log, usersById, t) {
   const direct =
     log?.target_user_name ||
     log?.targetUserName ||
@@ -203,12 +235,19 @@ function getTargetName(log, usersById) {
   const userName = getUserName(user);
 
   if (userName) return userName;
-  if (id != null) return `User #${id}`;
+  if (id != null) {
+    return t("activityHistory.fallbacks.userWithId", {
+      id,
+      defaultValue: `User #${id}`,
+    });
+  }
 
-  return "No affected user";
+  return t("activityHistory.fallbacks.noAffectedUser", {
+    defaultValue: "No affected user",
+  });
 }
 
-function getDetailsText(log) {
+function getDetailsText(log, t) {
   const direct =
     log?.message ||
     log?.description ||
@@ -222,7 +261,9 @@ function getDetailsText(log) {
   const details = log?.details || log?.metadata || log?.changes || log?.payload || null;
 
   if (!details) {
-    return "No extra details were sent for this action.";
+    return t("activityHistory.fallbacks.noExtraDetails", {
+      defaultValue: "No extra details were sent for this action.",
+    });
   }
 
   if (typeof details === "string") {
@@ -233,12 +274,14 @@ function getDetailsText(log) {
     const entries = Object.entries(details).slice(0, 5);
 
     if (!entries.length) {
-      return "No extra details were sent for this action.";
+      return t("activityHistory.fallbacks.noExtraDetails", {
+        defaultValue: "No extra details were sent for this action.",
+      });
     }
 
     return entries
       .map(([key, value]) => {
-        const readableKey = humanizeAction(key);
+        const readableKey = humanizeActionRaw(key);
         const readableValue =
           value && typeof value === "object" ? JSON.stringify(value) : String(value);
 
@@ -250,28 +293,40 @@ function getDetailsText(log) {
   return String(details);
 }
 
-function getErrorMessage(error) {
+function getErrorMessage(error, t) {
   const status = error?.response?.status;
 
   if (status === 403) {
-    return "You do not have permission to view activity history.";
+    return t("activityHistory.errors.forbidden", {
+      defaultValue: "You do not have permission to view activity history.",
+    });
   }
 
   if (status === 404) {
-    return "The activity history endpoint was not found. Please check the backend route.";
+    return t("activityHistory.errors.notFound", {
+      defaultValue:
+        "The activity history endpoint was not found. Please check the backend route.",
+    });
   }
 
   return (
     error?.response?.data?.detail ||
     error?.response?.data?.message ||
     error?.message ||
-    "Could not load activity history. Please try again."
+    t("activityHistory.errors.loadFailed", {
+      defaultValue: "Could not load activity history. Please try again.",
+    })
   );
 }
 
-function ActivityHistorySkeleton() {
+function ActivityHistorySkeleton({ t }) {
   return (
-    <div className="activity-history-list" aria-label="Loading activity history">
+    <div
+      className="activity-history-list"
+      aria-label={t("activityHistory.loading", {
+        defaultValue: "Loading activity history",
+      })}
+    >
       {Array.from({ length: 5 }).map((_, index) => (
         <div className="activity-history-row skeleton-row" key={index}>
           <div className="skeleton-icon" />
@@ -287,6 +342,8 @@ function ActivityHistorySkeleton() {
 }
 
 function ActivityHistory() {
+  const { t, i18n } = useTranslation("admin");
+
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
 
@@ -300,6 +357,15 @@ function ActivityHistory() {
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const actionOptions = useMemo(
+    () =>
+      ACTION_OPTION_DEFS.map((option) => ({
+        value: option.value,
+        label: t(option.labelKey),
+      })),
+    [t],
+  );
 
   const usersById = useMemo(() => {
     const map = new Map();
@@ -316,7 +382,12 @@ function ActivityHistory() {
 
   const userOptions = useMemo(() => {
     return [
-      { value: "", label: "Anyone" },
+      {
+        value: "",
+        label: t("activityHistory.filters.anyone", {
+          defaultValue: "Anyone",
+        }),
+      },
       ...users
         .map((user) => {
           const id = getUserId(user);
@@ -324,12 +395,17 @@ function ActivityHistory() {
 
           return {
             value: String(id),
-            label: getUserName(user) || `User #${id}`,
+            label:
+              getUserName(user) ||
+              t("activityHistory.fallbacks.userWithId", {
+                id,
+                defaultValue: `User #${id}`,
+              }),
           };
         })
         .filter(Boolean),
     ];
-  }, [users]);
+  }, [users, t]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const currentPage = Math.floor(offset / limit) + 1;
@@ -371,11 +447,11 @@ function ActivityHistory() {
     } catch (err) {
       setLogs([]);
       setTotal(0);
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
-  }, [action, performedById, targetUserId, limit, offset]);
+  }, [action, performedById, targetUserId, limit, offset, t]);
 
   useEffect(() => {
     loadUsers();
@@ -419,14 +495,22 @@ function ActivityHistory() {
         <div>
           <div className="activity-history-eyebrow">
             <ShieldCheck size={16} />
-            Admin only
+            {t("activityHistory.eyebrow", {
+              defaultValue: "Admin only",
+            })}
           </div>
 
-          <h1>Activity History</h1>
+          <h1>
+            {t("activityHistory.title", {
+              defaultValue: "Activity History",
+            })}
+          </h1>
 
           <p>
-            See important account changes in one place, including who made the
-            change and who was affected.
+            {t("activityHistory.subtitle", {
+              defaultValue:
+                "See important account changes in one place, including who made the change and who was affected.",
+            })}
           </p>
         </div>
 
@@ -437,23 +521,37 @@ function ActivityHistory() {
           disabled={loading}
         >
           <RefreshCw size={17} className={loading ? "spinning" : ""} />
-          Refresh
+          {t("activityHistory.refresh", {
+            defaultValue: "Refresh",
+          })}
         </button>
       </div>
 
       <div className="activity-history-summary">
         <div className="activity-summary-card">
-          <span className="activity-summary-label">Total activities</span>
+          <span className="activity-summary-label">
+            {t("activityHistory.summary.totalActivities", {
+              defaultValue: "Total activities",
+            })}
+          </span>
           <strong>{total}</strong>
         </div>
 
         <div className="activity-summary-card">
-          <span className="activity-summary-label">Showing now</span>
+          <span className="activity-summary-label">
+            {t("activityHistory.summary.showingNow", {
+              defaultValue: "Showing now",
+            })}
+          </span>
           <strong>{logs.length}</strong>
         </div>
 
         <div className="activity-summary-card">
-          <span className="activity-summary-label">Active filters</span>
+          <span className="activity-summary-label">
+            {t("activityHistory.summary.activeFilters", {
+              defaultValue: "Active filters",
+            })}
+          </span>
           <strong>{activeFiltersCount}</strong>
         </div>
       </div>
@@ -461,72 +559,100 @@ function ActivityHistory() {
       <form className="activity-history-filters" onSubmit={handleApplyFilters}>
         <div className="activity-filter-title">
           <Filter size={17} />
-          Filter activity
+          {t("activityHistory.filters.title", {
+            defaultValue: "Filter activity",
+          })}
         </div>
 
         <div className="activity-filter-grid">
           <FormSelect
-            label="Action"
+            label={t("activityHistory.filters.action", {
+              defaultValue: "Action",
+            })}
             name="action"
             value={action}
             onChange={(event) => setAction(event.target.value)}
-            options={ACTION_OPTIONS}
-            placeholder="All actions"
+            options={actionOptions}
+            placeholder={t("activityHistory.actions.all", {
+              defaultValue: "All actions",
+            })}
             className="activity-filter-select"
           />
 
           {users.length > 0 ? (
             <FormSelect
-              label="Performed by"
+              label={t("activityHistory.filters.performedBy", {
+                defaultValue: "Performed by",
+              })}
               name="performed_by_id"
               value={performedById}
               onChange={(event) => setPerformedById(event.target.value)}
               options={userOptions}
-              placeholder="Anyone"
+              placeholder={t("activityHistory.filters.anyone", {
+                defaultValue: "Anyone",
+              })}
               disabled={usersLoading}
               className="activity-filter-select"
             />
           ) : (
             <label className="activity-filter-field">
-              <span>Performed by</span>
+              <span>
+                {t("activityHistory.filters.performedBy", {
+                  defaultValue: "Performed by",
+                })}
+              </span>
               <input
                 type="number"
                 min="1"
                 value={performedById}
                 onChange={(event) => setPerformedById(event.target.value)}
                 className="activity-filter-control"
-                placeholder="User ID"
+                placeholder={t("activityHistory.filters.userIdPlaceholder", {
+                  defaultValue: "User ID",
+                })}
               />
             </label>
           )}
 
           {users.length > 0 ? (
             <FormSelect
-              label="Affected user"
+              label={t("activityHistory.filters.affectedUser", {
+                defaultValue: "Affected user",
+              })}
               name="target_user_id"
               value={targetUserId}
               onChange={(event) => setTargetUserId(event.target.value)}
               options={userOptions}
-              placeholder="Anyone"
+              placeholder={t("activityHistory.filters.anyone", {
+                defaultValue: "Anyone",
+              })}
               disabled={usersLoading}
               className="activity-filter-select"
             />
           ) : (
             <label className="activity-filter-field">
-              <span>Affected user</span>
+              <span>
+                {t("activityHistory.filters.affectedUser", {
+                  defaultValue: "Affected user",
+                })}
+              </span>
               <input
                 type="number"
                 min="1"
                 value={targetUserId}
                 onChange={(event) => setTargetUserId(event.target.value)}
                 className="activity-filter-control"
-                placeholder="User ID"
+                placeholder={t("activityHistory.filters.userIdPlaceholder", {
+                  defaultValue: "User ID",
+                })}
               />
             </label>
           )}
 
           <FormSelect
-            label="Rows per page"
+            label={t("activityHistory.filters.rowsPerPage", {
+              defaultValue: "Rows per page",
+            })}
             name="limit"
             value={String(limit)}
             onChange={handleLimitChange}
@@ -539,7 +665,9 @@ function ActivityHistory() {
         <div className="activity-filter-actions">
           <button type="submit" className="activity-primary-button">
             <Search size={16} />
-            Apply filters
+            {t("activityHistory.filters.apply", {
+              defaultValue: "Apply filters",
+            })}
           </button>
 
           <button
@@ -547,7 +675,9 @@ function ActivityHistory() {
             className="activity-secondary-button"
             onClick={handleResetFilters}
           >
-            Clear filters
+            {t("activityHistory.filters.clear", {
+              defaultValue: "Clear filters",
+            })}
           </button>
         </div>
       </form>
@@ -562,40 +692,64 @@ function ActivityHistory() {
       <section className="activity-history-card">
         <div className="activity-history-card-head">
           <div>
-            <h2>Recent activity</h2>
+            <h2>
+              {t("activityHistory.recentTitle", {
+                defaultValue: "Recent activity",
+              })}
+            </h2>
             <p>
-              Page {currentPage} of {totalPages}
+              {t("activityHistory.pagination.pageOf", {
+                page: currentPage,
+                totalPages,
+                defaultValue: `Page ${currentPage} of ${totalPages}`,
+              })}
             </p>
           </div>
 
           <div className="activity-history-range">
             {total > 0
-              ? `${offset + 1}-${Math.min(offset + logs.length, total)} of ${total}`
-              : "0 records"}
+              ? t("activityHistory.range.records", {
+                  start: offset + 1,
+                  end: Math.min(offset + logs.length, total),
+                  total,
+                  defaultValue: `${offset + 1}-${Math.min(
+                    offset + logs.length,
+                    total,
+                  )} of ${total}`,
+                })
+              : t("activityHistory.range.zeroRecords", {
+                  defaultValue: "0 records",
+                })}
           </div>
         </div>
 
         {loading ? (
-          <ActivityHistorySkeleton />
+          <ActivityHistorySkeleton t={t} />
         ) : logs.length === 0 ? (
           <div className="activity-history-empty">
             <History size={42} />
-            <h3>No activity found</h3>
+            <h3>
+              {t("activityHistory.empty.title", {
+                defaultValue: "No activity found",
+              })}
+            </h3>
             <p>
-              There are no records for the selected filters yet. Try clearing the
-              filters or checking again after new admin actions happen.
+              {t("activityHistory.empty.subtitle", {
+                defaultValue:
+                  "There are no records for the selected filters yet. Try clearing the filters or checking again after new admin actions happen.",
+              })}
             </p>
           </div>
         ) : (
           <div className="activity-history-list">
             {logs.map((log, index) => {
               const actionValue = log?.action || log?.event || log?.type || "";
-              const actionLabel = humanizeAction(actionValue);
+              const actionLabel = humanizeAction(actionValue, t);
               const actionClass = getActionClass(actionValue);
-              const actorName = getActorName(log, usersById);
-              const targetName = getTargetName(log, usersById);
-              const detailsText = getDetailsText(log);
-              const time = formatDate(getLogTime(log));
+              const actorName = getActorName(log, usersById, t);
+              const targetName = getTargetName(log, usersById, t);
+              const detailsText = getDetailsText(log, t);
+              const time = formatDate(getLogTime(log), t, i18n.language);
               const key = getLogId(log, `${offset}-${index}`);
 
               return (
@@ -619,11 +773,17 @@ function ActivityHistory() {
                     <div className="activity-history-people">
                       <span>
                         <UserRound size={15} />
-                        <strong>{actorName}</strong> performed this action
+                        <strong>{actorName}</strong>{" "}
+                        {t("activityHistory.log.performedAction", {
+                          defaultValue: "performed this action",
+                        })}
                       </span>
 
                       <span className="activity-history-target">
-                        Affected: <strong>{targetName}</strong>
+                        {t("activityHistory.log.affected", {
+                          defaultValue: "Affected:",
+                        })}{" "}
+                        <strong>{targetName}</strong>
                       </span>
                     </div>
 
@@ -643,11 +803,17 @@ function ActivityHistory() {
             disabled={!hasPrevious || loading}
           >
             <ChevronLeft size={16} />
-            Previous
+            {t("activityHistory.pagination.previous", {
+              defaultValue: "Previous",
+            })}
           </button>
 
           <span>
-            Page {currentPage} of {totalPages}
+            {t("activityHistory.pagination.pageOf", {
+              page: currentPage,
+              totalPages,
+              defaultValue: `Page ${currentPage} of ${totalPages}`,
+            })}
           </span>
 
           <button
@@ -656,7 +822,9 @@ function ActivityHistory() {
             onClick={goNext}
             disabled={!hasNext || loading}
           >
-            Next
+            {t("activityHistory.pagination.next", {
+              defaultValue: "Next",
+            })}
             <ChevronRight size={16} />
           </button>
         </div>
