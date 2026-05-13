@@ -1,4 +1,47 @@
 {
+  "common": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "roles": {
+    "date": "Date",
+    "product_code": "Product code",
+    "product_name": "Product name",
+    "category": "Category",
+    "quantity": "Quantity",
+    "unit_price": "Unit price",
+    "total_amount": "Total amount",
+    "discount": "Discount",
+    "customer_id": "Customer ID",
+    "location": "Location",
+    "payment_method": "Payment method",
+    "skip": "Skip"
+  },
+  "statuses": {
+    "pending": "Pending",
+    "mapping": "Mapping",
+    "mapped": "Mapped",
+    "mapping_confirmed": "Mapping confirmed",
+    "mappings_confirmed": "Mappings confirmed",
+    "products_pending": "Products pending",
+    "products_ready": "Products ready",
+    "review": "Review",
+    "review_required": "Review required",
+    "processed": "Processed",
+    "done": "Done",
+    "success": "Success",
+    "completed": "Completed",
+    "confirmed": "Confirmed",
+    "imported": "Imported",
+    "failed": "Failed",
+    "error": "Error",
+    "rejected": "Rejected"
+  },
+  "fileValidation": {
+    "noFile": "No file selected.",
+    "invalidType": "Only .csv and .xlsx files are allowed.",
+    "tooLarge": "File is too large. Max size is {{maxMb}} MB."
+  },
   "columnMeta": {
     "confidence": "Confidence",
     "classification": "Classification",
@@ -27,34 +70,34 @@
     "confirmMappings": "Confirm mappings",
     "continue": "Continue",
     "confirming": "Confirming...",
-    "resolveRequired": "Please resolve required missing fields and confirm all \"Needs verification\" columns.",
+    "resolveRequired": "Please finish the missing required fields and confirm every column that needs review.",
     "role": "Role",
     "showDetails": "Show details",
     "hideDetails": "Hide details",
-    "lockedBatch": "Mappings are locked for this batch.",
+    "lockedBatch": "Mappings are locked for this upload.",
     "confirmRoleChangeFirst": "Confirm or cancel the role change first.",
     "notSuggestedRole": "Not the suggested role. Suggested:",
     "roleChangePrompt": "You selected <strong>{{selected}}</strong>, which is not the suggested role (<strong>{{suggested}}</strong>). Confirm this change?",
     "cancel": "Cancel",
     "confirmChange": "Confirm change",
     "highConfidence": {
-      "title": "Auto-mapped (high confidence)",
-      "sub": "Review these mappings."
+      "title": "Ready to use",
+      "sub": "AIMOPS matched these columns with high confidence. You can still review them if needed."
     },
     "requiredMissing": {
       "title": "Required fields missing",
-      "sub": "You must map these required fields before you can confirm.",
+      "sub": "Choose the correct column for each required field before continuing.",
       "required": "(required)",
       "chooseColumn": "Choose column",
       "selectColumn": "Select a column..."
     },
     "needsMapping": {
       "title": "Needs mapping",
-      "sub": "These columns need a role before you can continue."
+      "sub": "Choose what each column means so AIMOPS can use it correctly."
     },
     "needsVerification": {
-      "title": "Needs verification ({{confirmed}}/{{total}} confirmed)",
-      "sub": "Confirm the AI guess or choose a different role.",
+      "title": "Needs review ({{confirmed}}/{{total}} confirmed)",
+      "sub": "Confirm the suggestion or choose a different role.",
       "prev": "Prev",
       "next": "Next",
       "page": "Page {{page}} / {{totalPages}}",
@@ -63,23 +106,26 @@
     },
     "suggestedSkip": {
       "title": "Suggested to skip",
-      "sub": "These columns are probably not useful.",
+      "sub": "These columns probably are not needed for reports, forecasts, or product analysis.",
       "whySkip": "Why skip:",
       "included": "Included",
       "skipped": "Skipped",
-      "currentRole": "Current role:"
+      "currentRole": "Current role:",
+      "includeColumn": "Include this column",
+      "skipThisColumn": "Skip this column"
     }
   },
   "review": {
     "title": "Merge duplicates, then confirm products",
     "subExtracted": "{{count}} products extracted • {{merges}} merges selected",
-    "subNotExtracted": "Extract products from this batch first",
+    "subNotExtracted": "Extract products from this upload first",
     "mappingsConfirmed": "Mappings confirmed ({{count}})",
+    "confirmedOnly": "Confirmed ({{count}})",
     "mappingsNotFound": "Mappings not found",
     "badgeExtracted": "Extracted",
     "badgeNotExtracted": "Not extracted",
     "productsConfirmedSuccess": "Products confirmed successfully. You can finish now.",
-    "noProductsExtracted": "No products were extracted from this batch.",
+    "noProductsExtracted": "No products were extracted from this upload.",
     "back": "Back",
     "extracting": "Extracting...",
     "extractProducts": "Extract products",
@@ -88,10 +134,13 @@
     "confirmProducts": "Confirm products",
     "finish": "Finish",
     "category": "Category:",
+    "product": "Product",
+    "uncategorized": "Uncategorized",
     "normalized": "Normalized:",
     "noMergesSelected": "No merges selected",
     "manageMerges": "Manage merges",
     "alreadyConfirmed": "Already confirmed",
+    "alreadyProcessed": "Already processed",
     "moreChip": "+{{count}} more",
     "modal": {
       "title": "Manage merges",
@@ -100,7 +149,7 @@
       "selectedMerges": "Selected merges",
       "candidates": "Candidates",
       "noMergesSelected": "No merges selected.",
-      "noCandidates": "No other product names found in this batch.",
+      "noCandidates": "No other product names found in this upload.",
       "noMatches": "No matches.",
       "searchPlaceholder": "Search candidates...",
       "shown": "{{count}} shown",
@@ -125,9 +174,10 @@
     "refreshAnalysis": "Refresh analysis",
     "clearLocal": "Clear local",
     "delete": "Delete",
-"deleteTitle": "Deletes this upload and its sales records"  },
+    "deleteTitle": "Deletes this upload and its sales records"
+  },
   "analyzeProgress": {
-    "defaultLabel": "Analyzing & preparing mapping...",
+    "defaultLabel": "Analyzing and preparing mapping...",
     "loading": "Loading",
     "hint": "This may take a few seconds depending on the file size."
   },
@@ -135,55 +185,136 @@
     "campaignLabel": "Related Campaign (optional)",
     "campaignPlaceholder": "Select a campaign...",
     "uploading": "Uploading... {{progress}}%",
+    "uploadingButton": "Uploading...",
     "cancel": "Cancel",
     "upload": "Upload"
   },
   "uploadsList": {
     "loading": "Loading uploads...",
     "empty": "No uploads yet.",
+    "emptyFiltered": "No uploads match the current filters.",
     "pageInfo": "Page {{page}} • Showing {{count}} item(s)",
     "offsetInfo": "Offset {{offset}} • Limit {{limit}}",
     "prev": "Prev",
-    "next": "Next"
+    "next": "Next",
+    "fileName": "File name",
+    "status": "Status",
+    "rangeInfo": "Showing {{from}}–{{to}} of {{total}}",
+    "delete": "Delete",
+    "deleteFile": "Delete {{fileName}}",
+    "selectFile": "Select {{fileName}}",
+    "selectVisible": "Select visible uploads",
+    "completedOpenProducts": "This upload is completed. Open the Products page to view imported products."
   },
   "mappingPage": {
     "title": "Map Columns",
     "breadcrumbRoot": "Upload Sales Data",
     "breadcrumbBatch": "Batch {{batchId}}",
-    "alreadyConfirmedInfo": "Mappings are already confirmed for this batch on this device. Editing is locked to avoid reprocessing.",
+    "alreadyConfirmedInfo": "Mappings are already confirmed for this upload. Editing is locked to avoid processing it again.",
+    "completedNoticeTitle": "This upload is already finished",
+    "completedNoticeMessage": "The products from this file were already added to AIMOPS. There is nothing else to map here, so you can go back to uploads or open the Products page.",
+    "backToUploads": "Back to uploads",
+    "viewProducts": "View products",
+    "friendlyFileTypeError": "We could not finish preparing this upload right now. Your file was uploaded, but AIMOPS could not continue the product extraction step. Please try again after the backend fix, or ask the backend team to check this upload.",
+    "friendlyCompletedError": "This upload is already finished. The products from this file were already added to AIMOPS, so there is nothing else to map here.",
     "errorAnalyzeFailed": "Analyze failed.",
-    "errorConfirmFailed": "Confirm mappings failed."
+    "errorConfirmFailed": "Confirm mappings failed.",
+    "help": {
+      "title": "How to use Column Mapping",
+      "items": {
+        "reviewRoles": {
+          "title": "1. Review suggested roles",
+          "description": "AIMOPS suggests what each column means, like Date, Product name, Quantity, Unit price, or Total amount."
+        },
+        "confirmUncertain": {
+          "title": "2. Confirm uncertain columns",
+          "description": "Columns that need review must be confirmed before you continue. Use the sample values to check if the suggestion is correct."
+        },
+        "fixRequired": {
+          "title": "3. Fix missing required fields",
+          "description": "If a required field is missing, choose the correct column manually from the dropdown."
+        },
+        "skipIrrelevant": {
+          "title": "4. Skip irrelevant columns",
+          "description": "Columns that are not useful for sales analysis can stay skipped. Only include columns that help reports, forecasts, and product analysis."
+        }
+      },
+      "note": "You can continue only when all required mappings and review items are resolved."
+    }
   },
   "reviewPage": {
     "title": "Extract & Confirm Products",
     "breadcrumbRoot": "Upload Sales Data",
     "breadcrumbBatch": "Batch {{batchId}}",
-    "noMappingsWarn": "No confirmed mappings found for this batch on this device. Go back and confirm mappings again.",
-    "noProductNameInfo": "Product extraction needs at least: product_name (and usually date/quantity/unit_price/total_amount). Go back and fix the column mappings if needed.",
-    "errorExtractNeedsProductName": "Extract products needs at least: product_name (and usually date/quantity/unit_price/total_amount).",
+    "noMappingsWarn": "No confirmed mappings were found for this upload. Go back and confirm the column mappings again.",
+    "noProductNameInfo": "Product extraction needs at least product_name, and usually date, quantity, unit_price, and total_amount. Go back and fix the column mappings if needed.",
+    "alreadyProcessedInfo": "This upload has already been processed. You can finish and return to uploads.",
+    "notifTitle": "New products confirmed",
+    "notifMessage": "{{count}} new product(s) from batch #{{batchId}} have been confirmed and are now available.",
+    "errorLoadFailed": "Unable to load upload details.",
+    "errorExtractNeedsProductName": "Extract products needs at least product_name, and usually date, quantity, unit_price, and total_amount.",
     "errorCannotConfirmYet": "Cannot confirm products yet. Make sure extraction succeeded.",
     "errorExtractFailed": "Extract products failed.",
     "errorConfirmFailed": "Confirm products failed.",
-    "errorGeneric": "Something went wrong."
+    "errorGeneric": "Something went wrong.",
+    "help": {
+      "title": "How to use Product Review",
+      "items": {
+        "checkProducts": {
+          "title": "1. Check extracted products",
+          "description": "Review the products AIMOPS found from the uploaded sales file. Make sure the names and categories look correct."
+        },
+        "mergeDuplicates": {
+          "title": "2. Merge duplicates",
+          "description": "Use Manage merges when the same product appears with different spellings or names. This keeps reports and forecasts cleaner."
+        },
+        "watchWarnings": {
+          "title": "3. Watch typo warnings",
+          "description": "Warning chips show possible spelling issues or product names that may need merging."
+        },
+        "confirmProducts": {
+          "title": "4. Confirm products",
+          "description": "After confirming, the products become available for the rest of the system, including reports and forecasting."
+        }
+      },
+      "note": "Once products are confirmed or the upload is already processed, editing is locked."
+    }
   },
   "uploadsPage": {
-    "deleteDialogTitle": "Delete this upload?",
-"deleteDialogMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
-"deleteDialogCancel": "Cancel",
-"deleteDialogConfirm": "Delete",
-"deleteUploadHumanTitle": "Delete this upload?",
-"deleteUploadHumanMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
-"deleteUploadHumanConfirm": "Delete",
-"bulkDeleteDialogTitle": "Delete selected uploads?",
-"bulkDeleteDialogMessage": "Are you sure you want to delete {{count}} selected upload(s)?\n\nThe uploaded files and their sales records will be removed.\nYour products will not be deleted.",
-"bulkDeleteDialogConfirm": "Delete selected",
-    "title": "Upload Campaign Sales Data",
+    "title": "Upload Sales Data",
     "breadcrumbRoot": "Campaigns",
     "breadcrumbCurrent": "Upload Sales Data",
+    "file": "file",
     "uploadsHeader": "Uploads",
     "refreshing": "Refreshing...",
     "refresh": "Refresh",
     "dismiss": "Dismiss",
+    "searchLabel": "Search file name",
+    "searchPlaceholder": "Search by file name...",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "sortBy": "Sort by",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortNameAsc": "File name A–Z",
+    "sortNameDesc": "File name Z–A",
+    "sortStatus": "Status",
+    "clearFilters": "Clear filters",
+    "selectedUploads": "{{count}} selected",
+    "clearSelection": "Clear selection",
+    "deleteSelected": "Delete selected ({{count}})",
+    "deleteDialogTitle": "Delete this upload?",
+    "deleteDialogMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
+    "deleteDialogCancel": "Cancel",
+    "deleteDialogConfirm": "Delete",
+    "deleteUploadHumanTitle": "Delete this upload?",
+    "deleteUploadHumanMessage": "Are you sure you want to delete \"{{fileName}}\"?\n\nThe uploaded file and its sales records will be removed.\nYour products will not be deleted.",
+    "deleteUploadHumanConfirm": "Delete",
+    "bulkDeleteDialogTitle": "Delete selected uploads?",
+    "bulkDeleteDialogMessage": "Are you sure you want to delete {{count}} selected upload(s)?\n\nThe uploaded files and their sales records will be removed.\nYour products will not be deleted.",
+    "bulkDeleteDialogConfirm": "Delete selected",
+    "bulkDeleteFailed": "Could not delete {{count}} selected upload(s).",
+    "bulkDeletePartialFailed": "{{failed}} of {{total}} selected upload(s) could not be deleted.",
     "errorDuplicateFile": "This file was already uploaded before. Please choose a different file.",
     "errorNoFile": "Please select a file first.",
     "errorLoadFailed": "Failed to load uploads list.",
@@ -192,6 +323,32 @@
     "errorDeleteFailed": "Delete failed.",
     "errorGeneric": "Something went wrong.",
     "overlapWarning": "Overlapping date range detected ({{from}} → {{to}}). Existing records in that range were replaced to avoid duplicates.",
-    "overlapWarningWithRows": "Overlapping date range detected ({{from}} → {{to}}). Existing records in that range were replaced to avoid duplicates. ({{deleted}} row(s) replaced)"
+    "overlapWarningWithRows": "Overlapping date range detected ({{from}} → {{to}}). Existing records in that range were replaced to avoid duplicates. ({{deleted}} row(s) replaced)",
+    "help": {
+      "title": "How to use Data Upload",
+      "items": {
+        "uploadFile": {
+          "title": "1. Upload a sales file",
+          "description": "Choose a CSV or Excel file that contains sales data such as date, product name, quantity, price, and total amount."
+        },
+        "checkUploads": {
+          "title": "2. Check previous uploads",
+          "description": "Use the uploads table to find older files, filter by date, search by file name, or sort by status."
+        },
+        "continueWorkflow": {
+          "title": "3. Continue the workflow",
+          "description": "Click an uploaded file to continue mapping columns or reviewing extracted products depending on its progress."
+        },
+        "completedUploads": {
+          "title": "4. Completed uploads",
+          "description": "When an upload is completed, products are available from the Products page instead of reopening the upload review."
+        },
+        "deleteCarefully": {
+          "title": "5. Delete carefully",
+          "description": "Deleting an upload removes that upload batch from AIMOPS."
+        }
+      },
+      "note": "Tip: If a report or forecast is empty, make sure your sales data was uploaded and fully processed first."
+    }
   }
 }

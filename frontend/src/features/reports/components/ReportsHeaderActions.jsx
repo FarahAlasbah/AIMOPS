@@ -1,14 +1,17 @@
 import { HelpCircle, Printer, RefreshCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function ReportsHeaderActions({ onHelp, onRefresh }) {
+  const { t } = useTranslation("reports");
+
   return (
     <div className="reports-header-actions">
       <button
         type="button"
         className="reports-help-btn"
         onClick={onHelp}
-        aria-label="Open reports help"
-        title="How to use this page"
+        aria-label={t("actions.openHelp")}
+        title={t("actions.howToUse")}
       >
         <HelpCircle size={18} />
       </button>
@@ -19,7 +22,7 @@ export function ReportsHeaderActions({ onHelp, onRefresh }) {
         onClick={onRefresh}
       >
         <RefreshCcw size={16} />
-        Refresh
+        {t("actions.refresh")}
       </button>
 
       <button
@@ -28,7 +31,7 @@ export function ReportsHeaderActions({ onHelp, onRefresh }) {
         onClick={() => window.print()}
       >
         <Printer size={16} />
-        Print
+        {t("actions.print")}
       </button>
     </div>
   );

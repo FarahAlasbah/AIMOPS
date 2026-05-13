@@ -50,19 +50,15 @@ export default function ProductsToolbar({
     () => [
       {
         value: "all",
-        label: t("toolbar.reviewAll", { defaultValue: "All" }),
+        label: t("toolbar.reviewAll"),
       },
       {
         value: "suspicious",
-        label: t("toolbar.reviewOnly", {
-          defaultValue: "Needs review only",
-        }),
+        label: t("toolbar.reviewOnly"),
       },
       {
         value: "normal",
-        label: t("toolbar.normalOnly", {
-          defaultValue: "Normal only",
-        }),
+        label: t("toolbar.normalOnly"),
       },
     ],
     [t],
@@ -81,8 +77,8 @@ export default function ProductsToolbar({
           className="products-refresh-icon-btn"
           onClick={onRefresh}
           disabled={loading}
-          title={t("toolbar.btnRefresh", { defaultValue: "Refresh" })}
-          aria-label={t("toolbar.btnRefresh", { defaultValue: "Refresh" })}
+          title={t("toolbar.btnRefresh")}
+          aria-label={t("toolbar.btnRefresh")}
         >
           <RefreshCw size={18} className={loading ? "spin-icon" : ""} />
         </button>
@@ -113,9 +109,7 @@ export default function ProductsToolbar({
 
           <div className="field">
             <FormSelect
-              label={t("toolbar.reviewLabel", {
-                defaultValue: "Needs review",
-              })}
+              label={t("toolbar.reviewLabel")}
               value={suspicious}
               onChange={(event) => onSuspiciousChange(event.target.value)}
               options={reviewOptions}
@@ -125,9 +119,7 @@ export default function ProductsToolbar({
 
           <div className="field">
             <FormCalendar
-              label={t("toolbar.dateFromLabel", {
-                defaultValue: "From date",
-              })}
+              label={t("toolbar.dateFromLabel")}
               value={dateFrom}
               onChange={(event) => onDateFromChange(event.target.value)}
               max={dateTo || undefined}
@@ -137,9 +129,7 @@ export default function ProductsToolbar({
 
           <div className="field">
             <FormCalendar
-              label={t("toolbar.dateToLabel", {
-                defaultValue: "To date",
-              })}
+              label={t("toolbar.dateToLabel")}
               value={dateTo}
               onChange={(event) => onDateToChange(event.target.value)}
               min={dateFrom || undefined}

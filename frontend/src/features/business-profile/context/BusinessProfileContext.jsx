@@ -1,7 +1,13 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import i18n from "../../../i18n";
 import { getBusinessProfile, saveBusinessProfile } from "../api/businessProfileApi";
 
 export const BusinessProfileContext = createContext(null);
+
+const tBusinessProfile = (key) =>
+  i18n.t(key, {
+    ns: "businessProfile",
+  });
 
 export function BusinessProfileProvider({ children }) {
   const [profile, setProfile] = useState(null);
@@ -17,7 +23,7 @@ export function BusinessProfileProvider({ children }) {
       const result = await getBusinessProfile();
       setProfile(result);
     } catch (err) {
-      setError(err?.message || "Failed to load business profile.");
+      setError(err?.message || tBusinessProfile("context.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -41,7 +47,7 @@ export function BusinessProfileProvider({ children }) {
           profile: result,
         };
       } catch (err) {
-        const message = err?.message || "Failed to save business profile.";
+        const message = err?.message || tBusinessProfile("context.saveFailed");
         setError(message);
 
         return {
@@ -52,7 +58,7 @@ export function BusinessProfileProvider({ children }) {
         setSaving(false);
       }
     },
-    [profile]
+    [profile],
   );
 
   const value = useMemo(
@@ -63,12 +69,12 @@ export function BusinessProfileProvider({ children }) {
       error,
       hasProfile: Boolean(profile?.profile_id),
       isProfileComplete: Boolean(
-        profile?.business_name && profile?.industry && profile?.city
+        profile?.business_name && profile?.industry && profile?.city,
       ),
       loadProfile,
       persistProfile,
     }),
-    [profile, loading, saving, error, loadProfile, persistProfile]
+    [profile, loading, saving, error, loadProfile, persistProfile],
   );
 
   return (

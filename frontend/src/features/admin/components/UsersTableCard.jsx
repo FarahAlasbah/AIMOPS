@@ -1,3 +1,4 @@
+// frontend/src/features/admin/components/UsersTableCard.jsx
 import { Card, Button } from "../../../shared/components";
 import { Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -8,74 +9,94 @@ const ROLE_BADGE_BY_NAME = {
   "Business Owner": "business_owner",
 };
 
-const UsersTableSkeleton = ({ rows = 6 }) => (
-  <>
-    <div className="users-table-wrapper users-table-desktop">
-      <table className="users-table users-table-clean">
-        <thead>
-          <tr>
-            <th>User name</th>
-            <th>Full name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th style={{ width: 56, textAlign: "right" }} />
-          </tr>
-        </thead>
+const UsersTableSkeleton = ({ rows = 6 }) => {
+  const { t } = useTranslation("admin");
 
-        <tbody>
-          {Array.from({ length: rows }).map((_, i) => (
-            <tr key={`table-skel-${i}`}>
-              <td>
-                <div className="skel skel-text skel-w-sm" />
-              </td>
-              <td>
-                <div className="skel skel-text skel-w-md" />
-              </td>
-              <td>
-                <div className="skel skel-text skel-w-lg" />
-              </td>
-              <td>
-                <div className="skel skel-pill" />
-              </td>
-              <td style={{ textAlign: "right" }}>
-                <div
-                  className="skel skel-icon"
-                  style={{ marginInlineStart: "auto" }}
-                />
-              </td>
+  return (
+    <>
+      <div className="users-table-wrapper users-table-desktop">
+        <table className="users-table users-table-clean">
+          <thead>
+            <tr>
+              <th>
+                {t("editUser.labels.username", {
+                  defaultValue: "Username",
+                })}
+              </th>
+              <th>
+                {t("editUser.labels.fullName", {
+                  defaultValue: "Full name",
+                })}
+              </th>
+              <th>
+                {t("editUser.labels.email", {
+                  defaultValue: "Email",
+                })}
+              </th>
+              <th>
+                {t("editUser.labels.role", {
+                  defaultValue: "Role",
+                })}
+              </th>
+              <th style={{ width: 56, textAlign: "right" }} />
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
 
-    <div className="users-cards users-cards-skeleton">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={`card-skel-${i}`} className="user-card user-card-skeleton">
-          <div className="user-card-top">
-            <div style={{ flex: 1 }}>
-              <div className="skel skel-text skel-w-sm" />
-              <div
-                className="skel skel-text skel-w-md"
-                style={{ marginTop: 8 }}
-              />
-              <div
-                className="skel skel-text skel-w-lg"
-                style={{ marginTop: 10 }}
-              />
+          <tbody>
+            {Array.from({ length: rows }).map((_, i) => (
+              <tr key={`table-skel-${i}`}>
+                <td>
+                  <div className="skel skel-text skel-w-sm" />
+                </td>
+                <td>
+                  <div className="skel skel-text skel-w-md" />
+                </td>
+                <td>
+                  <div className="skel skel-text skel-w-lg" />
+                </td>
+                <td>
+                  <div className="skel skel-pill" />
+                </td>
+                <td style={{ textAlign: "right" }}>
+                  <div
+                    className="skel skel-icon"
+                    style={{ marginInlineStart: "auto" }}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="users-cards users-cards-skeleton">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={`card-skel-${i}`} className="user-card user-card-skeleton">
+            <div className="user-card-top">
+              <div style={{ flex: 1 }}>
+                <div className="skel skel-text skel-w-sm" />
+                <div
+                  className="skel skel-text skel-w-md"
+                  style={{ marginTop: 8 }}
+                />
+                <div
+                  className="skel skel-text skel-w-lg"
+                  style={{ marginTop: 10 }}
+                />
+              </div>
+
+              <div className="skel skel-pill" />
             </div>
 
-            <div className="skel skel-pill" />
+            <div className="user-card-actions">
+              <div className="skel skel-icon" />
+            </div>
           </div>
-
-          <div className="user-card-actions">
-            <div className="skel skel-icon" />
-          </div>
-        </div>
-      ))}
-    </div>
-  </>
-);
+        ))}
+      </div>
+    </>
+  );
+};
 
 const UsersTableCard = ({
   users = [],
@@ -155,7 +176,10 @@ const UsersTableCard = ({
                 {users.map((u) => (
                   <tr key={u.user_id ?? u.id}>
                     <td className="username-cell">
-                      {u.username || t("users.unknownUser", { defaultValue: "Unknown" })}
+                      {u.username ||
+                        t("users.unknownUser", {
+                          defaultValue: "Unknown",
+                        })}
                     </td>
                     <td>{u.full_name || "-"}</td>
                     <td className="cell-muted">{u.email || "-"}</td>

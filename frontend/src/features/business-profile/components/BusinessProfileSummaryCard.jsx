@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { useBusinessProfile } from "../hooks/useBusinessProfile";
 
 export default function BusinessProfileSummaryCard() {
+  const { t } = useTranslation("businessProfile");
   const { profile, loading, isProfileComplete } = useBusinessProfile();
 
   if (loading || !isProfileComplete) {
@@ -10,20 +12,20 @@ export default function BusinessProfileSummaryCard() {
   return (
     <section className="business-profile-summary-card">
       <div className="business-profile-card-header">
-        <h3>Business Profile</h3>
+        <h3>{t("summary.title")}</h3>
       </div>
 
       <div className="business-profile-summary-grid">
         <div>
-          <span>Name</span>
+          <span>{t("summary.name")}</span>
           <strong>{profile.business_name}</strong>
         </div>
         <div>
-          <span>Industry</span>
+          <span>{t("summary.industry")}</span>
           <strong>{profile.industry}</strong>
         </div>
         <div>
-          <span>City</span>
+          <span>{t("summary.city")}</span>
           <strong>{profile.city}</strong>
         </div>
       </div>

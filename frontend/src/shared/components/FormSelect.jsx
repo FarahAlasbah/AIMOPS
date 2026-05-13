@@ -1,6 +1,7 @@
 // frontend/src/shared/components/FormSelect.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronDown } from "lucide-react";
 import "./FormInput.css";
 import "./FormSelect.css";
@@ -28,7 +29,7 @@ const getSelectedLabel = ({ normalizedOptions, value, placeholder }) => {
     (option) => String(option.value) === String(value ?? ""),
   );
 
-  return selected?.label || placeholder || "Select...";
+  return selected?.label || placeholder || "";
 };
 
 export default function FormSelect({
@@ -44,6 +45,8 @@ export default function FormSelect({
   className = "",
   ...props
 }) {
+  const { t } = useTranslation("common");
+
   const wrapRef = useRef(null);
   const triggerRef = useRef(null);
   const listRef = useRef(null);
@@ -65,7 +68,7 @@ export default function FormSelect({
   const selectedLabel = getSelectedLabel({
     normalizedOptions,
     value,
-    placeholder,
+    placeholder: placeholder || t("shared.formSelect.placeholder"),
   });
 
   const hasValue = selectedIndex >= 0;
@@ -187,8 +190,7 @@ export default function FormSelect({
       event.preventDefault();
 
       setActiveIndex((prev) => {
-        const start =
-          prev < 0 ? normalizedOptions.length - 1 : prev - 1;
+        const start = prev < 0 ? normalizedOptions.length - 1 : prev - 1;
 
         for (let i = 0; i < normalizedOptions.length; i += 1) {
           const index =
@@ -272,11 +274,10 @@ export default function FormSelect({
             role="listbox"
           >
             {normalizedOptions.length === 0 ? (
-              <div className="fs-empty">No options</div>
+              <div className="fs-empty">{t("shared.formSelect.noOptions")}</div>
             ) : (
               normalizedOptions.map((option, index) => {
-                const selected =
-                  String(option.value) === String(value ?? "");
+                const selected = String(option.value) === String(value ?? "");
                 const active = index === activeIndex;
 
                 return (

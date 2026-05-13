@@ -1,14 +1,19 @@
 import { Bot, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import ConsultationMarkdown from "./ConsultationMarkdown";
 
 export default function ConsultationMessageBubble({ message }) {
+  const { t } = useTranslation("consultation");
+
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
 
   return (
     <div
       className={`consultation-message-row ${
-        isUser ? "consultation-message-row-user" : "consultation-message-row-assistant"
+        isUser
+          ? "consultation-message-row-user"
+          : "consultation-message-row-assistant"
       }`}
     >
       {!isUser && (
@@ -22,7 +27,11 @@ export default function ConsultationMessageBubble({ message }) {
           isUser ? "consultation-bubble-user" : "consultation-bubble-assistant"
         }`}
       >
-        {!isUser && <div className="consultation-bubble-label">AIMOPS AI</div>}
+        {!isUser && (
+          <div className="consultation-bubble-label">
+            {t("assistantName")}
+          </div>
+        )}
 
         {isUser ? (
           <div className="consultation-message-text">{message.content}</div>

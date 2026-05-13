@@ -1,4 +1,6 @@
+// frontend/src/features/admin/hooks/useUsers.js
 import { useCallback, useState } from "react";
+import i18n from "../../../i18n";
 import {
   getUsers,
   createUser,
@@ -15,17 +17,31 @@ const emptyApiError = () => ({
   status: null,
 });
 
-const statusFallbacks = {
-  400: "The request is invalid. Please check the entered information.",
-  401: "Your session has expired. Please log in again.",
-  403: "You do not have permission to perform this action.",
-  404: "The requested user was not found.",
-  409: "This user information conflicts with an existing user.",
-  422: "Some fields are invalid. Please review the highlighted fields.",
-  429: "Too many requests. Please wait a moment and try again.",
-  500: "A server error occurred. Please try again later.",
-  502: "The server is temporarily unavailable. Please try again later.",
-  503: "The server is temporarily unavailable. Please try again later.",
+const statusFallbackKeys = {
+  400: "apiErrors.invalidRequest",
+  401: "apiErrors.sessionExpired",
+  403: "apiErrors.noPermission",
+  404: "apiErrors.userNotFound",
+  409: "apiErrors.conflict",
+  422: "apiErrors.invalidFields",
+  429: "apiErrors.tooManyRequests",
+  500: "apiErrors.serverError",
+  502: "apiErrors.serverUnavailable",
+  503: "apiErrors.serverUnavailable",
+};
+
+const tAdmin = (key, options = {}) =>
+  i18n.t(key, {
+    ns: "admin",
+    ...options,
+  });
+
+const getStatusFallback = (status) => {
+  const key = statusFallbackKeys[status];
+
+  if (!key) return "";
+
+  return tAdmin(key);
 };
 
 const humanizeFieldName = (field) =>
@@ -162,7 +178,10 @@ const normalizeErrorState = (value) => {
   };
 };
 
-const formatApiError = (error, fallbackMessage = "Something went wrong.") => {
+const formatApiError = (
+  error,
+  fallbackMessage = tAdmin("apiErrors.generic"),
+) => {
   const response = error?.response;
   const status = response?.status ?? null;
   const data = response?.data || null;
@@ -170,11 +189,12 @@ const formatApiError = (error, fallbackMessage = "Something went wrong.") => {
   const fieldErrors = extractFieldErrors(data);
 
   if (!response) {
-    const message = error?.code === "ECONNABORTED"
-      ? "The request timed out. Please try again."
-      : error?.message?.toLowerCase?.().includes("network")
-        ? "Cannot connect to the server. Please check that the backend is running."
-        : error?.message || "Cannot reach the server. Please try again.";
+    const message =
+      error?.code === "ECONNABORTED"
+        ? tAdmin("apiErrors.timeout")
+        : error?.message?.toLowerCase?.().includes("network")
+          ? tAdmin("apiErrors.cannotConnect")
+          : error?.message || tAdmin("apiErrors.cannotReach");
 
     return {
       message,
@@ -184,7 +204,7 @@ const formatApiError = (error, fallbackMessage = "Something went wrong.") => {
   }
 
   const backendMessage = extractBackendMessage(data);
-  const statusMessage = statusFallbacks[status];
+  const statusMessage = getStatusFallback(status);
 
   let message = backendMessage || statusMessage || fallbackMessage;
 
@@ -192,7 +212,10 @@ const formatApiError = (error, fallbackMessage = "Something went wrong.") => {
     message =
       statusMessage ||
       Object.entries(fieldErrors)
-        .map(([field, fieldMessage]) => `${humanizeFieldName(field)}: ${fieldMessage}`)
+        .map(
+          ([field, fieldMessage]) =>
+            `${humanizeFieldName(field)}: ${fieldMessage}`,
+        )
         .join(" | ");
   }
 
@@ -262,7 +285,7 @@ export const useUsers = () => {
       setUsers(normalizeUsersResponse(raw));
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      setApiErrorState(formatApiError(error, "Unable to load users."));
+      setApiErrorState(formatApiError(error, tAdmin("apiErrors.loadUsers")));
     } finally {
       setLoading(false);
     }
@@ -272,7 +295,7 @@ export const useUsers = () => {
     async (payload) =>
       runUserAction(
         () => createUser(payload),
-        "Unable to create user. Please check the entered information.",
+        tAdmin("apiErrors.createUser"),
       ),
     [runUserAction],
   );
@@ -281,7 +304,7 @@ export const useUsers = () => {
     async (userId, roleId) =>
       runUserAction(
         () => updateUserRole(userId, roleId),
-        "Unable to update the user role.",
+        tAdmin("apiErrors.updateRole"),
       ),
     [runUserAction],
   );
@@ -290,7 +313,7 @@ export const useUsers = () => {
     async (userId, payload) =>
       runUserAction(
         () => updateUser(userId, payload),
-        "Unable to update user information.",
+        tAdmin("apiErrors.updateUser"),
       ),
     [runUserAction],
   );
@@ -299,7 +322,7 @@ export const useUsers = () => {
     async (userId) =>
       runUserAction(
         () => deleteUser(userId),
-        "Unable to delete this user.",
+        tAdmin("apiErrors.deleteUser"),
       ),
     [runUserAction],
   );
@@ -308,7 +331,7 @@ export const useUsers = () => {
     async (userId) =>
       runUserAction(
         () => reactivateUser(userId),
-        "Unable to restore this user.",
+        tAdmin("apiErrors.restoreUser"),
       ),
     [runUserAction],
   );
@@ -317,7 +340,7 @@ export const useUsers = () => {
     async (userId, currentPassword, newPassword) =>
       runUserAction(
         () => changeUserPassword(userId, currentPassword, newPassword),
-        "Unable to update the password.",
+        tAdmin("apiErrors.updatePassword"),
       ),
     [runUserAction],
   );

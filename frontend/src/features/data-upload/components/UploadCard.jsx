@@ -9,13 +9,15 @@ const kbToMb = (kb) => {
   return `${n} KB`;
 };
 
-const fmtDate = (s) => {
+const fmtDate = (s, language = "en") => {
   if (!s) return "-";
 
   const d = new Date(s);
   if (Number.isNaN(d.getTime())) return "-";
 
-  return d.toLocaleDateString("en-GB", {
+  const locale = String(language || "").startsWith("ar") ? "ar" : "en-GB";
+
+  return d.toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -59,6 +61,24 @@ const statusVariant = (s) => {
   return "gray";
 };
 
+const statusFallback = (status) => {
+  const raw = String(status || "-").trim();
+  if (!raw || raw === "-") return "-";
+
+  return raw
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getStatusLabel = (status, t) => {
+  const value = String(status || "").trim().toLowerCase();
+  if (!value) return "-";
+
+  return t(`statuses.${value}`, {
+    defaultValue: statusFallback(value),
+  });
+};
+
 function StatusDot({ status }) {
   const v = statusVariant(status);
   return <span className={`ul-dot ul-dot--${v}`} />;
@@ -77,7 +97,7 @@ export default function UploadRow({
   onSelectChange,
   selectionDisabled = false,
 }) {
-  const { t } = useTranslation("upload");
+  const { t, i18n } = useTranslation("upload");
 
   const batchId = upload?.batchId;
   const fileName = upload?.fileName || "-";
@@ -86,9 +106,9 @@ export default function UploadRow({
     if (deleting) return;
 
     if (isCompleted) {
-  onCompletedOpen?.(upload);
-  return;
-}
+      onCompletedOpen?.(upload);
+      return;
+    }
 
     if (canOpenReview) {
       onReview?.(batchId);
@@ -112,10 +132,7 @@ export default function UploadRow({
       aria-selected={selected}
       title={
         isCompleted
-          ? t("uploadsList.completedOpenProducts", {
-              defaultValue:
-                "This upload is completed. Open the Products page to view imported products.",
-            })
+          ? t("uploadsList.completedOpenProducts")
           : undefined
       }
     >
@@ -130,10 +147,7 @@ export default function UploadRow({
           checked={selected}
           onChange={handleSelectChange}
           disabled={selectionDisabled || deleting}
-          aria-label={t("uploadsList.selectFile", {
-            fileName,
-            defaultValue: `Select ${fileName}`,
-          })}
+          aria-label={t("uploadsList.selectFile", { fileName })}
         />
       </div>
 
@@ -143,15 +157,14 @@ export default function UploadRow({
         </div>
 
         <div className="ul-sub">
-          {fmtDate(upload?.uploadedAt)} · {kbToMb(upload?.fileSizeKb)}
+          {fmtDate(upload?.uploadedAt, i18n.language)} ·{" "}
+          {kbToMb(upload?.fileSizeKb)}
         </div>
       </div>
 
       <div className="ul-status">
         <StatusDot status={upload?.status} />
-        <span style={{ textTransform: "capitalize" }}>
-          {upload?.status || "-"}
-        </span>
+        <span>{getStatusLabel(upload?.status, t)}</span>
       </div>
 
       <div className="ul-actions">
@@ -163,11 +176,8 @@ export default function UploadRow({
             e.stopPropagation();
             onDelete?.(upload);
           }}
-          title={t("uploadsList.delete", { defaultValue: "Delete" })}
-          aria-label={t("uploadsList.deleteFile", {
-            fileName,
-            defaultValue: `Delete ${fileName}`,
-          })}
+          title={t("uploadsList.delete")}
+          aria-label={t("uploadsList.deleteFile", { fileName })}
         >
           <Trash2 size={16} />
         </button>

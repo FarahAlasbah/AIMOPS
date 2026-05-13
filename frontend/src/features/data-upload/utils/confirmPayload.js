@@ -13,28 +13,43 @@ const ALLOWED_ROLES = new Set([
   "customer_id",
   "location",
   "payment_method",
-  "skip", // used only internally; we do NOT send it
+  "skip",
 ]);
 
+function getFinalRole(column, state) {
+  const selectedRole = normalizeRole(state?.role);
+  const suggestedRole = normalizeRole(column?.role ?? column?.suggested_role);
+
+  if (selectedRole) return selectedRole;
+  if (suggestedRole) return suggestedRole;
+
+  return "skip";
+}
+
 export const buildConfirmMappingsPayload = ({ analysis, columnMap }) => {
-  const cols = analysis?.columns || [];
+  const cols = Array.isArray(analysis?.columns) ? analysis.columns : [];
 
   const mappings = cols
-    .map((c) => {
-      const st = columnMap?.[c.index];
-      if (!st) return null;
+    .map((column) => {
+      const state = columnMap?.[column.index];
 
-      const role = normalizeRole(st.role);
-      const include = st.include !== false && role !== "skip";
+      let role = getFinalRole(column, state);
 
-      if (!include) return null;
+      const manuallyExcluded = state?.include === false;
+      if (manuallyExcluded) {
+        role = "skip";
+      }
 
-      // final safety
-      if (!ALLOWED_ROLES.has(role) || role === "skip") return null;
+      if (!ALLOWED_ROLES.has(role)) {
+        role = "skip";
+      }
 
-      return { original_name: c.name, role };
+      return {
+        original_name: column.name,
+        role,
+      };
     })
-    .filter(Boolean);
+    .filter((mapping) => mapping.original_name);
 
   return { mappings };
 };

@@ -53,8 +53,8 @@ const normalizeCampaignAsCalendarEvent = (campaign) => {
   return {
     ...campaign,
     event_id: `campaign-${campaignId}`,
-    event_name: campaign?.campaign_name || campaign?.name || "Campaign",
-    title: campaign?.campaign_name || campaign?.name || "Campaign",
+    event_name: campaign?.campaign_name || campaign?.name || "",
+    title: campaign?.campaign_name || campaign?.name || "",
     start_date: campaign?.start_date,
     end_date: campaign?.end_date,
     calendar_type: "campaign",
@@ -125,6 +125,7 @@ export default function CalendarPage() {
 
           nextEvents = allEvents.filter((event) => {
             const status = String(event?.status || "").toLowerCase();
+
             return status !== "detected" && status !== "draft";
           });
         }
@@ -147,6 +148,7 @@ export default function CalendarPage() {
         }
       } catch (e) {
         if (!alive) return;
+
         setEvents([]);
         setError(e?.message || t("calendarPage.errorLoadFailed"));
       } finally {
@@ -166,7 +168,7 @@ export default function CalendarPage() {
     setJumpYear(anchor.getFullYear());
   }, [anchor]);
 
-  const title = useMemo(() => monthLabel(anchor), [anchor]);
+  const title = useMemo(() => monthLabel(anchor, locale), [anchor, locale]);
 
   const applyJump = () => {
     const nextDate = new Date(Number(jumpYear), Number(jumpMonth), 1);
@@ -238,7 +240,7 @@ export default function CalendarPage() {
             value={String(jumpYear)}
             onChange={(e) => setJumpYear(Number(e.target.value))}
             options={yearOptions}
-            aria-label="Year"
+            aria-label={t("calendarPage.jumpYearAriaLabel")}
           />
 
           <Button type="button" variant="secondary" onClick={applyJump}>

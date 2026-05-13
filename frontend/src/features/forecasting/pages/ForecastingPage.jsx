@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { RefreshCw } from "lucide-react";
 
-import { Button, Card, FormSelect, PageHeader } from "../../../shared/components";
+import { Button, Card, FormSelect } from "../../../shared/components";
 import FormCalendar from "../../../shared/components/FormCalendar";
 import InfoMessage from "../../../shared/components/InfoMessage";
 import PageHelp from "../../../shared/components/PageHelp";
@@ -138,7 +138,12 @@ function ForecastControlsSkeleton() {
             <div className="forecast-sk" style={{ width: "36%", height: 12 }} />
             <div
               className="forecast-sk"
-              style={{ width: "100%", height: 42, marginTop: 8, borderRadius: 12 }}
+              style={{
+                width: "100%",
+                height: 42,
+                marginTop: 8,
+                borderRadius: 12,
+              }}
             />
           </div>
         ))}
@@ -353,10 +358,7 @@ export default function ForecastingPage() {
       { value: "nameAsc", label: t("toolbar.sortName") },
       { value: "revenueDesc", label: t("toolbar.sortRevenue") },
       { value: "dataDesc", label: t("toolbar.sortData") },
-      {
-        value: "dateDesc",
-        label: t("toolbar.sortLastSale", { defaultValue: "Last sale" }),
-      },
+      { value: "dateDesc", label: t("toolbar.sortLastSale") },
       { value: "categoryAsc", label: t("toolbar.sortCategory") },
     ],
     [t],
@@ -441,7 +443,7 @@ export default function ForecastingPage() {
         text:
           res?.message ||
           t("messages.generateAccepted", {
-            name: product?.product_name || `#${productId}`,
+            name: product?.product_name || t("details.productFallback", { id: productId }),
           }),
       });
 
@@ -450,7 +452,7 @@ export default function ForecastingPage() {
       setErr(
         e?.message ||
           t("messages.generateFailed", {
-            name: product?.product_name || `#${productId}`,
+            name: product?.product_name || t("details.productFallback", { id: productId }),
           }),
       );
     } finally {
@@ -474,47 +476,36 @@ export default function ForecastingPage() {
 
   return (
     <div className="forecasting-page">
-      <PageHeader
-        
-        actions={
-          <PageHelp
-            title="How to use Forecasting"
-            buttonLabel="Open forecasting help"
-            items={[
-              {
-                title: "1. Check product readiness",
-                description:
-                  "Each product has a forecast status. Not Started means no forecast exists yet, Training means AIMOPS is generating it, Ready means you can view the forecast, and Failed means you can retry.",
-              },
-              {
-                title: "2. Generate forecasts",
-                description:
-                  "Click Generate for a product when it has enough sales history. AIMOPS uses uploaded sales data to estimate future demand.",
-              },
-              {
-                title: "3. Upload data when needed",
-                description:
-                  "If a product has no sales history or not enough usable data, upload sales data first before generating a forecast.",
-              },
-              {
-                title: "4. Wait while training finishes",
-                description:
-                  "Training can take a little time. You can stay on this page, or go back to the dashboard and AIMOPS will notify you when watched forecasts are ready.",
-              },
-              {
-                title: "5. Open ready forecasts",
-                description:
-                  "When a forecast is Ready, click View to open the forecast details page with charts, summary numbers, confidence, and AI explanation.",
-              },
-              {
-                title: "6. Retry failed forecasts",
-                description:
-                  "If a forecast fails, check the error message. Retry after uploading better data or after fixing the product sales history.",
-              },
-            ]}
-            note="Tip: Forecast quality depends on clean product names and enough sales history. Merge duplicate products before forecasting when needed."
-          />
-        }
+      <PageHelp
+        title={t("help.page.title")}
+        buttonLabel={t("help.page.buttonLabel")}
+        items={[
+          {
+            title: t("help.page.items.readiness.title"),
+            description: t("help.page.items.readiness.description"),
+          },
+          {
+            title: t("help.page.items.generate.title"),
+            description: t("help.page.items.generate.description"),
+          },
+          {
+            title: t("help.page.items.upload.title"),
+            description: t("help.page.items.upload.description"),
+          },
+          {
+            title: t("help.page.items.training.title"),
+            description: t("help.page.items.training.description"),
+          },
+          {
+            title: t("help.page.items.ready.title"),
+            description: t("help.page.items.ready.description"),
+          },
+          {
+            title: t("help.page.items.retry.title"),
+            description: t("help.page.items.retry.description"),
+          },
+        ]}
+        note={t("help.page.note")}
       />
 
       {pageSkeleton ? (
@@ -589,9 +580,7 @@ export default function ForecastingPage() {
             <div className="forecast-controls-top">
               <div className="forecast-results-pill">
                 {refreshing
-                  ? t("toolbar.refreshing", {
-                      defaultValue: "Refreshing...",
-                    })
+                  ? t("toolbar.refreshing")
                   : t("toolbar.results", { count: filtered.length })}
               </div>
 
@@ -645,7 +634,7 @@ export default function ForecastingPage() {
 
               <div className="forecast-field">
                 <FormCalendar
-                  label={t("toolbar.dateLabel", { defaultValue: "Date" })}
+                  label={t("toolbar.dateLabel")}
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
                   placeholder="YYYY-MM-DD"
@@ -711,7 +700,10 @@ export default function ForecastingPage() {
                       <tr key={productId}>
                         <td className="forecast-name-cell">
                           <div className="name">
-                            <bdi>{product?.product_name || `#${productId}`}</bdi>
+                            <bdi>
+                              {product?.product_name ||
+                                t("details.productFallback", { id: productId })}
+                            </bdi>
                           </div>
 
                           <div className="sub">
@@ -749,13 +741,17 @@ export default function ForecastingPage() {
                               {status === "ready" ? (
                                 <Button
                                   type="button"
-                                  onClick={() => navigate(`/app/forecasting/${productId}`)}
+                                  onClick={() =>
+                                    navigate(`/app/forecasting/${productId}`)
+                                  }
                                 >
                                   {t("actions.view")}
                                 </Button>
                               ) : status === "training" || busy ? (
                                 <Button type="button" disabled>
-                                  {busy ? t("actions.generating") : t("actions.training")}
+                                  {busy
+                                    ? t("actions.generating")
+                                    : t("actions.training")}
                                 </Button>
                               ) : needsUpload ? (
                                 <Button
@@ -774,7 +770,10 @@ export default function ForecastingPage() {
                                   {t("actions.retry")}
                                 </Button>
                               ) : (
-                                <Button type="button" onClick={() => handleGenerate(product)}>
+                                <Button
+                                  type="button"
+                                  onClick={() => handleGenerate(product)}
+                                >
                                   {t("actions.generate")}
                                 </Button>
                               )}

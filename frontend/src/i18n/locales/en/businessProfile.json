@@ -1,0 +1,51 @@
+{
+  "banner": {
+    "title": "Complete your business profile",
+    "description": "Add your business name, industry, and city to improve analytics, forecasts, and AI recommendations.",
+    "action": "Set up profile"
+  },
+  "overview": {
+    "title": "Business Profile",
+    "loading": "Loading business profile...",
+    "incompleteTitle": "Business profile is not complete",
+    "incompleteAdmin": "Add your business name, industry, and city to improve dashboard context, forecasting, and AI consultation quality.",
+    "incompleteReadonly": "Only an administrator can complete or update the business profile.",
+    "activeAdmin": "Your workspace business context is active.",
+    "activeReadonly": "Your workspace business context is active. You have read-only access.",
+    "setUpProfile": "Set up profile",
+    "viewProfile": "View profile",
+    "manageProfile": "Manage profile",
+    "industry": "Industry",
+    "city": "City",
+    "created": "Created"
+  },
+  "summary": {
+    "title": "Business Profile",
+    "name": "Name",
+    "industry": "Industry",
+    "city": "City"
+  },
+  "context": {
+    "loadFailed": "Failed to load business profile.",
+    "saveFailed": "Failed to save business profile."
+  },
+  "page": {
+    "cardTitle": "Business information",
+    "loading": "Loading business profile...",
+    "readonlyTitle": "Read-only access",
+    "readonlyMessage": "You can view the business profile here. Changes can only be made by an admin.",
+    "businessName": "Business Name",
+    "businessNamePlaceholder": "e.g. AIMOPS Shop",
+    "industry": "Industry",
+    "industryPlaceholder": "e.g. Retail / تجارة التجزئة",
+    "city": "City",
+    "cityPlaceholder": "e.g. Bethlehem / بيت لحم",
+    "updatedSuccess": "Business profile updated successfully.",
+    "createdSuccess": "Business profile created successfully.",
+    "adminOnlyTitle": "Only administrators can update the business profile.",
+    "adminOnlyButton": "Admin only",
+    "saving": "Saving...",
+    "updateProfile": "Update Profile",
+    "createProfile": "Create Profile"
+  }
+}

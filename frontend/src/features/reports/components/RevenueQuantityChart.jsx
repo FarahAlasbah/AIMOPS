@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import ReactApexChart from "react-apexcharts";
+import { useTranslation } from "react-i18next";
 
 import { Card } from "../../../shared/components";
 import { CHART_COLORS } from "../constants";
 import {
   formatCurrency,
   formatNumber,
+  getIntlLocale,
   toNumber,
 } from "../utils/reportUtils";
 
@@ -53,22 +55,22 @@ function getWeekEnd(weekStart) {
   return end;
 }
 
-function formatShortDate(date) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatShortDate(date, locale) {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     day: "2-digit",
     month: "short",
   }).format(date);
 }
 
-function formatMonthLabel(date) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatMonthLabel(date, locale) {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     month: "short",
     year: "numeric",
   }).format(date);
 }
 
-function formatCompactCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
+function formatCompactCurrency(value, locale) {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     style: "currency",
     currency: "USD",
     notation: "compact",
@@ -76,7 +78,7 @@ function formatCompactCurrency(value) {
   }).format(toNumber(value, 0));
 }
 
-function buildTrendPoints(salesTrend) {
+function buildTrendPoints(salesTrend, t, locale) {
   const sorted = [...salesTrend]
     .map((item) => {
       const date = parseDate(item.period);
@@ -102,7 +104,7 @@ function buildTrendPoints(salesTrend) {
         monthMap.set(key, {
           key,
           start,
-          label: formatMonthLabel(start),
+          label: formatMonthLabel(start, locale),
           revenue: 0,
           quantity: 0,
         });
@@ -114,9 +116,8 @@ function buildTrendPoints(salesTrend) {
     });
 
     return {
-      mode: "Monthly",
-      description:
-        "Monthly view keeps long report periods readable while preserving the overall trend.",
+      mode: t("charts.revenueQuantity.monthlyMode"),
+      description: t("charts.revenueQuantity.monthlyDescription"),
       points: Array.from(monthMap.values()).sort(
         (a, b) => a.start.getTime() - b.start.getTime(),
       ),
@@ -136,7 +137,7 @@ function buildTrendPoints(salesTrend) {
           key,
           start,
           end,
-          label: `${formatShortDate(start)} - ${formatShortDate(end)}`,
+          label: `${formatShortDate(start, locale)} - ${formatShortDate(end, locale)}`,
           revenue: 0,
           quantity: 0,
         });
@@ -148,9 +149,8 @@ function buildTrendPoints(salesTrend) {
     });
 
     return {
-      mode: "Weekly",
-      description:
-        "Weekly view makes the trend easier to read for longer report periods.",
+      mode: t("charts.revenueQuantity.weeklyMode"),
+      description: t("charts.revenueQuantity.weeklyDescription"),
       points: Array.from(weekMap.values()).sort(
         (a, b) => a.start.getTime() - b.start.getTime(),
       ),
@@ -158,13 +158,12 @@ function buildTrendPoints(salesTrend) {
   }
 
   return {
-    mode: "Daily",
-    description:
-      "Daily view shows revenue and quantity movement across the selected period.",
+    mode: t("charts.revenueQuantity.dailyMode"),
+    description: t("charts.revenueQuantity.dailyDescription"),
     points: sorted.map((item) => ({
       key: dateKey(item.date),
       start: item.date,
-      label: formatShortDate(item.date),
+      label: formatShortDate(item.date, locale),
       revenue: item.revenue,
       quantity: item.quantity,
     })),
@@ -172,9 +171,12 @@ function buildTrendPoints(salesTrend) {
 }
 
 export function RevenueQuantityChart({ loading, salesTrend }) {
+  const { t, i18n } = useTranslation("reports");
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
   const trendData = useMemo(() => {
-    return buildTrendPoints(salesTrend);
-  }, [salesTrend]);
+    return buildTrendPoints(salesTrend, t, locale);
+  }, [salesTrend, t, locale]);
 
   const options = useMemo(() => {
     return {
@@ -248,10 +250,10 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
       yaxis: [
         {
           title: {
-            text: "Revenue",
+            text: t("charts.revenueQuantity.revenue"),
           },
           labels: {
-            formatter: (value) => formatCompactCurrency(value),
+            formatter: (value) => formatCompactCurrency(value, locale),
             style: {
               colors: "#374151",
               fontSize: "12px",
@@ -261,10 +263,10 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
         {
           opposite: true,
           title: {
-            text: "Quantity",
+            text: t("charts.revenueQuantity.quantity"),
           },
           labels: {
-            formatter: (value) => formatNumber(value, 0),
+            formatter: (value) => formatNumber(value, 0, locale),
             style: {
               colors: "#374151",
               fontSize: "12px",
@@ -277,25 +279,31 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
         intersect: false,
         y: [
           {
-            formatter: (value) => formatCurrency(value),
+            formatter: (value) => formatCurrency(value, locale),
           },
           {
-            formatter: (value) => `${formatNumber(value, 0)} units`,
+            formatter: (value) =>
+              t("charts.revenueQuantity.units", {
+                value: formatNumber(value, 0, locale),
+              }),
           },
         ],
       },
     };
-  }, [trendData]);
+  }, [trendData, t, locale]);
 
   return (
-    <Card title="Revenue and quantity trend">
+    <Card title={t("charts.revenueQuantity.title")}>
       <p className="reports-muted">
-        {trendData.mode} trend view. {trendData.description}
+        {t("charts.revenueQuantity.summary", {
+          mode: trendData.mode,
+          description: trendData.description,
+        })}
       </p>
 
       <div className="reports-chart-box reports-chart-box-xl">
         {loading ? (
-          <div className="reports-empty">Loading chart...</div>
+          <div className="reports-empty">{t("charts.revenueQuantity.loading")}</div>
         ) : trendData.points.length ? (
           <ReactApexChart
             type="line"
@@ -303,19 +311,21 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
             options={options}
             series={[
               {
-                name: "Revenue",
+                name: t("charts.revenueQuantity.revenue"),
                 type: "area",
                 data: trendData.points.map((item) => item.revenue),
               },
               {
-                name: "Quantity sold",
+                name: t("charts.revenueQuantity.quantitySold"),
                 type: "line",
                 data: trendData.points.map((item) => item.quantity),
               },
             ]}
           />
         ) : (
-          <div className="reports-empty">No sales trend data available.</div>
+          <div className="reports-empty">
+            {t("charts.revenueQuantity.empty")}
+          </div>
         )}
       </div>
     </Card>

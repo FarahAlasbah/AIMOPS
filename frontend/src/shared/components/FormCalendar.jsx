@@ -33,14 +33,17 @@ const clampDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 const inRange = (d, minD, maxD) => {
   const t = clampDay(d).getTime();
+
   if (minD) {
     const mn = clampDay(minD).getTime();
     if (t < mn) return false;
   }
+
   if (maxD) {
     const mx = clampDay(maxD).getTime();
     if (t > mx) return false;
   }
+
   return true;
 };
 
@@ -53,24 +56,33 @@ const buildGrid = (monthDate) => {
   const gridStart = new Date(y, m, 1 - startOffset);
 
   const days = [];
-  for (let i = 0; i < 42; i++) {
+
+  for (let i = 0; i < 42; i += 1) {
     const d = new Date(gridStart);
     d.setDate(gridStart.getDate() + i);
+
     days.push({
       date: d,
       inMonth: d.getMonth() === m,
     });
   }
+
   return days;
 };
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-const getMonthLabels = () => {
+const getMonthLabels = (locale = "en") => {
   const labels = [];
-  for (let i = 0; i < 12; i++) {
-    labels.push(new Date(2000, i, 1).toLocaleString(undefined, { month: "long" }));
+
+  for (let i = 0; i < 12; i += 1) {
+    labels.push(
+      new Date(2000, i, 1).toLocaleString(locale === "ar" ? "ar" : "en", {
+        month: "long",
+      }),
+    );
   }
+
   return labels;
 };
 
@@ -81,9 +93,11 @@ const clampAnchorToMinMax = (monthDate, minD, maxD) => {
   if (minD && clampDay(last).getTime() < clampDay(minD).getTime()) {
     return startOfMonth(minD);
   }
+
   if (maxD && clampDay(first).getTime() > clampDay(maxD).getTime()) {
     return startOfMonth(maxD);
   }
+
   return first;
 };
 
@@ -96,10 +110,12 @@ const FormCalendar = ({
   required = false,
   disabled = false,
   error,
-  placeholder = "YYYY-MM-DD",
+  placeholder,
   ...props
 }) => {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const locale = i18n.language?.startsWith("ar") ? "ar" : "en";
+
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
 
@@ -112,7 +128,9 @@ const FormCalendar = ({
     return startOfMonth(new Date());
   });
 
-  const monthLabels = useMemo(() => getMonthLabels(), []);
+  const safePlaceholder = placeholder || t("shared.formCalendar.placeholder");
+  const monthLabels = useMemo(() => getMonthLabels(locale), [locale]);
+
   const [monthIdx, setMonthIdx] = useState(anchor.getMonth());
   const [yearText, setYearText] = useState(String(anchor.getFullYear()));
 
@@ -134,6 +152,7 @@ const FormCalendar = ({
       if (!wrapRef.current) return;
       if (!wrapRef.current.contains(e.target)) setOpen(false);
     };
+
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
@@ -164,13 +183,20 @@ const FormCalendar = ({
 
   const canPrev = () => {
     if (!minD) return true;
+
     const prevMonthLast = new Date(anchor.getFullYear(), anchor.getMonth(), 0);
     return clampDay(prevMonthLast).getTime() >= clampDay(minD).getTime();
   };
 
   const canNext = () => {
     if (!maxD) return true;
-    const nextMonthFirst = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1);
+
+    const nextMonthFirst = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth() + 1,
+      1,
+    );
+
     return clampDay(nextMonthFirst).getTime() <= clampDay(maxD).getTime();
   };
 
@@ -178,6 +204,7 @@ const FormCalendar = ({
 
   const applyMonthYear = (nextMonthIdx, nextYear) => {
     if (Number.isNaN(nextYear) || nextYear < 1000 || nextYear > 9999) return;
+
     const next = new Date(nextYear, nextMonthIdx, 1);
     setAnchorSafe(next);
   };
@@ -191,21 +218,26 @@ const FormCalendar = ({
         </label>
       )}
 
-      <div className={`fc-field ${disabled ? "disabled" : ""} ${error ? "error" : ""}`}>
+      <div
+        className={`fc-field ${disabled ? "disabled" : ""} ${
+          error ? "error" : ""
+        }`}
+      >
         <input
           type="text"
           className={`form-input fc-input ${error ? "error" : ""}`}
           value={value || ""}
-          placeholder={placeholder}
+          placeholder={safePlaceholder}
           readOnly
           disabled={disabled}
-          onClick={() => !disabled && setOpen((v) => !v)}
+          onClick={() => !disabled && setOpen((current) => !current)}
           {...props}
         />
+
         <button
           type="button"
           className="fc-btn"
-          onClick={() => !disabled && setOpen((v) => !v)}
+          onClick={() => !disabled && setOpen((current) => !current)}
           disabled={disabled}
           aria-label={t("shared.formCalendar.openCalendar")}
         >
@@ -225,20 +257,24 @@ const FormCalendar = ({
                 ‹
               </button>
 
-              <div className="fc-ctrls" aria-label="Month and year">
+              <div
+                className="fc-ctrls"
+                aria-label={t("shared.formCalendar.monthAndYear")}
+              >
                 <select
                   className="fc-month"
                   value={monthIdx}
                   onChange={(e) => {
                     const nextM = Number(e.target.value);
                     setMonthIdx(nextM);
+
                     const y = Number(yearText);
                     applyMonthYear(nextM, y);
                   }}
                 >
-                  {monthLabels.map((lbl, idx) => (
-                    <option key={lbl} value={idx}>
-                      {lbl}
+                  {monthLabels.map((monthLabel, idx) => (
+                    <option key={monthLabel} value={idx}>
+                      {monthLabel}
                     </option>
                   ))}
                 </select>
@@ -250,6 +286,7 @@ const FormCalendar = ({
                   onChange={(e) => {
                     const v = e.target.value;
                     setYearText(v);
+
                     const y = Number(v);
                     if (!Number.isNaN(y)) applyMonthYear(monthIdx, y);
                   }}
@@ -275,9 +312,9 @@ const FormCalendar = ({
             </div>
 
             <div className="fc-week">
-              {WEEKDAYS.map((w) => (
-                <div key={w} className="fc-wd">
-                  {w}
+              {WEEKDAY_KEYS.map((key) => (
+                <div key={key} className="fc-wd">
+                  {t(`shared.formCalendar.weekdays.${key}`)}
                 </div>
               ))}
             </div>
@@ -312,6 +349,7 @@ const FormCalendar = ({
               <button type="button" className="fc-link" onClick={clear}>
                 {t("shared.formCalendar.clear")}
               </button>
+
               <button type="button" className="fc-link" onClick={pickToday}>
                 {t("shared.formCalendar.today")}
               </button>

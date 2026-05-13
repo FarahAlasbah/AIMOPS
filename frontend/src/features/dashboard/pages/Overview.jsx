@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
-
+import { getDateRangeFromPeriod } from "../../reports/utils/reportUtils";
 import { getDashboardReport } from "../../../api/reports";
 import { Card, PageHeader } from "../../../shared/components";
 import { useAuth } from "../../../shared/contexts/AuthContext";
@@ -61,6 +61,14 @@ const CAMPAIGN_STATUS_ORDER = [
   "draft",
   "other",
 ];
+
+const CAMPAIGN_STATUS_LABEL_KEY = {
+  active: "campaignStatus.active",
+  planned: "campaignStatus.planned",
+  completed: "campaignStatus.completed",
+  draft: "campaignStatus.draft",
+  other: "campaignStatus.other",
+};
 
 function pickDashboard({ user, hasPermission }) {
   const roleName = user?.role?.display_name || user?.role_name || "";
@@ -215,7 +223,7 @@ function shortDayLabel(value, locale = "en") {
   });
 }
 
-function getProductName(product, fallback = "Unnamed product") {
+function getProductName(product, fallback) {
   return product?.product_name || product?.name || fallback;
 }
 
@@ -228,13 +236,8 @@ function getProductRevenue(product) {
   );
 }
 
-function getCampaignName(campaign) {
-  return (
-    campaign?.campaign_name ||
-    campaign?.name ||
-    campaign?.title ||
-    "Untitled campaign"
-  );
+function getCampaignName(campaign, fallback) {
+  return campaign?.campaign_name || campaign?.name || campaign?.title || fallback;
 }
 
 function getCampaignBudget(campaign) {
@@ -309,6 +312,7 @@ export default function Overview() {
       setError("");
 
       try {
+        const dashboardReportRange = getDateRangeFromPeriod("all");
         const [
           summaryResult,
           uploadsResult,
@@ -322,7 +326,7 @@ export default function Overview() {
           getProductsForCharts({ limit: 200 }),
           getCampaignsForDashboard(),
           getForecastSummaryForDashboard(),
-          getDashboardReport(),
+          getDashboardReport({ range: dashboardReportRange }),
         ]);
 
         if (!alive) return;
@@ -606,7 +610,7 @@ export default function Overview() {
         },
       },
     };
-  }, [uploads.length, locale, t]);
+  }, [uploads.length, locale, t, uploadStatusStats]);
 
   const productRevenueData = useMemo(() => {
     const reportProducts = Array.isArray(reportData?.top_products)
@@ -758,7 +762,7 @@ export default function Overview() {
         const roi = getCampaignRoi(campaign);
 
         return {
-          name: getCampaignName(campaign),
+          name: getCampaignName(campaign, t("labels.untitledCampaign")),
           budget,
           revenue,
           roi,
@@ -767,7 +771,7 @@ export default function Overview() {
       })
       .sort((a, b) => b.bubbleSize - a.bubbleSize)
       .slice(0, 10);
-  }, [campaigns]);
+  }, [campaigns, t]);
 
   const campaignBubbleOptions = useMemo(() => {
     return {
@@ -797,13 +801,13 @@ export default function Overview() {
         },
       },
       xaxis: {
-        title: { text: "Budget" },
+        title: { text: t("charts.axis.budget") },
         labels: {
           formatter: (value) => formatCurrency(value, locale),
         },
       },
       yaxis: {
-        title: { text: "ROI" },
+        title: { text: t("charts.axis.roi") },
         labels: {
           formatter: (value) => formatPercent(value, locale),
         },
@@ -814,16 +818,22 @@ export default function Overview() {
 
           return `
             <div class="overview-chart-tooltip">
-              <strong>${escapeHtml(point?.name || "Campaign")}</strong>
-              <span>Budget: ${escapeHtml(formatCurrency(point?.x || 0, locale))}</span>
-              <span>ROI: ${escapeHtml(formatPercent(point?.y || 0, locale))}</span>
-              <span>Revenue: ${escapeHtml(formatCurrency(point?.revenue || 0, locale))}</span>
+              <strong>${escapeHtml(point?.name || t("labels.untitledCampaign"))}</strong>
+              <span>${escapeHtml(t("charts.tooltip.budget"))}: ${escapeHtml(
+                formatCurrency(point?.x || 0, locale),
+              )}</span>
+              <span>${escapeHtml(t("charts.tooltip.roi"))}: ${escapeHtml(
+                formatPercent(point?.y || 0, locale),
+              )}</span>
+              <span>${escapeHtml(t("charts.tooltip.revenue"))}: ${escapeHtml(
+                formatCurrency(point?.revenue || 0, locale),
+              )}</span>
             </div>
           `;
         },
       },
     };
-  }, [locale]);
+  }, [locale, t]);
 
   const campaignStatusSeries = useMemo(() => {
     return CAMPAIGN_STATUS_ORDER.map((key) => campaignStats[key] || 0);
@@ -843,7 +853,9 @@ export default function Overview() {
         CHART_COLORS.amber,
         CHART_COLORS.indigo,
       ],
-      labels: ["Active", "Planned", "Completed", "Draft", "Other"],
+      labels: CAMPAIGN_STATUS_ORDER.map((key) =>
+        t(CAMPAIGN_STATUS_LABEL_KEY[key]),
+      ),
       dataLabels: { enabled: false },
       legend: {
         position: "bottom",
@@ -859,7 +871,7 @@ export default function Overview() {
               show: true,
               total: {
                 show: true,
-                label: t("charts.total", { defaultValue: "Total" }),
+                label: t("charts.total"),
                 formatter: () => formatNumber(campaignStats.total, locale),
               },
             },
@@ -958,11 +970,7 @@ export default function Overview() {
           </div>
         </Card>
 
-        <Card
-          title={t("charts.forecastStatus", {
-            defaultValue: "Forecast readiness",
-          })}
-        >
+        <Card title={t("charts.forecastStatus")}>
           <div className="chart-shell large">
             {loading ? (
               <div className="chart-empty">{t("charts.loading")}</div>
@@ -981,11 +989,7 @@ export default function Overview() {
       </div>
 
       <div className="overview-secondary-grid">
-        <Card
-          title={t("charts.productRevenueRank", {
-            defaultValue: "Product revenue ranking",
-          })}
-        >
+        <Card title={t("charts.productRevenueRank")}>
           <div className="chart-shell medium">
             {loading ? (
               <div className="chart-empty">{t("charts.loading")}</div>
@@ -1007,11 +1011,7 @@ export default function Overview() {
           </div>
         </Card>
 
-        <Card
-          title={t("charts.campaignPortfolio", {
-            defaultValue: "Campaign portfolio",
-          })}
-        >
+        <Card title={t("charts.campaignPortfolio")}>
           <div className="chart-shell medium">
             {loading ? (
               <div className="chart-empty">{t("charts.loading")}</div>
@@ -1022,7 +1022,7 @@ export default function Overview() {
                 options={campaignBubbleOptions}
                 series={[
                   {
-                    name: "Campaigns",
+                    name: t("charts.campaignsDatasetLabel"),
                     data: campaignBubbleData.map((item) => ({
                       x: item.budget,
                       y: item.roi,
@@ -1034,11 +1034,7 @@ export default function Overview() {
                 ]}
               />
             ) : (
-              <div className="chart-empty">
-                {t("charts.noCampaigns", {
-                  defaultValue: "No campaign data available.",
-                })}
-              </div>
+              <div className="chart-empty">{t("charts.noCampaigns")}</div>
             )}
           </div>
         </Card>
@@ -1062,11 +1058,7 @@ export default function Overview() {
           </div>
         </Card>
 
-        <Card
-          title={t("charts.campaignStatus", {
-            defaultValue: "Campaign status",
-          })}
-        >
+        <Card title={t("charts.campaignStatus")}>
           <div className="chart-shell medium">
             {loading ? (
               <div className="chart-empty">{t("charts.loading")}</div>
@@ -1078,11 +1070,7 @@ export default function Overview() {
                 series={campaignStatusSeries}
               />
             ) : (
-              <div className="chart-empty">
-                {t("charts.noCampaigns", {
-                  defaultValue: "No campaign data available.",
-                })}
-              </div>
+              <div className="chart-empty">{t("charts.noCampaigns")}</div>
             )}
           </div>
         </Card>

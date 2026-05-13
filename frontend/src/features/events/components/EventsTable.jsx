@@ -38,6 +38,8 @@ const toSet = (value) => {
   return new Set();
 };
 
+const normalizeKey = (value) => String(value || "").trim().toLowerCase();
+
 export default function EventsTable({
   events = [],
   onOpen,
@@ -57,7 +59,7 @@ export default function EventsTable({
   const visibleIds = useMemo(
     () =>
       events
-        .map((ev) => String(ev?.event_id ?? "").trim())
+        .map((event) => String(event?.event_id ?? "").trim())
         .filter(Boolean),
     [events],
   );
@@ -84,9 +86,7 @@ export default function EventsTable({
                   indeterminate={someVisibleSelected}
                   disabled={selectionDisabled || visibleIds.length === 0}
                   onChange={onToggleAll}
-                  label={t("table.selectAllConfirmed", {
-                    defaultValue: "Select all confirmed events",
-                  })}
+                  label={t("table.selectAllConfirmed")}
                 />
               </th>
             )}
@@ -104,16 +104,20 @@ export default function EventsTable({
         </thead>
 
         <tbody>
-          {events.map((ev) => {
-            const id = String(ev?.event_id ?? "");
+          {events.map((event) => {
+            const id = String(event?.event_id ?? "");
             const selected = selectedSet.has(id);
             const deleting = deletingSet.has(id);
 
+            const typeKey = normalizeKey(event?.event_type);
+            const statusKey = normalizeKey(event?.status);
+            const recurrenceKey = normalizeKey(event?.recurrence_type);
+
             return (
               <tr
-                key={ev.event_id}
+                key={event.event_id}
                 onClick={() => {
-                  if (!deleting) onOpen?.(ev.event_id);
+                  if (!deleting) onOpen?.(event.event_id);
                 }}
                 className={`events-row ${selected ? "events-row-selected" : ""} ${
                   deleting ? "events-row-busy" : ""
@@ -126,39 +130,56 @@ export default function EventsTable({
                       className="events-checkbox"
                       checked={selected}
                       disabled={selectionDisabled || deleting}
-                      onChange={(e) => onToggleOne?.(ev.event_id, e.target.checked)}
-                      aria-label={t("table.selectConfirmed", {
-                        defaultValue: "Select confirmed event",
-                      })}
+                      onChange={(e) =>
+                        onToggleOne?.(event.event_id, e.target.checked)
+                      }
+                      aria-label={t("table.selectConfirmed")}
                     />
                   </td>
                 )}
 
                 <td>
-                  <div className="ev-title">{pickEventTitle(ev)}</div>
-                  {ev?.description ? (
-                    <div className="ev-sub">{ev.description}</div>
+                  <div className="ev-title">{pickEventTitle(event)}</div>
+
+                  {event?.description ? (
+                    <div className="ev-sub">{event.description}</div>
                   ) : null}
                 </td>
 
                 <td className="mono">
-                  {fmtDateRange(ev?.start_date, ev?.end_date)}
+                  {fmtDateRange(event?.start_date, event?.end_date)}
                 </td>
 
-                <td>{ev?.event_type || "-"}</td>
+                <td>
+                  {typeKey
+                    ? t(`form.types.${typeKey}`, {
+                        defaultValue: event?.event_type || "-",
+                      })
+                    : "-"}
+                </td>
 
                 <td>
                   <span
-                    className={`pill pill-${String(ev?.status || "").toLowerCase()}`}
+                    className={`pill pill-${String(event?.status || "").toLowerCase()}`}
                   >
-                    {ev?.status || "-"}
+                    {statusKey
+                      ? t(`table.statuses.${statusKey}`, {
+                          defaultValue: event?.status || "-",
+                        })
+                      : "-"}
                   </span>
                 </td>
 
                 <td>
-                  {ev?.is_recurring ? (
+                  {event?.is_recurring ? (
                     <span className="pill pill-recurring">
-                      {ev?.recurrence_type || "recurring"}
+                      {recurrenceKey
+                        ? t(`form.recurrenceOptions.${recurrenceKey}`, {
+                            defaultValue:
+                              event?.recurrence_type ||
+                              t("table.recurrenceFallback"),
+                          })
+                        : t("table.recurrenceFallback")}
                     </span>
                   ) : (
                     <span className="pill pill-muted">
@@ -173,11 +194,9 @@ export default function EventsTable({
                       type="button"
                       className="events-delete-btn"
                       disabled={deleting}
-                      onClick={() => onDeleteOne?.(ev)}
+                      onClick={() => onDeleteOne?.(event)}
                     >
-                      {deleting
-                        ? t("table.deleting", { defaultValue: "Deleting..." })
-                        : t("table.delete", { defaultValue: "Delete" })}
+                      {deleting ? t("table.deleting") : t("table.delete")}
                     </button>
                   </td>
                 )}

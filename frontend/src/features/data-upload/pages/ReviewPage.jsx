@@ -88,7 +88,9 @@ const extractProductsFromValue = (value) => {
       ? value
       : [];
 
-  return raw.map(normalizeProduct).filter((p) => p.primary_name && p.normalized_name);
+  return raw
+    .map(normalizeProduct)
+    .filter((p) => p.primary_name && p.normalized_name);
 };
 
 const extractProductsFromMappingResult = (confirmResult) => {
@@ -171,7 +173,11 @@ const buildConfirmResultFromDetails = (details) => {
   const mappings = extractConfirmedMappingsFromDetails(details);
   const products = extractProductsFromDetails(details);
 
-  if (!isMappingConfirmedStatus(details.status) && mappings.length === 0 && products.length === 0) {
+  if (
+    !isMappingConfirmedStatus(details.status) &&
+    mappings.length === 0 &&
+    products.length === 0
+  ) {
     return null;
   }
 
@@ -270,9 +276,12 @@ export default function ReviewPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(extractApiError(err, t("reviewPage.errorLoadFailed", {
-            defaultValue: "Unable to load upload details.",
-          })));
+          setError(
+            extractApiError(
+              err,
+              t("reviewPage.errorLoadFailed"),
+            ),
+          );
         }
       } finally {
         if (!cancelled) {
@@ -372,13 +381,10 @@ export default function ReviewPage() {
 
       try {
         await broadcastNotification({
-          title: t("reviewPage.notifTitle", {
-            defaultValue: "New Products Confirmed",
-          }),
+          title: t("reviewPage.notifTitle"),
           message: t("reviewPage.notifMessage", {
             count: confirmed_products.length,
             batchId,
-            defaultValue: `${confirmed_products.length} new product(s) from batch #${batchId} have been confirmed and are now available.`,
           }),
           type: "info",
           target_type: "all",
@@ -398,30 +404,30 @@ export default function ReviewPage() {
       <PageHeader
         actions={
           <PageHelp
-            title="How to use Product Review"
+            title={t("reviewPage.help.title")}
             items={[
               {
-                title: "1. Check extracted products",
-                description:
-                  "Review the products AIMOPS found from the uploaded sales file. Make sure the product names and categories look correct.",
+                title: t("reviewPage.help.items.checkProducts.title"),
+                description: t("reviewPage.help.items.checkProducts.description"),
               },
               {
-                title: "2. Merge duplicates",
-                description:
-                  "Use Manage merges when the same product appears with different spellings or names. This keeps reports and forecasts cleaner.",
+                title: t("reviewPage.help.items.mergeDuplicates.title"),
+                description: t(
+                  "reviewPage.help.items.mergeDuplicates.description",
+                ),
               },
               {
-                title: "3. Watch typo warnings",
-                description:
-                  "Warning chips show possible spelling issues or product names that may need merging.",
+                title: t("reviewPage.help.items.watchWarnings.title"),
+                description: t("reviewPage.help.items.watchWarnings.description"),
               },
               {
-                title: "4. Confirm products",
-                description:
-                  "After confirming, the products become available for the rest of the system, including reports and forecasting.",
+                title: t("reviewPage.help.items.confirmProducts.title"),
+                description: t(
+                  "reviewPage.help.items.confirmProducts.description",
+                ),
               },
             ]}
-            note="Once products are confirmed or the batch is already processed, editing is locked."
+            note={t("reviewPage.help.note")}
           />
         }
       />
@@ -440,19 +446,14 @@ export default function ReviewPage() {
             {alreadyProcessed && !confirmProductsResult?.success && (
               <div style={{ marginBottom: 12 }}>
                 <InfoMessage type="info">
-                  {t("reviewPage.alreadyProcessedInfo", {
-                    defaultValue:
-                      "This batch has already been processed. You can finish and return to uploads.",
-                  })}
+                  {t("reviewPage.alreadyProcessedInfo")}
                 </InfoMessage>
               </div>
             )}
 
             {!confirmMappingsResult?.success && (
               <div style={{ marginBottom: 12 }}>
-                <InfoMessage type="warn">
-                  {t("reviewPage.noMappingsWarn")}
-                </InfoMessage>
+                <InfoMessage type="warn">{t("reviewPage.noMappingsWarn")}</InfoMessage>
               </div>
             )}
 

@@ -23,7 +23,9 @@ import "./ProductsPage.css";
 
 const getDateTime = (value) => {
   if (!value) return 0;
+
   const time = new Date(value).getTime();
+
   return Number.isNaN(time) ? 0 : time;
 };
 
@@ -82,6 +84,7 @@ export default function ProductsPage() {
 
     try {
       const res = await getProducts();
+
       if (seq !== loadRef.current) return;
 
       const list = Array.isArray(res?.products) ? res.products : [];
@@ -355,44 +358,41 @@ export default function ProductsPage() {
   };
 
   const redirectMessage = redirectNotice?.fileName
-    ? `“${redirectNotice.fileName}” is already completed, so we brought you to Products. You can view and manage the products imported from that file here.`
-    : "This upload is already completed, so we brought you to Products. You can view and manage the imported products here.";
+    ? t("page.redirectCompletedWithFile", {
+        fileName: redirectNotice.fileName,
+      })
+    : t("page.redirectCompleted");
 
   return (
     <div className="products-page">
       <PageHeader
         actions={
           <PageHelp
-            title="How to use Products"
-            buttonLabel="Open products help"
+            title={t("page.help.title")}
+            buttonLabel={t("page.help.buttonLabel")}
             items={[
               {
-                title: "1. Review extracted products",
-                description:
-                  "This page shows the products AIMOPS found from uploaded sales data, including category, sales count, revenue, and last sale date.",
+                title: t("page.help.items.reviewProducts.title"),
+                description: t("page.help.items.reviewProducts.description"),
               },
               {
-                title: "2. Use filters to find products",
-                description:
-                  "Search by product name, filter by category, filter products that need review, or narrow the list by last sale date.",
+                title: t("page.help.items.useFilters.title"),
+                description: t("page.help.items.useFilters.description"),
               },
               {
-                title: "3. Check products that need review",
-                description:
-                  "Rows marked as Needs review may contain possible duplicates, spelling issues, or unusual product names that should be checked.",
+                title: t("page.help.items.checkReview.title"),
+                description: t("page.help.items.checkReview.description"),
               },
               {
-                title: "4. Merge duplicate products",
-                description:
-                  "Select two or more products, then use Merge selected. Choose the main product that should stay, and merge the duplicate names into it.",
+                title: t("page.help.items.mergeDuplicates.title"),
+                description: t("page.help.items.mergeDuplicates.description"),
               },
               {
-                title: "5. Delete carefully",
-                description:
-                  "Deleting products can affect product lists, reports, and forecasting. Products with sales history require extra caution.",
+                title: t("page.help.items.deleteCarefully.title"),
+                description: t("page.help.items.deleteCarefully.description"),
               },
             ]}
-            note="Tip: Clean product names make reports and forecasts more accurate, especially when the same product appears with different spellings."
+            note={t("page.help.note")}
           />
         }
       />

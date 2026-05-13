@@ -1,4 +1,47 @@
 {
+  "common": {
+    "yes": "نعم",
+    "no": "لا"
+  },
+  "roles": {
+    "date": "التاريخ",
+    "product_code": "رمز المنتج",
+    "product_name": "اسم المنتج",
+    "category": "الفئة",
+    "quantity": "الكمية",
+    "unit_price": "سعر الوحدة",
+    "total_amount": "المبلغ الإجمالي",
+    "discount": "الخصم",
+    "customer_id": "رقم العميل",
+    "location": "الموقع",
+    "payment_method": "طريقة الدفع",
+    "skip": "تجاهل"
+  },
+  "statuses": {
+    "pending": "قيد الانتظار",
+    "mapping": "قيد تعيين الأعمدة",
+    "mapped": "تم تعيين الأعمدة",
+    "mapping_confirmed": "تم تأكيد التعيين",
+    "mappings_confirmed": "تم تأكيد التعيينات",
+    "products_pending": "المنتجات بانتظار المراجعة",
+    "products_ready": "المنتجات جاهزة",
+    "review": "مراجعة",
+    "review_required": "تحتاج إلى مراجعة",
+    "processed": "تمت المعالجة",
+    "done": "تم",
+    "success": "ناجح",
+    "completed": "مكتمل",
+    "confirmed": "مؤكد",
+    "imported": "تم الاستيراد",
+    "failed": "فشل",
+    "error": "خطأ",
+    "rejected": "مرفوض"
+  },
+  "fileValidation": {
+    "noFile": "لم يتم اختيار ملف.",
+    "invalidType": "يُسمح فقط بملفات .csv و .xlsx.",
+    "tooLarge": "حجم الملف كبير جداً. الحد الأقصى هو {{maxMb}} MB."
+  },
   "columnMeta": {
     "confidence": "مستوى الثقة",
     "classification": "التصنيف",
@@ -27,34 +70,34 @@
     "confirmMappings": "تأكيد التعيينات",
     "continue": "متابعة",
     "confirming": "جارٍ التأكيد...",
-    "resolveRequired": "يرجى حل الحقول المطلوبة المفقودة وتأكيد جميع أعمدة \"تحتاج إلى تحقق\".",
+    "resolveRequired": "يرجى إكمال الحقول المطلوبة وتأكيد كل الأعمدة التي تحتاج إلى مراجعة.",
     "role": "الدور",
     "showDetails": "عرض التفاصيل",
     "hideDetails": "إخفاء التفاصيل",
-    "lockedBatch": "التعيينات مقفلة لهذه الدفعة.",
+    "lockedBatch": "التعيينات مقفلة لهذا الرفع.",
     "confirmRoleChangeFirst": "قم بتأكيد تغيير الدور أو إلغائه أولاً.",
-    "notSuggestedRole": "ليس الدور المقترح. المقترح:",
+    "notSuggestedRole": "هذا ليس الدور المقترح. المقترح:",
     "roleChangePrompt": "لقد اخترت <strong>{{selected}}</strong>، وهو ليس الدور المقترح (<strong>{{suggested}}</strong>). هل تريد تأكيد هذا التغيير؟",
     "cancel": "إلغاء",
     "confirmChange": "تأكيد التغيير",
     "highConfidence": {
-      "title": "مُعيَّن تلقائياً (ثقة عالية)",
-      "sub": "راجع هذه التعيينات."
+      "title": "جاهزة للاستخدام",
+      "sub": "قام AIMOPS بمطابقة هذه الأعمدة بثقة عالية. يمكنك مراجعتها إذا احتجت."
     },
     "requiredMissing": {
       "title": "حقول مطلوبة مفقودة",
-      "sub": "يجب تعيين هذه الحقول المطلوبة قبل التأكيد.",
+      "sub": "اختر العمود الصحيح لكل حقل مطلوب قبل المتابعة.",
       "required": "(مطلوب)",
       "chooseColumn": "اختر عموداً",
       "selectColumn": "اختر عموداً..."
     },
     "needsMapping": {
       "title": "يحتاج إلى تعيين",
-      "sub": "هذه الأعمدة تحتاج إلى دور قبل المتابعة."
+      "sub": "اختر معنى كل عمود حتى يستخدمه AIMOPS بشكل صحيح."
     },
     "needsVerification": {
-      "title": "يحتاج إلى تحقق ({{confirmed}}/{{total}} مؤكد)",
-      "sub": "أكّد تخمين الذكاء الاصطناعي أو اختر دوراً مختلفاً.",
+      "title": "يحتاج إلى مراجعة ({{confirmed}}/{{total}} مؤكد)",
+      "sub": "أكّد الاقتراح أو اختر دوراً مختلفاً.",
       "prev": "السابق",
       "next": "التالي",
       "page": "صفحة {{page}} / {{totalPages}}",
@@ -62,24 +105,27 @@
       "confirmed": "مؤكد"
     },
     "suggestedSkip": {
-      "title": "مقترح تجاوزه",
-      "sub": "هذه الأعمدة على الأرجح غير مفيدة.",
-      "whySkip": "سبب التجاوز:",
+      "title": "مقترح تجاهله",
+      "sub": "هذه الأعمدة غالباً غير ضرورية للتقارير أو التنبؤات أو تحليل المنتجات.",
+      "whySkip": "سبب التجاهل:",
       "included": "مضمّن",
-      "skipped": "متجاوَز",
-      "currentRole": "الدور الحالي:"
+      "skipped": "تم تجاهله",
+      "currentRole": "الدور الحالي:",
+      "includeColumn": "تضمين هذا العمود",
+      "skipThisColumn": "تجاهل هذا العمود"
     }
   },
   "review": {
-    "title": "دمج المكررات، ثم تأكيد المنتجات",
-    "subExtracted": "{{count}} منتج مستخرج • {{merges}} دمج محدد",
-    "subNotExtracted": "استخرج المنتجات من هذه الدفعة أولاً",
+    "title": "ادمج التكرارات، ثم أكّد المنتجات",
+    "subExtracted": "{{count}} منتج مستخرج • {{merges}} عملية دمج محددة",
+    "subNotExtracted": "استخرج المنتجات من هذا الرفع أولاً",
     "mappingsConfirmed": "التعيينات مؤكدة ({{count}})",
+    "confirmedOnly": "مؤكد ({{count}})",
     "mappingsNotFound": "التعيينات غير موجودة",
     "badgeExtracted": "مستخرج",
     "badgeNotExtracted": "غير مستخرج",
     "productsConfirmedSuccess": "تم تأكيد المنتجات بنجاح. يمكنك الإنهاء الآن.",
-    "noProductsExtracted": "لم يتم استخراج أي منتجات من هذه الدفعة.",
+    "noProductsExtracted": "لم يتم استخراج أي منتجات من هذا الرفع.",
     "back": "رجوع",
     "extracting": "جارٍ الاستخراج...",
     "extractProducts": "استخراج المنتجات",
@@ -88,21 +134,24 @@
     "confirmProducts": "تأكيد المنتجات",
     "finish": "إنهاء",
     "category": "الفئة:",
+    "product": "المنتج",
+    "uncategorized": "غير مصنف",
     "normalized": "الاسم الموحّد:",
     "noMergesSelected": "لا توجد عمليات دمج محددة",
     "manageMerges": "إدارة الدمج",
     "alreadyConfirmed": "مؤكد بالفعل",
+    "alreadyProcessed": "تمت معالجته مسبقاً",
     "moreChip": "+{{count}} المزيد",
     "modal": {
       "title": "إدارة الدمج",
       "close": "إغلاق",
       "normalizedLabel": "الاسم الموحّد:",
-      "selectedMerges": "الدمج المحدد",
-      "candidates": "المرشحون",
+      "selectedMerges": "عمليات الدمج المحددة",
+      "candidates": "الخيارات المتاحة",
       "noMergesSelected": "لا توجد عمليات دمج محددة.",
-      "noCandidates": "لا توجد أسماء منتجات أخرى في هذه الدفعة.",
+      "noCandidates": "لا توجد أسماء منتجات أخرى في هذا الرفع.",
       "noMatches": "لا توجد نتائج.",
-      "searchPlaceholder": "البحث في المرشحين...",
+      "searchPlaceholder": "ابحث في الخيارات...",
       "shown": "{{count}} معروض",
       "remove": "إزالة",
       "add": "إضافة",
@@ -136,38 +185,124 @@
     "campaignLabel": "الحملة المرتبطة (اختياري)",
     "campaignPlaceholder": "اختر حملة...",
     "uploading": "جارٍ الرفع... {{progress}}%",
+    "uploadingButton": "جارٍ الرفع...",
     "cancel": "إلغاء",
     "upload": "رفع"
   },
   "uploadsList": {
     "loading": "جارٍ تحميل الملفات المرفوعة...",
     "empty": "لا توجد ملفات مرفوعة بعد.",
-    "pageInfo": "صفحة {{page}} • يعرض {{count}} عنصر(عناصر)",
+    "emptyFiltered": "لا توجد ملفات تطابق الفلاتر الحالية.",
+    "pageInfo": "صفحة {{page}} • يعرض {{count}} عنصر/عناصر",
     "offsetInfo": "الإزاحة {{offset}} • الحد {{limit}}",
     "prev": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "fileName": "اسم الملف",
+    "status": "الحالة",
+    "rangeInfo": "يعرض {{from}}–{{to}} من {{total}}",
+    "delete": "حذف",
+    "deleteFile": "حذف {{fileName}}",
+    "selectFile": "تحديد {{fileName}}",
+    "selectVisible": "تحديد الملفات الظاهرة",
+    "completedOpenProducts": "هذا الرفع مكتمل. افتح صفحة المنتجات لعرض المنتجات التي تم استيرادها."
   },
   "mappingPage": {
     "title": "تعيين الأعمدة",
     "breadcrumbRoot": "رفع بيانات المبيعات",
     "breadcrumbBatch": "دفعة {{batchId}}",
-    "alreadyConfirmedInfo": "تم تأكيد التعيينات لهذه الدفعة على هذا الجهاز. التعديل مقفل لتجنب إعادة المعالجة.",
+    "alreadyConfirmedInfo": "تم تأكيد التعيينات لهذا الرفع. التعديل مقفل لتجنب معالجته مرة أخرى.",
+    "completedNoticeTitle": "هذا الرفع مكتمل بالفعل",
+    "completedNoticeMessage": "تمت إضافة منتجات هذا الملف إلى AIMOPS مسبقاً. لا يوجد شيء آخر لتعيينه هنا، يمكنك الرجوع إلى الملفات المرفوعة أو فتح صفحة المنتجات.",
+    "backToUploads": "رجوع إلى الملفات المرفوعة",
+    "viewProducts": "عرض المنتجات",
+    "friendlyFileTypeError": "لم نتمكن من تجهيز هذا الرفع حالياً. تم رفع الملف، لكن AIMOPS لم يستطع إكمال خطوة استخراج المنتجات. جرّب مرة أخرى بعد إصلاح المشكلة من الباك إند، أو اطلب من فريق الباك إند فحص هذا الرفع.",
+    "friendlyCompletedError": "هذا الرفع مكتمل بالفعل. تمت إضافة منتجات هذا الملف إلى AIMOPS مسبقاً، لذلك لا يوجد شيء آخر لتعيينه هنا.",
     "errorAnalyzeFailed": "فشل التحليل.",
-    "errorConfirmFailed": "فشل تأكيد التعيينات."
+    "errorConfirmFailed": "فشل تأكيد التعيينات.",
+    "help": {
+      "title": "طريقة استخدام تعيين الأعمدة",
+      "items": {
+        "reviewRoles": {
+          "title": "1. راجع الأدوار المقترحة",
+          "description": "يقترح AIMOPS معنى كل عمود، مثل التاريخ، اسم المنتج، الكمية، سعر الوحدة، أو المبلغ الإجمالي."
+        },
+        "confirmUncertain": {
+          "title": "2. أكّد الأعمدة غير الواضحة",
+          "description": "الأعمدة التي تحتاج إلى مراجعة يجب تأكيدها قبل المتابعة. استخدم الأمثلة للتأكد أن الاقتراح صحيح."
+        },
+        "fixRequired": {
+          "title": "3. أصلح الحقول المطلوبة",
+          "description": "إذا كان هناك حقل مطلوب مفقود، اختر العمود الصحيح يدوياً من القائمة."
+        },
+        "skipIrrelevant": {
+          "title": "4. تجاهل الأعمدة غير المهمة",
+          "description": "الأعمدة غير المفيدة لتحليل المبيعات يمكن أن تبقى متجاهلة. ضمّن فقط الأعمدة التي تساعد التقارير والتنبؤات وتحليل المنتجات."
+        }
+      },
+      "note": "يمكنك المتابعة فقط بعد حل كل التعيينات المطلوبة وعناصر المراجعة."
+    }
   },
   "reviewPage": {
     "title": "استخراج المنتجات وتأكيدها",
     "breadcrumbRoot": "رفع بيانات المبيعات",
     "breadcrumbBatch": "دفعة {{batchId}}",
-    "noMappingsWarn": "لم يتم العثور على تعيينات مؤكدة لهذه الدفعة على هذا الجهاز. ارجع وأكّد التعيينات مجدداً.",
-    "noProductNameInfo": "يتطلب استخراج المنتجات على الأقل: product_name (وعادةً date/quantity/unit_price/total_amount). ارجع وأصلح تعيينات الأعمدة إذا لزم الأمر.",
-    "errorExtractNeedsProductName": "يتطلب استخراج المنتجات على الأقل: product_name (وعادةً date/quantity/unit_price/total_amount).",
+    "noMappingsWarn": "لم يتم العثور على تعيينات مؤكدة لهذا الرفع. ارجع وأكّد تعيينات الأعمدة مرة أخرى.",
+    "noProductNameInfo": "استخراج المنتجات يحتاج على الأقل product_name، وغالباً يحتاج date و quantity و unit_price و total_amount. ارجع وأصلح تعيينات الأعمدة إذا لزم الأمر.",
+    "alreadyProcessedInfo": "تمت معالجة هذا الرفع مسبقاً. يمكنك الإنهاء والرجوع إلى الملفات المرفوعة.",
+    "notifTitle": "تم تأكيد منتجات جديدة",
+    "notifMessage": "تم تأكيد {{count}} منتج/منتجات جديدة من الدفعة #{{batchId}} وأصبحت متاحة الآن.",
+    "errorLoadFailed": "تعذر تحميل تفاصيل الرفع.",
+    "errorExtractNeedsProductName": "استخراج المنتجات يحتاج على الأقل product_name، وغالباً يحتاج date و quantity و unit_price و total_amount.",
     "errorCannotConfirmYet": "لا يمكن تأكيد المنتجات بعد. تأكد من نجاح الاستخراج.",
     "errorExtractFailed": "فشل استخراج المنتجات.",
     "errorConfirmFailed": "فشل تأكيد المنتجات.",
-    "errorGeneric": "حدث خطأ ما."
+    "errorGeneric": "حدث خطأ ما.",
+    "help": {
+      "title": "طريقة استخدام مراجعة المنتجات",
+      "items": {
+        "checkProducts": {
+          "title": "1. راجع المنتجات المستخرجة",
+          "description": "راجع المنتجات التي وجدها AIMOPS من ملف المبيعات المرفوع. تأكد أن الأسماء والفئات صحيحة."
+        },
+        "mergeDuplicates": {
+          "title": "2. ادمج التكرارات",
+          "description": "استخدم إدارة الدمج عندما يظهر نفس المنتج بأسماء أو كتابات مختلفة. هذا يجعل التقارير والتنبؤات أنظف."
+        },
+        "watchWarnings": {
+          "title": "3. انتبه لتحذيرات الأخطاء",
+          "description": "علامات التحذير تعرض أسماء قد تحتوي على أخطاء كتابة أو منتجات قد تحتاج إلى دمج."
+        },
+        "confirmProducts": {
+          "title": "4. أكّد المنتجات",
+          "description": "بعد التأكيد، تصبح المنتجات متاحة لباقي النظام، مثل التقارير والتنبؤات."
+        }
+      },
+      "note": "بعد تأكيد المنتجات أو إذا كان الرفع معالجاً مسبقاً، سيتم قفل التعديل."
+    }
   },
   "uploadsPage": {
+    "title": "رفع بيانات المبيعات",
+    "breadcrumbRoot": "الحملات",
+    "breadcrumbCurrent": "رفع بيانات المبيعات",
+    "file": "ملف",
+    "uploadsHeader": "الملفات المرفوعة",
+    "refreshing": "جارٍ التحديث...",
+    "refresh": "تحديث",
+    "dismiss": "إغلاق",
+    "searchLabel": "البحث باسم الملف",
+    "searchPlaceholder": "ابحث باسم الملف...",
+    "dateFrom": "من",
+    "dateTo": "إلى",
+    "sortBy": "ترتيب حسب",
+    "sortNewest": "الأحدث أولاً",
+    "sortOldest": "الأقدم أولاً",
+    "sortNameAsc": "اسم الملف أ–ي",
+    "sortNameDesc": "اسم الملف ي–أ",
+    "sortStatus": "الحالة",
+    "clearFilters": "مسح الفلاتر",
+    "selectedUploads": "{{count}} محدد",
+    "clearSelection": "مسح التحديد",
+    "deleteSelected": "حذف المحدد ({{count}})",
     "deleteDialogTitle": "حذف هذا الملف؟",
     "deleteDialogMessage": "هل أنت متأكد أنك تريد حذف \"{{fileName}}\"؟\n\nسيتم حذف الملف المرفوع وسجلات المبيعات المرتبطة به.\nلن يتم حذف المنتجات.",
     "deleteDialogCancel": "إلغاء",
@@ -178,13 +313,8 @@
     "bulkDeleteDialogTitle": "حذف الملفات المحددة؟",
     "bulkDeleteDialogMessage": "هل أنت متأكد أنك تريد حذف {{count}} ملف/ملفات محددة؟\n\nسيتم حذف الملفات المرفوعة وسجلات المبيعات المرتبطة بها.\nلن يتم حذف المنتجات.",
     "bulkDeleteDialogConfirm": "حذف المحدد",
-    "title": "رفع بيانات مبيعات الحملة",
-    "breadcrumbRoot": "الحملات",
-    "breadcrumbCurrent": "رفع بيانات المبيعات",
-    "uploadsHeader": "الملفات المرفوعة",
-    "refreshing": "جارٍ التحديث...",
-    "refresh": "تحديث",
-    "dismiss": "إغلاق",
+    "bulkDeleteFailed": "تعذر حذف {{count}} ملف/ملفات محددة.",
+    "bulkDeletePartialFailed": "تعذر حذف {{failed}} من أصل {{total}} ملف/ملفات محددة.",
     "errorDuplicateFile": "هذا الملف تم رفعه مسبقاً. يرجى اختيار ملف مختلف.",
     "errorNoFile": "يرجى اختيار ملف أولاً.",
     "errorLoadFailed": "فشل تحميل قائمة الملفات المرفوعة.",
@@ -193,6 +323,32 @@
     "errorDeleteFailed": "فشل الحذف.",
     "errorGeneric": "حدث خطأ ما.",
     "overlapWarning": "تم اكتشاف تداخل في النطاق الزمني ({{from}} → {{to}}). تم استبدال السجلات الموجودة في ذلك النطاق لتجنب التكرار.",
-    "overlapWarningWithRows": "تم اكتشاف تداخل في النطاق الزمني ({{from}} → {{to}}). تم استبدال السجلات الموجودة في ذلك النطاق لتجنب التكرار. (تم استبدال {{deleted}} صف/صفوف)"
+    "overlapWarningWithRows": "تم اكتشاف تداخل في النطاق الزمني ({{from}} → {{to}}). تم استبدال السجلات الموجودة في ذلك النطاق لتجنب التكرار. (تم استبدال {{deleted}} صف/صفوف)",
+    "help": {
+      "title": "طريقة استخدام رفع البيانات",
+      "items": {
+        "uploadFile": {
+          "title": "1. ارفع ملف مبيعات",
+          "description": "اختر ملف CSV أو Excel يحتوي على بيانات المبيعات مثل التاريخ، اسم المنتج، الكمية، السعر، والمبلغ الإجمالي."
+        },
+        "checkUploads": {
+          "title": "2. راجع الملفات السابقة",
+          "description": "استخدم جدول الملفات المرفوعة للعثور على ملفات قديمة، أو فلترتها حسب التاريخ، أو البحث باسم الملف، أو ترتيبها حسب الحالة."
+        },
+        "continueWorkflow": {
+          "title": "3. أكمل خطوات المعالجة",
+          "description": "اضغط على أي ملف مرفوع لإكمال تعيين الأعمدة أو مراجعة المنتجات المستخرجة حسب حالته."
+        },
+        "completedUploads": {
+          "title": "4. الملفات المكتملة",
+          "description": "عند اكتمال الرفع، ستظهر المنتجات في صفحة المنتجات بدلاً من إعادة فتح مراجعة الرفع."
+        },
+        "deleteCarefully": {
+          "title": "5. احذف بحذر",
+          "description": "حذف ملف مرفوع سيزيل دفعة الرفع من AIMOPS."
+        }
+      },
+      "note": "ملاحظة: إذا كان التقرير أو التنبؤ فارغاً، تأكد أن بيانات المبيعات تم رفعها ومعالجتها بالكامل أولاً."
+    }
   }
 }

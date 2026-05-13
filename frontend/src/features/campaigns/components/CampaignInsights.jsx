@@ -12,6 +12,28 @@ const getConfidenceClass = (value) => {
   return "unknown";
 };
 
+const translateKnownLevel = (value, t, baseKey) => {
+  const normalized = String(value || "").toLowerCase().trim();
+
+  if (normalized.includes("high")) {
+    return t(`${baseKey}.high`);
+  }
+
+  if (normalized.includes("medium") || normalized.includes("normal")) {
+    return t(`${baseKey}.medium`);
+  }
+
+  if (normalized.includes("low")) {
+    return t(`${baseKey}.low`);
+  }
+
+  if (!normalized) return "-";
+
+  return t(`${baseKey}.unknown`, {
+    defaultValue: value,
+  });
+};
+
 const CampaignInsights = ({ result }) => {
   const { t } = useTranslation("campaigns");
 
@@ -23,17 +45,12 @@ const CampaignInsights = ({ result }) => {
       : result.start_date && result.end_date
         ? [
             {
-              label: t("insights.yourProposedDates", {
-                defaultValue: "Your proposed dates",
-              }),
+              label: t("insights.yourProposedDates"),
               start_date: result.start_date,
               end_date: result.end_date,
               forecast_quantity: result.forecast_quantity ?? null,
               forecast_uplift_pct: result.forecast_uplift_pct ?? null,
-              note: t("insights.noForecastData", {
-                defaultValue:
-                  "No forecast data available — generate forecasts first",
-              }),
+              note: t("insights.noForecastData"),
             },
           ]
         : [];
@@ -110,7 +127,11 @@ const CampaignInsights = ({ result }) => {
                   forecastImpact.confidence,
                 )}`}
               >
-                {forecastImpact.confidence || "-"}
+                {translateKnownLevel(
+                  forecastImpact.confidence,
+                  t,
+                  "insights.confidenceLevels",
+                )}
               </span>
             </div>
           </div>
@@ -198,7 +219,12 @@ const CampaignInsights = ({ result }) => {
 
             <div className="campaign-insights-meta">
               <span>
-                {t("insights.risk")}: {result.consultation.risk_level || "-"}
+                {t("insights.risk")}:{" "}
+                {translateKnownLevel(
+                  result.consultation.risk_level,
+                  t,
+                  "insights.riskLevels",
+                )}
               </span>
 
               <span className="campaign-insights-meta-separator">·</span>
@@ -210,7 +236,11 @@ const CampaignInsights = ({ result }) => {
                   result.consultation.confidence,
                 )}`}
               >
-                {result.consultation.confidence || "-"}
+                {translateKnownLevel(
+                  result.consultation.confidence,
+                  t,
+                  "insights.confidenceLevels",
+                )}
               </span>
             </div>
           </div>

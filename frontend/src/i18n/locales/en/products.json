@@ -1,11 +1,14 @@
 {
+  "modal": {
+    "close": "Close"
+  },
   "deleteModal": {
     "title": "Delete products",
     "cancel": "Cancel",
     "deleting": "Deleting...",
     "delete": "Delete",
     "confirmText": "You are deleting <strong>{{count}}</strong> product(s).",
-    "salesWarning": "Some selected products have sales."
+    "salesWarning": "Some selected products already have sales. Deleting them may affect product lists, reports, and forecasting."
   },
   "mergeModal": {
     "title": "Merge products",
@@ -16,13 +19,15 @@
     "primaryPlaceholder": "Select primary...",
     "mergeIntoLabel": "Products to merge into primary",
     "noProductsSelected": "No products selected yet.",
-    "removeProduct": "remove",
+    "noPrimaryMatches": "No products match your search.",
+    "noMoreCandidates": "No more products to add.",
+    "removeProduct": "Remove product",
     "addProductLabel": "Add product to merge",
     "addProductPlaceholder": "Select product...",
-    "tip": "Tip: select products in the table, then click \"Merge selected\".",
+    "tip": "Tip: select products in the table, then click \"Merge selected\". Choose the cleanest product name as the primary one, and add the duplicate or misspelled names on the other side.",
     "mergeCount": "Merge {{count}} products",
     "primarySearchPlaceholder": "Search products...",
-"addProductSearchPlaceholder": "Search products to add..."
+    "addProductSearchPlaceholder": "Search products to add..."
   },
   "pager": {
     "rowsLabel": "Rows",
@@ -31,11 +36,14 @@
     "next": "Next"
   },
   "table": {
+    "selectPage": "Select all products on this page",
+    "selectProduct": "Select {{name}}",
     "colId": "ID",
     "colName": "Name",
     "colCategory": "Category",
     "colActive": "Active",
     "colSuspicious": "Suspicious",
+    "colNeedsReview": "Needs review",
     "colSales": "Sales",
     "colRevenue": "Revenue",
     "colLastSale": "Last sale",
@@ -43,6 +51,7 @@
     "activeYes": "Yes",
     "activeNo": "No",
     "chipNeedsMerge": "Needs merge",
+    "chipNeedsReview": "Needs review",
     "chipNormal": "Normal",
     "empty": "No products found.",
     "btnMerge": "Merge",
@@ -58,7 +67,36 @@
     "successDelete": "Delete completed.",
     "errorLoadFailed": "Failed to load products.",
     "errorMergeFailed": "Merge failed.",
-    "errorDeleteFailed": "Delete failed."
+    "errorDeleteFailed": "Delete failed.",
+    "redirectCompletedWithFile": "“{{fileName}}” is already completed, so we brought you to Products. You can view and manage the products imported from that file here.",
+    "redirectCompleted": "This upload is already completed, so we brought you to Products. You can view and manage the imported products here.",
+    "help": {
+      "title": "How to use Products",
+      "buttonLabel": "Open products help",
+      "items": {
+        "reviewProducts": {
+          "title": "1. Review extracted products",
+          "description": "This page shows the products AIMOPS found from uploaded sales data, including category, sales count, revenue, and last sale date."
+        },
+        "useFilters": {
+          "title": "2. Use filters to find products",
+          "description": "Search by product name, filter by category, filter products that need review, or narrow the list by last sale date."
+        },
+        "checkReview": {
+          "title": "3. Check products that need review",
+          "description": "Rows marked as Needs review may contain possible duplicates, spelling issues, or unusual product names that should be checked."
+        },
+        "mergeDuplicates": {
+          "title": "4. Merge duplicate products",
+          "description": "Select two or more products, then use Merge selected. Choose the main product that should stay, and merge the duplicate names into it."
+        },
+        "deleteCarefully": {
+          "title": "5. Delete carefully",
+          "description": "Deleting products can affect product lists, reports, and forecasting. Products with sales history require extra caution."
+        }
+      },
+      "note": "Tip: Clean product names make reports and forecasts more accurate, especially when the same product appears with different spellings."
+    }
   },
   "toolbar": {
     "searchLabel": "Search",
@@ -72,7 +110,12 @@
     "suspiciousLabel": "Suspicious",
     "suspiciousAll": "All",
     "suspiciousOnly": "Suspicious only",
+    "reviewLabel": "Needs review",
+    "reviewAll": "All",
+    "reviewOnly": "Needs review only",
     "normalOnly": "Normal only",
+    "dateFromLabel": "From date",
+    "dateToLabel": "To date",
     "salesLabel": "Sales",
     "salesAll": "All",
     "salesHas": "Has sales",

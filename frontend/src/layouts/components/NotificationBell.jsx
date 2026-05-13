@@ -159,7 +159,7 @@ const dedupeById = (items) => {
 };
 
 export default function NotificationBell() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("common");
   const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
 
@@ -239,12 +239,14 @@ export default function NotificationBell() {
     () => [
       {
         value: "",
-        label: usersLoading ? t("notifications.loading") : "—",
+        label: usersLoading
+          ? t("notifications.loading")
+          : t("notifications.selectPlaceholder"),
         disabled: true,
       },
       ...users.map((currentUser) => ({
         value: String(currentUser.user_id ?? currentUser.id),
-        label: `${currentUser.username || currentUser.email || "User"}${
+        label: `${currentUser.username || currentUser.email || t("notifications.unknownUser")}${
           currentUser.email ? ` (${currentUser.email})` : ""
         }`,
       })),
@@ -256,7 +258,9 @@ export default function NotificationBell() {
     () => [
       {
         value: "",
-        label: usersLoading ? t("notifications.loading") : "—",
+        label: usersLoading
+          ? t("notifications.loading")
+          : t("notifications.selectPlaceholder"),
         disabled: true,
       },
       ...roles.map((role) => ({
@@ -723,7 +727,7 @@ export default function NotificationBell() {
                 type="button"
                 className="notif-iconbtn"
                 onClick={() => setOpen(false)}
-                aria-label="Close"
+                aria-label={t("actions.close")}
               >
                 <X size={16} />
               </button>
@@ -757,11 +761,9 @@ export default function NotificationBell() {
                 className="notif-toolbtn"
                 onClick={clearCurrentTab}
                 disabled={!hasAnythingVisible}
-                title={t("notifications.clearTabTitle", {
-                  defaultValue: "Clear this tab",
-                })}
+                title={t("notifications.clearTabTitle")}
               >
-                {t("notifications.clearTab", { defaultValue: "Clear" })}
+                {t("notifications.clearTab")}
               </button>
 
               <button
@@ -771,11 +773,9 @@ export default function NotificationBell() {
                 disabled={
                   visibleReminders.length === 0 && visibleInbox.length === 0
                 }
-                title={t("notifications.clearAllTitle", {
-                  defaultValue: "Clear everything",
-                })}
+                title={t("notifications.clearAllTitle")}
               >
-                {t("notifications.clearAll", { defaultValue: "Clear all" })}
+                {t("notifications.clearAll")}
               </button>
             </div>
           </div>
@@ -827,12 +827,8 @@ export default function NotificationBell() {
                             <button
                               type="button"
                               className="notif-item-x"
-                              aria-label={t("notifications.clearOne", {
-                                defaultValue: "Clear item",
-                              })}
-                              title={t("notifications.clearOne", {
-                                defaultValue: "Clear item",
-                              })}
+                              aria-label={t("notifications.clearOne")}
+                              title={t("notifications.clearOne")}
                               onClick={(event) => {
                                 event.preventDefault();
                                 event.stopPropagation();
@@ -902,12 +898,8 @@ export default function NotificationBell() {
                           <button
                             type="button"
                             className="notif-item-x"
-                            aria-label={t("notifications.clearOne", {
-                              defaultValue: "Clear item",
-                            })}
-                            title={t("notifications.clearOne", {
-                              defaultValue: "Clear item",
-                            })}
+                            aria-label={t("notifications.clearOne")}
+                            title={t("notifications.clearOne")}
                             onClick={(event) => {
                               event.preventDefault();
                               event.stopPropagation();
@@ -950,9 +942,7 @@ export default function NotificationBell() {
             <div className="notif-detail-header">
               <div>
                 <div className="notif-detail-kicker">
-                  {t("notifications.notificationDetails", {
-                    defaultValue: "Notification",
-                  })}
+                  {t("notifications.notificationDetails")}
                 </div>
 
                 <div className="notif-detail-title">
@@ -964,7 +954,7 @@ export default function NotificationBell() {
                 type="button"
                 className="notif-iconbtn"
                 onClick={() => setSelectedNotification(null)}
-                aria-label="Close"
+                aria-label={t("actions.close")}
               >
                 <X size={16} />
               </button>
@@ -984,10 +974,7 @@ export default function NotificationBell() {
               </div>
 
               <p className="notif-detail-message">
-                {selectedNotification.message ||
-                  t("notifications.noMessage", {
-                    defaultValue: "No message content.",
-                  })}
+                {selectedNotification.message || t("notifications.noMessage")}
               </p>
             </div>
 
@@ -997,9 +984,7 @@ export default function NotificationBell() {
                 className="notif-secondary"
                 onClick={() => hideOneInbox(selectedNotification.id)}
               >
-                {t("notifications.clearOne", {
-                  defaultValue: "Clear item",
-                })}
+                {t("notifications.clearOne")}
               </button>
 
               <button
@@ -1007,9 +992,7 @@ export default function NotificationBell() {
                 className="notif-primary"
                 onClick={() => setSelectedNotification(null)}
               >
-                {t("actions.close", {
-                  defaultValue: "Close",
-                })}
+                {t("actions.close")}
               </button>
             </div>
           </div>
@@ -1020,7 +1003,7 @@ export default function NotificationBell() {
         <div
           className="notif-modal-overlay"
           role="dialog"
-          aria-label="Create notification"
+          aria-label={t("notifications.createDialog")}
         >
           <div className="notif-modal">
             <div className="notif-modal-header">
@@ -1032,7 +1015,7 @@ export default function NotificationBell() {
                 type="button"
                 className="notif-iconbtn"
                 onClick={closeComposer}
-                aria-label="Close"
+                aria-label={t("actions.close")}
               >
                 <X size={16} />
               </button>

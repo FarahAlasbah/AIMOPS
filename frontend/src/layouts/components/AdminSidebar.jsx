@@ -25,6 +25,8 @@ import { isAdminUser } from "../../shared/permissions/rolePermissions";
 import "./AdminSidebar.css";
 
 function LogoutConfirmModal({ userName, onCancel, onConfirm }) {
+  const { t } = useTranslation("common");
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -61,13 +63,13 @@ function LogoutConfirmModal({ userName, onCancel, onConfirm }) {
         </div>
 
         <h2 id="logout-confirm-title" className="logout-confirm-title">
-          Log out of AIMOPS?
+          {t("layout.logoutConfirm.title")}
         </h2>
 
         <p className="logout-confirm-message">
           {userName
-            ? `${userName}, you will need to sign in again to continue using your workspace.`
-            : "You will need to sign in again to continue using your workspace."}
+            ? t("layout.logoutConfirm.messageWithName", { name: userName })
+            : t("layout.logoutConfirm.message")}
         </p>
 
         <div className="logout-confirm-actions">
@@ -76,7 +78,7 @@ function LogoutConfirmModal({ userName, onCancel, onConfirm }) {
             className="logout-confirm-cancel"
             onClick={onCancel}
           >
-            Stay signed in
+            {t("layout.logoutConfirm.cancel")}
           </button>
 
           <button
@@ -84,7 +86,7 @@ function LogoutConfirmModal({ userName, onCancel, onConfirm }) {
             className="logout-confirm-primary"
             onClick={onConfirm}
           >
-            Yes, log out
+            {t("layout.logoutConfirm.confirm")}
           </button>
         </div>
       </div>
@@ -95,13 +97,14 @@ function LogoutConfirmModal({ userName, onCancel, onConfirm }) {
 const AdminSidebar = ({ isOpen }) => {
   const location = useLocation();
   const { user, logout, hasPermission } = useAuth();
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const adminUser = isAdminUser(user);
-  const userName = user?.full_name || user?.username || "User";
-  const userRole = user?.role?.display_name || user?.role_name || "User";
+  const userFallback = t("notifications.unknownUser");
+  const userName = user?.full_name || user?.username || userFallback;
+  const userRole = user?.role?.display_name || user?.role_name || userFallback;
 
   const isActive = (path) => {
     if (path === "/app/overview") {
@@ -192,7 +195,6 @@ const AdminSidebar = ({ isOpen }) => {
       path: "/app/activity-history",
       icon: History,
       adminOnly: true,
-      fallbackLabel: "Activity History",
     },
     {
       key: "userManagement",
@@ -218,9 +220,9 @@ const AdminSidebar = ({ isOpen }) => {
             <Link
               to="/app/overview"
               className="brand-link"
-              aria-label="Go to dashboard"
+              aria-label={t("layout.goToDashboard")}
             >
-              <span className="brand-text">AIMOPS</span>
+              <span className="brand-text">{t("appName")}</span>
             </Link>
           </div>
         </div>
@@ -229,7 +231,7 @@ const AdminSidebar = ({ isOpen }) => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const label = t(`nav.${item.key}`, {
-              defaultValue: item.fallbackLabel || item.key,
+              defaultValue: item.key,
             });
 
             return (
@@ -258,7 +260,6 @@ const AdminSidebar = ({ isOpen }) => {
 
               <div className="user-info">
                 <div className="user-name">{userName}</div>
-
                 <div className="user-role">{userRole}</div>
               </div>
 
@@ -266,8 +267,8 @@ const AdminSidebar = ({ isOpen }) => {
                 type="button"
                 className="logout-button"
                 onClick={handleLogoutClick}
-                title="Logout"
-                aria-label="Logout"
+                title={t("layout.logout")}
+                aria-label={t("layout.logout")}
               >
                 <LogOut size={18} />
               </button>
@@ -280,7 +281,6 @@ const AdminSidebar = ({ isOpen }) => {
 
               <div className="user-info">
                 <div className="user-name">{userName}</div>
-
                 <div className="user-role">{userRole}</div>
               </div>
 
@@ -288,8 +288,8 @@ const AdminSidebar = ({ isOpen }) => {
                 type="button"
                 className="logout-button"
                 onClick={handleLogoutClick}
-                title="Logout"
-                aria-label="Logout"
+                title={t("layout.logout")}
+                aria-label={t("layout.logout")}
               >
                 <LogOut size={18} />
               </button>

@@ -1,16 +1,22 @@
 // frontend/src/shared/components/PageHelp.jsx
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HelpCircle, X } from "lucide-react";
 import "./PageHelp.css";
 
 export default function PageHelp({
-  title = "How to use this page",
-  eyebrow = "Page guide",
+  title,
+  eyebrow,
   items = [],
   note = "",
-  buttonLabel = "Open page help",
+  buttonLabel,
 }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
+
+  const safeTitle = title || t("shared.pageHelp.defaultTitle");
+  const safeEyebrow = eyebrow || t("shared.pageHelp.defaultEyebrow");
+  const safeButtonLabel = buttonLabel || t("shared.pageHelp.defaultButtonLabel");
 
   useEffect(() => {
     if (!open) return undefined;
@@ -36,8 +42,8 @@ export default function PageHelp({
         type="button"
         className="page-help-btn"
         onClick={() => setOpen(true)}
-        aria-label={buttonLabel}
-        title="How to use this page"
+        aria-label={safeButtonLabel}
+        title={safeTitle}
       >
         <HelpCircle size={18} />
       </button>
@@ -47,7 +53,7 @@ export default function PageHelp({
           className="page-help-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={safeTitle}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setOpen(false);
           }}
@@ -55,15 +61,15 @@ export default function PageHelp({
           <div className="page-help-modal">
             <div className="page-help-header">
               <div>
-                <div className="page-help-eyebrow">{eyebrow}</div>
-                <h3>{title}</h3>
+                <div className="page-help-eyebrow">{safeEyebrow}</div>
+                <h3>{safeTitle}</h3>
               </div>
 
               <button
                 type="button"
                 className="page-help-close"
                 onClick={() => setOpen(false)}
-                aria-label="Close help"
+                aria-label={t("shared.pageHelp.closeHelp")}
               >
                 <X size={18} />
               </button>
