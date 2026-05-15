@@ -772,7 +772,10 @@ def detect_file_type_from_mappings(file_path: str, mappings: List[Dict]) -> Dict
     # HAS PRODUCT COLUMN = Check how many unique products
     try:
         # Read the file
-        df = pd.read_csv(file_path)
+        if file_path.endswith('.csv'):
+            df = pd.read_csv(file_path, encoding='utf-8')
+        else:
+            df = pd.read_excel(file_path)
         
         # Get product column name
         product_col = product_mapping.get("original_name")
