@@ -359,3 +359,112 @@ def build_consultation_context(
         "multiplier_source": multiplier_source,
         "forecast_confidence": forecast_confidence
     }
+    
+
+# ============================================
+# CAMPAIGN SUGGESTION ENRICHER (Claude API)
+# ============================================
+
+def enrich_suggestion_with_claude(
+    suggestion: dict,
+    business_profile: dict = None
+) -> dict:
+    import json
+    import httpx
+    from app.core.config import settings
+
+    api_key = settings.ANTHROPIC_API_KEY
+    if not api_key:
+        return suggestion
+
+    strategy = suggestion.get("suggestion_reason", {}).get("type", "")
+    event_name = suggestion.get("suggestion_reason", {}).get("event_name", "")
+    campaign_type = suggestion.get("campaign_type", "discount")
+    products = suggestion.get("products", [])
+    start_date = suggestion.get("start_date", "")
+    end_date = suggestion.get("end_date", "")
+    budget = suggestion.get("budget")
+    business_name = business_profile.get("business_name", "the business") if business_profile else "the business"
+    industry = business_profile.get("industry", "retail") if business_profile else "retail"
+
+    product_names = [p.get("product_name", "") for p in products if p.get("product_name")]
+    product_list = ", ".join(product_names[:5]) if product_names else "selected products"
+
+    strategy_context = {
+        "upcoming_event": f"capitalize on the upcoming {event_name}",
+        "clearance": "move slow-moving inventory through a clearance campaign",
+        "top_products": "drive sales during a regular period using top-performing products",
+        "event_given": f"build a campaign around {event_name}",
+        "products_given": "build the best campaign around the user's selected products",
+        "upcoming_event_no_impact_data": f"prepare for the upcoming {event_name} using top products",
+        "no_data": "create a general campaign"
+    }.get(strategy, "create a targeted sales campaign")
+
+    prompt = f"""You are a retail business consultant helping a small {industry} business called "{business_name}" in the Arabic-speaking market.
+
+Generate campaign text for a {campaign_type} campaign designed to {strategy_context}.
+
+Campaign details:
+- Products: {product_list}
+- Dates: {start_date} to {end_date}
+- Budget: {f"{budget:,.0f} ILS" if budget else "not set"}
+- Campaign type: {campaign_type}
+
+Return ONLY a JSON object with exactly these four fields, nothing else:
+{{
+  "campaign_name": "A short professional campaign name in English (max 8 words)",
+  "campaign_name_ar": "نفس الاسم باللغة العربية",
+  "notes": "2-3 sentences explaining the campaign strategy and what the business should focus on",
+  "description": "One sentence summary of the campaign goal"
+}}
+
+Rules:
+- campaign_name must be specific and professional, not generic
+- notes must be practical business advice, not marketing fluff
+- Write as if advising a real shop owner
+- Arabic name should be a natural translation, not word-for-word"""
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json"
+                },
+                json={
+                    "model": "claude-opus-4-5",
+                    "max_tokens": 400,
+                    "messages": [{"role": "user", "content": prompt}]
+                }
+            )
+
+        if response.status_code != 200:
+            print(f"Claude API error {response.status_code}: {response.text}")
+            return suggestion
+
+        text = response.json()["content"][0]["text"].strip()
+
+        # Strip markdown fences if present
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        text = text.strip()
+
+        generated = json.loads(text)
+
+        if generated.get("campaign_name"):
+            suggestion["campaign_name"] = generated["campaign_name"]
+        if generated.get("campaign_name_ar"):
+            suggestion["campaign_name_ar"] = generated["campaign_name_ar"]
+        if generated.get("notes"):
+            suggestion["notes"] = generated["notes"]
+        if generated.get("description"):
+            suggestion["description"] = generated["description"]
+
+    except Exception as e:
+        print(f"Claude enrichment failed: {e}")
+
+    return suggestion
