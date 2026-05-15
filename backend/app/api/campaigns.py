@@ -12,6 +12,7 @@ from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.campaign import Campaign, CampaignProduct, CampaignChannel
 from app.services import campaign_service
+from app.services.campaign_suggestion_service import generate_campaign_suggestion as _generate_suggestion
 
 router = APIRouter(prefix="/api/campaigns", tags=["Campaigns"])
 
@@ -157,6 +158,85 @@ async def get_campaign_calendar(
     }
 
 
+
+# ============================================
+# ENDPOINT: Generate Campaign Suggestion
+# ============================================
+
+@router.post("/generate-suggestion")
+async def generate_campaign_suggestion(
+    request: dict = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate AI-powered campaign suggestion(s).
+
+    REQUEST BODY (all optional):
+    {
+        "mode": "full",           # full / products_given / event_given / clearance
+        "product_ids": [1, 2],   # required for products_given mode
+        "event_id": 5,           # required for event_given mode
+        "start_date": "2026-06-01",  # optional — user already set dates
+        "end_date": "2026-06-07"     # optional
+    }
+
+    RETURNS:
+    {
+        "success": true,
+        "mode": "full",
+        "suggestions": [
+            { ...opportunity suggestion... },
+            { ...clearance suggestion... }
+        ]
+    }
+
+    Each suggestion matches POST /api/campaigns request body exactly.
+    Frontend populates the form — nothing is saved by this endpoint.
+
+    PERMISSIONS: Admin or marketing_user only.
+    """
+    if current_user.role.role_name not in ['admin', 'marketing_user']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if request is None:
+        request = {}
+
+    # ── Parse request ──
+    mode = request.get("mode", "full")
+    product_ids = request.get("product_ids", None)
+    event_id = request.get("event_id", None)
+    start_date_str = request.get("start_date", None)
+    end_date_str = request.get("end_date", None)
+
+    start_date = None
+    end_date = None
+
+    if start_date_str:
+        try:
+            from datetime import datetime
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="start_date must be YYYY-MM-DD")
+
+    if end_date_str:
+        try:
+            from datetime import datetime
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="end_date must be YYYY-MM-DD")
+
+    return _generate_suggestion(
+        db=db,
+        mode=mode,
+        product_ids=product_ids,
+        event_id=event_id,
+        start_date=start_date,
+        end_date=end_date
+    )
+    
+    
+    
 # ============================================
 # ENDPOINT 4: Get Single Campaign
 # ============================================
@@ -380,3 +460,5 @@ def _build_campaign_detail(campaign: Campaign) -> dict:
     ]
 
     return summary
+
+

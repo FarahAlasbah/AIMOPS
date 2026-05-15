@@ -12,6 +12,7 @@ import numpy as np
 from app.models.campaign import Campaign, Product, CampaignProduct, CampaignChannel
 from app.models.event import Event, EventImpactResult
 from app.models.forecast import ForecastResult, ForecastModel
+from app.services.campaign_suggestion_service import generate_campaign_suggestion
 
 
 # ============================================
