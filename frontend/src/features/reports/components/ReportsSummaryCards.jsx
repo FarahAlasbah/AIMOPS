@@ -66,15 +66,15 @@ export function ReportsSummaryCards({
       icon: Megaphone,
       tone: "violet",
     },
-    {
-      label: t("summary.forecastModels"),
-      value: formatNumber(summary.forecast_models_total, 0, locale),
-      helper: t("summary.readyModels", {
-        value: formatNumber(summary.forecast_models_ready, 0, locale),
-      }),
-      icon: Activity,
-      tone: "blue",
-    },
+    // {
+    //   label: t("summary.forecastModels"),
+    //   value: formatNumber(summary.forecast_models_total, 0, locale),
+    //   helper: t("summary.readyModels", {
+    //     value: formatNumber(summary.forecast_models_ready, 0, locale),
+    //   }),
+    //   icon: Activity,
+    //   tone: "blue",
+    // },
     {
       label: t("summary.uploads"),
       value: formatNumber(summary.uploads_count, 0, locale),
