@@ -237,6 +237,35 @@ async def generate_campaign_suggestion(
     
     
     
+@router.post("/{campaign_id}/recalculate-forecast")
+async def recalculate_forecast(
+    campaign_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Recalculate forecast impact for an existing campaign.
+    
+    Use when:
+    - Campaign was created before forecasts were trained
+    - New sales data was uploaded and forecasts were retrained
+    
+    Updates forecast_uplift_pct and forecast_additional_revenue.
+    Does not change any other campaign fields.
+    
+    PERMISSIONS: Admin or marketing_user only.
+    """
+    if current_user.role.role_name not in ['admin', 'marketing_user']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    return campaign_service.recalculate_campaign_forecast(
+        db=db,
+        campaign_id=campaign_id,
+        current_user_id=current_user.user_id
+    )
+    
+
+    
 # ============================================
 # ENDPOINT 4: Get Single Campaign
 # ============================================
