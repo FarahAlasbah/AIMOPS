@@ -888,17 +888,17 @@
 
 .confirmed-delete-selected-btn {
   border: 1px solid #fecaca;
-  background: #fee2e2;
+  background: #ffffff;
   color: #991b1b;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 12px;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 13px;
   font-weight: 800;
   cursor: pointer;
 }
 
 .confirmed-delete-selected-btn:hover:not(:disabled) {
-  background: #fecaca;
+  background: #fef2f2;
 }
 
 .confirmed-secondary-btn:disabled,
