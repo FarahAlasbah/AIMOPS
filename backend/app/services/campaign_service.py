@@ -944,7 +944,7 @@ def _calculate_uplift_from_discount(
     Multiplied by campaign type factor.
     Further multiplied if high-impact events overlap.
 
-    THIS IS A ROUGH ESTIMATE — historical data always wins.
+    THIS IS A ROUGH ESTIMATE historical data always wins.
     When forecast_with_campaign finds historical promo impacts,
     it uses those instead of this estimate.
     """
@@ -990,3 +990,91 @@ def _dominant_value(values: list) -> Optional[str]:
     if not values:
         return None
     return max(set(values), key=values.count)
+
+
+def recalculate_campaign_forecast(
+    db: Session,
+    campaign_id: int,
+    current_user_id: int
+) -> dict:
+    """
+    Recalculate forecast impact for an existing campaign.
+
+    """
+    from app.services.forecasting_service import forecast_with_campaign
+    from datetime import datetime
+
+    campaign = get_campaign_by_id(db, campaign_id)
+    
+    if campaign.status == 'completed':
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot recalculate forecast for a completed campaign."
+        )
+
+    product_ids = [cp.product_id for cp in campaign.products]
+    if not product_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="No products found for this campaign."
+        )
+
+    total_additional_revenue = 0
+    total_additional_units = 0
+    all_uplifts = []
+    all_confidences = []
+    products_with_forecast = 0
+    products_without_forecast = 0
+
+    for cp in campaign.products:
+        result = forecast_with_campaign(
+            db=db,
+            product_id=cp.product_id,
+            campaign_start=campaign.start_date,
+            campaign_end=campaign.end_date,
+            expected_uplift_pct=None
+        )
+
+        if "error" not in result:
+            products_with_forecast += 1
+            total_additional_units += result["totals"]["additional_units"]
+            if result["totals"].get("additional_revenue"):
+                total_additional_revenue += result["totals"]["additional_revenue"]
+            if result.get("expected_uplift_pct"):
+                all_uplifts.append(result["expected_uplift_pct"])
+            if result.get("confidence"):
+                all_confidences.append(result["confidence"])
+        else:
+            products_without_forecast += 1
+
+    if products_with_forecast == 0:
+        return {
+            "success": False,
+            "message": "No forecast models are ready for the products in this campaign. "
+                       "Go to the Forecasting page and generate forecasts first.",
+            "campaign_id": campaign_id,
+            "products_with_forecast": 0,
+            "products_without_forecast": products_without_forecast
+        }
+
+    # Update campaign with new forecast data
+    avg_uplift = round(sum(all_uplifts) / len(all_uplifts), 2) if all_uplifts else None
+
+    campaign.forecast_uplift_pct = avg_uplift
+    campaign.forecast_additional_revenue = round(total_additional_revenue, 2) if total_additional_revenue else None
+    campaign.updated_by = current_user_id
+    campaign.updated_at = datetime.utcnow()
+
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Forecast recalculated for {products_with_forecast} product(s).",
+        "campaign_id": campaign_id,
+        "forecast_uplift_pct": avg_uplift,
+        "forecast_additional_revenue": round(total_additional_revenue, 2) if total_additional_revenue else None,
+        "predicted_roi": campaign.predicted_roi(),
+        "products_with_forecast": products_with_forecast,
+        "products_without_forecast": products_without_forecast,
+        "note": f"{products_without_forecast} product(s) still have no forecast model." if products_without_forecast > 0 else None
+    }
