@@ -8,6 +8,15 @@ const tCampaigns = (key, options = {}) =>
 
 const getLocale = () => i18n.language || "en-US";
 
+const hasValue = (value) =>
+  value !== "" && value !== null && value !== undefined;
+
+const normalizeChannelsForPayload = (channels = []) => {
+  return channels.filter(
+    (channel) => channel && channel !== "google_ads",
+  );
+};
+
 export const formatCurrency = (value) => {
   if (value === null || value === undefined || value === "") return "-";
 
@@ -61,9 +70,7 @@ export const normalizeProductsResponse = (response) => {
         product.product_name ??
         product.name ??
         tCampaigns("utils.unnamedProduct"),
-      category:
-        product.category ??
-        tCampaigns("utils.uncategorized"),
+      category: product.category ?? tCampaigns("utils.uncategorized"),
     }))
     .filter((item) => item.id);
 };
@@ -77,10 +84,7 @@ export const normalizeCampaignResponse = (response) => {
       : response;
 
   const insightSource =
-    response?.insights ||
-    response?.analysis ||
-    response?.result ||
-    {};
+    response?.insights || response?.analysis || response?.result || {};
 
   return {
     ...campaign,
@@ -126,13 +130,22 @@ export const buildCampaignPayload = ({ formData, selectedProducts }) => {
     campaign_type: formData.campaignType,
     start_date: formData.startDate,
     end_date: formData.endDate,
-    products: selectedProducts.map((product) => ({
-      product_id: product.product_id,
-      discount_pct:
-        product.discount_pct === "" ? 0 : Number(product.discount_pct),
-      target_quantity: Number(product.target_quantity),
-    })),
-    channels: formData.channels,
+    products: selectedProducts.map((product) => {
+      const payload = {
+        product_id: product.product_id,
+      };
+
+      if (hasValue(product.discount_pct)) {
+        payload.discount_pct = Number(product.discount_pct);
+      }
+
+      if (hasValue(product.target_quantity)) {
+        payload.target_quantity = Number(product.target_quantity);
+      }
+
+      return payload;
+    }),
+    channels: normalizeChannelsForPayload(formData.channels),
     budget: Number(formData.budget),
     notes: notesParts.join("\n\n"),
   };
