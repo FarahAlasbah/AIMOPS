@@ -2,6 +2,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../../../shared/components";
 import { fmtDateTime } from "../utils/forecastDetailsUtils";
 
+function getTranslationTip(locale) {
+  if (locale === "ar") {
+    return "تحتاج الترجمة؟ انسخ الشرح واسأل AI Consultation يترجمه لك.";
+  }
+
+  return "Need it translated? Copy this explanation and ask AI Consultation to translate it.";
+}
+
 export default function ForecastAiExplanationCard({
   locale,
   hasFetchedExplanation,
@@ -65,6 +73,10 @@ export default function ForecastAiExplanationCard({
           ) : null}
 
           <div className="forecast-ai-summary">{explanationText}</div>
+
+          <div className="forecast-ai-translation-tip">
+            {getTranslationTip(locale)}
+          </div>
 
           {explanationDrivers.length > 0 ? (
             <div className="forecast-ai-drivers-card">

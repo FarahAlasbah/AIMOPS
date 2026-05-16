@@ -332,8 +332,10 @@ export function useNewCampaign(t) {
 
       setGeneratedFields({});
       setCreatedResult(finalResult);
+      return finalResult;
     } catch (error) {
       setPageError(error.message || t("messages.createError"));
+      return null;
     } finally {
       setSubmitMode("");
     }
