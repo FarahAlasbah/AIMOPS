@@ -5,7 +5,6 @@ import ForecastControls from "../components/ForecastControls";
 import ForecastingHelp from "../components/ForecastingHelp";
 import ForecastProductsTable from "../components/ForecastProductsTable";
 import ForecastSummaryCards from "../components/ForecastSummaryCards";
-import ForecastTrainingBanner from "../components/ForecastTrainingBanner";
 import {
   ForecastControlsSkeleton,
   ForecastSummarySkeleton,
@@ -27,13 +26,6 @@ export default function ForecastingPage() {
       ) : (
         <ForecastSummaryCards summary={page.summary} locale={page.locale} />
       )}
-
-      {!page.pageSkeleton ? (
-        <ForecastTrainingBanner
-          count={page.trainingProducts.length}
-          onGoDashboard={page.handleGoDashboard}
-        />
-      ) : null}
 
       {page.err ? (
         <div className="forecast-banner">
@@ -76,14 +68,21 @@ export default function ForecastingPage() {
           <ForecastTableSkeleton />
         ) : (
           <ForecastProductsTable
-            products={page.filtered}
-            statusMap={page.statusMap}
-            rowBusy={page.rowBusy}
-            locale={page.locale}
-            onView={page.handleViewForecast}
-            onUploadData={page.handleUploadData}
-            onGenerate={page.handleGenerate}
-          />
+  products={page.filtered}
+  statusMap={page.statusMap}
+  rowBusy={page.rowBusy}
+  locale={page.locale}
+  selectedProductIds={page.selectedForecastIds}
+  eligibleProductIds={page.visibleGeneratableProductIds}
+  allVisibleSelected={page.allVisibleForecastsSelected}
+  bulkGenerating={page.bulkGenerating}
+  onToggleSelect={page.handleToggleForecastSelection}
+  onToggleSelectAll={page.handleToggleSelectAllForecasts}
+  onGenerateSelected={page.handleGenerateSelectedForecasts}
+  onView={page.handleViewForecast}
+  onUploadData={page.handleUploadData}
+  onGenerate={page.handleGenerate}
+/>
         )}
       </Card>
     </div>

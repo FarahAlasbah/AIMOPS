@@ -8,13 +8,16 @@ import { watchForecastProducts } from "../../../shared/utils/forecastNotificatio
 
 import { useLatestValueRef } from "./useLatestValueRef";
 import {
+  isLikelyNoDataMessage,
   normalizeStatus,
   POLL_MS,
   toDateKey,
 } from "../utils/forecastingUtils";
-
 const FAILED_PENDING_GRACE_MS = 10000;
-
+const getProductId = (product) => {
+  const id = Number(product?.product_id ?? product?.id);
+  return Number.isFinite(id) ? id : null;
+};
 export function useForecastingPage() {
   const { t, i18n } = useTranslation("forecasting");
   const tRef = useLatestValueRef(t);
@@ -38,7 +41,8 @@ export function useForecastingPage() {
 
   const [rowBusy, setRowBusy] = useState({});
   const [pendingForecasts, setPendingForecasts] = useState({});
-
+const [selectedForecastIds, setSelectedForecastIds] = useState([]);
+const [bulkGenerating, setBulkGenerating] = useState(false);
   const loadData = useCallback(
     async ({ showSkeleton = false } = {}) => {
       if (showSkeleton) {
@@ -305,7 +309,154 @@ export function useForecastingPage() {
         "training",
     );
   }, [products, effectiveStatusMap]);
+const visibleGeneratableProductIds = useMemo(() => {
+  return filtered
+    .filter((product) => {
+      const productId = getProductId(product);
+      if (productId == null) return false;
 
+      const row = effectiveStatusMap?.[productId] || {};
+      const status = normalizeStatus(row?.status);
+      const totalSales = Number(product?.stats?.total_sales || 0);
+      const busy = !!rowBusy[productId];
+      const locallyPending = !!row?.locally_pending;
+      const needsUpload = totalSales <= 0 || isLikelyNoDataMessage(row?.error);
+
+      return (
+        !needsUpload &&
+        !busy &&
+        !locallyPending &&
+        status !== "ready" &&
+        status !== "training"
+      );
+    })
+    .map(getProductId)
+    .filter((id) => id != null);
+}, [filtered, effectiveStatusMap, rowBusy]);
+
+useEffect(() => {
+  const allowed = new Set(visibleGeneratableProductIds.map(String));
+
+  setSelectedForecastIds((previous) =>
+    previous.filter((id) => allowed.has(String(id))),
+  );
+}, [visibleGeneratableProductIds]);
+
+const allVisibleForecastsSelected =
+  visibleGeneratableProductIds.length > 0 &&
+  selectedForecastIds.length === visibleGeneratableProductIds.length;
+
+const handleToggleForecastSelection = (productId) => {
+  const safeId = Number(productId);
+  if (!Number.isFinite(safeId)) return;
+
+  setSelectedForecastIds((previous) => {
+    const exists = previous.includes(safeId);
+
+    if (exists) {
+      return previous.filter((id) => id !== safeId);
+    }
+
+    return [...previous, safeId];
+  });
+};
+
+const handleToggleSelectAllForecasts = () => {
+  setSelectedForecastIds((previous) => {
+    if (previous.length === visibleGeneratableProductIds.length) {
+      return [];
+    }
+
+    return visibleGeneratableProductIds;
+  });
+};
+
+const handleGenerateSelectedForecasts = async () => {
+  const selectedSet = new Set(selectedForecastIds.map(String));
+
+  const productsToGenerate = filtered.filter((product) => {
+    const productId = getProductId(product);
+    return productId != null && selectedSet.has(String(productId));
+  });
+
+  if (!productsToGenerate.length) return;
+
+  setBulkGenerating(true);
+  setErr("");
+  setInfo({
+    type: "info",
+    text: `Starting forecasts for ${productsToGenerate.length} product(s). This may take a little while.`,
+  });
+
+  const ids = productsToGenerate
+    .map(getProductId)
+    .filter((id) => id != null);
+
+  setPendingForecasts((previous) => {
+    const next = { ...previous };
+    ids.forEach((id) => {
+      next[id] = Date.now();
+    });
+    return next;
+  });
+
+  setRowBusy((previous) => {
+    const next = { ...previous };
+    ids.forEach((id) => {
+      next[id] = true;
+    });
+    return next;
+  });
+
+  const failed = [];
+
+  for (const product of productsToGenerate) {
+    const productId = getProductId(product);
+    if (productId == null) continue;
+
+    const currentStatus = normalizeStatus(effectiveStatusMap?.[productId]?.status);
+
+    try {
+      await generateForecast({
+        productId,
+        retrain: currentStatus === "failed",
+      });
+    } catch {
+      failed.push(product?.product_name || `Product #${productId}`);
+
+      setPendingForecasts((previous) => {
+        const next = { ...previous };
+        delete next[productId];
+        return next;
+      });
+    }
+  }
+
+  setRowBusy((previous) => {
+    const next = { ...previous };
+    ids.forEach((id) => {
+      next[id] = false;
+    });
+    return next;
+  });
+
+  setSelectedForecastIds([]);
+  setBulkGenerating(false);
+
+  await loadData();
+
+  if (failed.length) {
+    setErr(
+      `Could not start ${failed.length} forecast(s). You can try again for those products.`,
+    );
+    return;
+  }
+
+  setInfo({
+    type: "success",
+    text: `Forecast generation started for ${productsToGenerate.length} product(s). It may take a little while.`,
+  });
+};
   const handleGenerate = async (product, retrain = false) => {
     const productId = Number(product?.product_id);
     if (Number.isNaN(productId)) return;
@@ -410,5 +561,13 @@ export function useForecastingPage() {
     handleGoDashboard,
     handleViewForecast,
     handleUploadData,
+    selectedForecastIds,
+visibleGeneratableProductIds,
+allVisibleForecastsSelected,
+bulkGenerating,
+
+handleToggleForecastSelection,
+handleToggleSelectAllForecasts,
+handleGenerateSelectedForecasts,
   };
 }

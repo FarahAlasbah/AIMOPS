@@ -32,8 +32,15 @@ export default function ReviewStep({
 
   const locked = !!confirmProductsResult?.success || !!alreadyProcessed;
 
+  const finishButtonClass = `review-finish-btn ${
+    locked ? "review-finish-btn--ready" : ""
+  }`;
+
   const allPrimaryNames = useMemo(
-    () => uniq(safeArr(products).map((product) => product.primary_name)).filter(Boolean),
+    () =>
+      uniq(safeArr(products).map((product) => product.primary_name)).filter(
+        Boolean,
+      ),
     [products],
   );
 
@@ -148,14 +155,14 @@ export default function ReviewStep({
             {t("review.back")}
           </Button>
 
-          <Button
+          <button
             type="button"
-            variant="secondary"
+            className={finishButtonClass}
             onClick={onFinish}
             disabled={!locked}
           >
             {t("review.finish")}
-          </Button>
+          </button>
         </FormActions>
       ) : null}
 
@@ -190,14 +197,14 @@ export default function ReviewStep({
                     : t("review.confirmProducts")}
               </Button>
 
-              <Button
+              <button
                 type="button"
-                variant="secondary"
+                className={finishButtonClass}
                 onClick={onFinish}
                 disabled={!locked}
               >
                 {t("review.finish")}
-              </Button>
+              </button>
             </div>
           </FormActions>
 

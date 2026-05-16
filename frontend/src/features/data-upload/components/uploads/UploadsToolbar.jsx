@@ -1,4 +1,5 @@
-import { Button, FormSelect } from "../../../../shared/components";
+import { RefreshCw } from "lucide-react";
+import { FormSelect } from "../../../../shared/components";
 import FormCalendar from "../../../../shared/components/FormCalendar";
 
 export default function UploadsToolbar({
@@ -24,6 +25,10 @@ export default function UploadsToolbar({
 
   onRefresh,
 }) {
+  const refreshLabel = uploadsLoading
+    ? t("uploadsPage.refreshing", { defaultValue: "Refreshing..." })
+    : t("uploadsPage.refresh", { defaultValue: "Refresh" });
+
   return (
     <>
       <div className="uploads-header">
@@ -32,15 +37,18 @@ export default function UploadsToolbar({
         </div>
 
         <div className="uploads-header-actions">
-          <Button
-            variant="secondary"
+          <button
+            type="button"
+            className={`uploads-refresh-btn ${
+              uploadsLoading ? "is-loading" : ""
+            }`}
             onClick={onRefresh}
             disabled={uploadsLoading || isDeleting}
+            title={refreshLabel}
+            aria-label={refreshLabel}
           >
-            {uploadsLoading
-              ? t("uploadsPage.refreshing")
-              : t("uploadsPage.refresh")}
-          </Button>
+            <RefreshCw size={20} />
+          </button>
         </div>
       </div>
 

@@ -956,3 +956,57 @@ html[dir="rtl"] .confidence-mini-row {
     grid-template-columns: 1fr;
   }
 }
+
+.uploads-refresh-btn {
+  width: 46px;
+  height: 46px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--c-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.uploads-refresh-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 20px rgba(3, 4, 94, 0.08);
+  transform: translateY(-1px);
+}
+
+.uploads-refresh-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.uploads-refresh-btn svg {
+  transition: transform 0.18s ease;
+}
+
+.uploads-refresh-btn:hover:not(:disabled) svg {
+  transform: rotate(90deg);
+}
+
+.uploads-refresh-btn.is-loading svg {
+  animation: uploads-refresh-spin 0.75s linear infinite;
+}
+
+@keyframes uploads-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uploads-refresh-btn.is-loading svg {
+    animation: none;
+  }
+}
