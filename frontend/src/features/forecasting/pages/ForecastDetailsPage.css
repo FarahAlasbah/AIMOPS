@@ -624,3 +624,21 @@ html[dir="rtl"] .forecast-help-row {
   border-radius: 999px;
   animation: forecast-refresh-spin 0.75s linear infinite;
 }
+.forecast-ai-translation-tip {
+  margin-top: -2px;
+  padding: 12px 14px;
+  border: 1px solid #93c5fd;
+  border-left: 5px solid #03045e;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #03045e;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  box-shadow: 0 8px 18px rgba(3, 4, 94, 0.06);
+}
+
+html[dir="rtl"] .forecast-ai-translation-tip {
+  border-left: 1px solid #93c5fd;
+  border-right: 5px solid #03045e;
+}

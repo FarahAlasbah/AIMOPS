@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Card, PageHeader } from "../../../shared/components";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 
-import CreatedCampaignResult from "../components/new-campaign/CreatedCampaignResult";
 import GenerateCampaignModal from "../components/new-campaign/GenerateCampaignModal";
 import NewCampaignChannelsSection from "../components/new-campaign/NewCampaignChannelsSection";
 import NewCampaignDetailsSection from "../components/new-campaign/NewCampaignDetailsSection";
@@ -69,7 +68,13 @@ const NewCampaign = () => {
       </div>
     );
   }
+const submitAndGoToList = async (mode) => {
+  const created = await handleSubmit(mode);
 
+  if (created) {
+    navigate("/app/campaigns");
+  }
+};
   return (
     <div className="new-campaign-page">
       <PageHeader
@@ -131,22 +136,17 @@ const NewCampaign = () => {
           />
 
           <NewCampaignFormActions
-            t={t}
-            submitMode={submitMode}
-            createdResult={createdResult}
-            generating={generatorLoading}
-            onCancel={() => navigate("/app/campaigns")}
-            onSubmit={handleSubmit}
-          />
+  t={t}
+  submitMode={submitMode}
+  createdResult={createdResult}
+  generating={generatorLoading}
+  onCancel={() => navigate("/app/campaigns")}
+  onSubmit={submitAndGoToList}
+/>
         </div>
       </Card>
 
-      <CreatedCampaignResult
-        t={t}
-        createdResult={createdResult}
-        onView={() => navigate(`/app/campaigns/${createdResult.campaign_id}`)}
-        onCreateAnother={resetForm}
-      />
+      
 
       <GenerateCampaignModal
         isOpen={generatorModalOpen}
