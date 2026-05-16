@@ -2,6 +2,7 @@ export default function NewCampaignFormActions({
   t,
   submitMode,
   createdResult,
+  generating = false,
   onCancel,
   onSubmit,
 }) {
@@ -9,7 +10,12 @@ export default function NewCampaignFormActions({
 
   return (
     <div className="campaign-form-actions">
-      <button type="button" className="btn-secondary" onClick={onCancel}>
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={onCancel}
+        disabled={generating}
+      >
         {t("actions.cancel")}
       </button>
 
@@ -18,7 +24,7 @@ export default function NewCampaignFormActions({
           <button
             type="button"
             className="btn-outline"
-            disabled={!!submitMode}
+            disabled={!!submitMode || generating}
             onClick={() => onSubmit("planned")}
           >
             {submitMode === "planned"
@@ -30,7 +36,7 @@ export default function NewCampaignFormActions({
         <button
           type="button"
           className="btn-primary"
-          disabled={!!submitMode || isPublished}
+          disabled={!!submitMode || generating || isPublished}
           onClick={() => onSubmit("publish")}
         >
           {isPublished

@@ -21,7 +21,12 @@
     "backToCampaigns": "Back to Campaigns",
     "apply": "Apply",
     "add": "Add",
-    "selectProducts": "Select Products"
+    "selectProducts": "Select Products",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "loading": "Loading...",
+    "published": "Published",
+    "refresh": "Refresh"
   },
   "status": {
     "planned": "Planned",
@@ -180,7 +185,8 @@
     "productsRequired": "Select at least one product.",
     "targetQuantityRequired": "Target quantity must be greater than 0.",
     "discountRequired": "Discount is required for discount campaigns.",
-    "discountRange": "Discount must be between 0 and 100."
+    "discountRange": "Discount must be between 0 and 100.",
+    "targetQuantityInvalid": "Target quantity must be greater than 0."
   },
   "messages": {
     "loadError": "Failed to load campaign data.",
@@ -200,7 +206,10 @@
     "publishFailedStillPlanned": "Campaign was created successfully, but publishing failed. It is still saved as planned.",
     "createdCampaignSummary": "The backend response is shown below.",
     "noPermission": "You do not have permission to create campaigns.",
-    "noProductsLeftToSelect": "All available products are already selected."
+    "noProductsLeftToSelect": "All available products are already selected.",
+    "generatorApplied": "The suggestion is ready. Fields filled by AIMOPS are highlighted so you can review them before saving.",
+    "generatorError": "Could not generate a campaign suggestion.",
+    "generatorNoUsableData": "AIMOPS received suggestions, but the response fields do not match the campaign form yet. Open the console and check the extracted suggestion."
   },
   "picker": {
     "selectedProductsLabel": "Selected products",
@@ -302,5 +311,57 @@
     "unnamedProduct": "Unnamed Product",
     "uncategorized": "Uncategorized",
     "customCampaignTypeName": "Custom campaign type name"
+  },
+  "generator": {
+    "title": "Generate campaign suggestion",
+    "subtitle": "Choose how AIMOPS should build the campaign idea. The suggestion will fill this form, and the user can still edit everything.",
+    "autoFilled": "AI filled",
+    "full": {
+      "title": "Full suggestion",
+      "description": "Let AIMOPS choose the products, dates, campaign type, and details.",
+      "helper": "Best when the system should decide everything."
+    },
+    "products": {
+      "title": "Use selected products",
+      "description": "Choose products here, then AIMOPS will generate a campaign idea for them.",
+      "ready": "{{count}} product(s) selected.",
+      "pickInsideModal": "Choose products below before generating.",
+      "selectTitle": "Choose products",
+      "selectSubtitle": "Pick the products you want AIMOPS to focus on.",
+      "selectedHint": "Selected products will appear here. Use the Add button to include a product.",
+      "added": "Added",
+      "noMatchingProducts": "No products match your search.",
+      "noProducts": "No products were found. Add products first, then generate a campaign from them."
+    },
+    "productsWithDates": {
+      "title": "Use selected products and dates",
+      "description": "Choose products and dates here, then AIMOPS will generate the suggestion.",
+      "ready": "Products and dates are ready.",
+      "pickInsideModal": "Choose products and dates below."
+    },
+    "dates": {
+      "selectTitle": "Choose campaign dates",
+      "selectSubtitle": "Pick the date range AIMOPS should use for this suggestion."
+    },
+    "event": {
+      "title": "Based on an event",
+      "description": "Generate a campaign suggestion around one of the confirmed events.",
+      "helper": "Choose an existing event below. AIMOPS will use that event name.",
+      "selectTitle": "Select an event",
+      "selectSubtitle": "This list comes from the confirmed events in your project.",
+      "loading": "Loading events...",
+      "loadError": "Could not load events.",
+      "noEvents": "No confirmed events were found. Add or confirm an event first, then come back to generate a campaign from it."
+    },
+    "clearance": {
+      "title": "Clearance / slow stock",
+      "description": "Find products that need a push and generate a campaign for them.",
+      "helper": "Best for moving slow-selling products."
+    },
+    "errors": {
+      "productsRequired": "Choose at least one product first.",
+      "datesRequired": "Choose both start and end dates first.",
+      "eventRequired": "Choose one event from your events list first."
+    }
   }
 }

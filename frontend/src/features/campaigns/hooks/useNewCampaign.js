@@ -8,9 +8,8 @@ import {
   normalizeCampaignResponse,
   normalizeProductsResponse,
 } from "../utils";
-
-const hasValue = (value) =>
-  value !== "" && value !== null && value !== undefined;
+import { hasValue } from "../utils/campaignSuggestionUtils";
+import { useCampaignGenerator } from "./useCampaignGenerator";
 
 export function useNewCampaign(t) {
   const [formData, setFormData] = useState({ ...DEFAULT_FORM_DATA });
@@ -23,6 +22,47 @@ export function useNewCampaign(t) {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [createdResult, setCreatedResult] = useState(null);
+  const [generatedFields, setGeneratedFields] = useState({});
+
+  const clearGeneratedField = (field) => {
+    setGeneratedFields((prev) => {
+      if (!prev[field]) return prev;
+
+      const next = { ...prev };
+      delete next[field];
+
+      return next;
+    });
+  };
+
+  const clearGeneratedProducts = () => {
+    clearGeneratedField("products");
+  };
+
+  const {
+    generatorModalOpen,
+    generatorLoading,
+    generatorError,
+    campaignEvents,
+    eventsLoading,
+    eventsError,
+    openGeneratorModal,
+    closeGeneratorModal,
+    handleGenerateSuggestion,
+    loadCampaignEvents,
+  } = useCampaignGenerator({
+    t,
+    formData,
+    setFormData,
+    availableProducts,
+    selectedProducts,
+    setSelectedProducts,
+    setErrors,
+    setCreatedResult,
+    setPageError,
+    setSuccessMessage,
+    setGeneratedFields,
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -61,6 +101,7 @@ export function useNewCampaign(t) {
       [field]: value,
     }));
 
+    clearGeneratedField(field);
     setCreatedResult(null);
 
     setErrors((prev) => ({
@@ -81,6 +122,7 @@ export function useNewCampaign(t) {
       };
     });
 
+    clearGeneratedField("channels");
     setCreatedResult(null);
 
     setErrors((prev) => ({
@@ -107,6 +149,7 @@ export function useNewCampaign(t) {
       ];
     });
 
+    clearGeneratedProducts();
     setCreatedResult(null);
 
     setErrors((prev) => ({
@@ -121,6 +164,7 @@ export function useNewCampaign(t) {
       prev.filter((item) => item.product_id !== productId),
     );
 
+    clearGeneratedProducts();
     setCreatedResult(null);
   };
 
@@ -131,6 +175,7 @@ export function useNewCampaign(t) {
       ),
     );
 
+    clearGeneratedProducts();
     setCreatedResult(null);
 
     setErrors((prev) => {
@@ -240,6 +285,7 @@ export function useNewCampaign(t) {
     setPageError("");
     setSuccessMessage("");
     setCreatedResult(null);
+    setGeneratedFields({});
   };
 
   const handleSubmit = async (mode = "publish") => {
@@ -284,6 +330,7 @@ export function useNewCampaign(t) {
         setSuccessMessage(t("messages.createPlannedSuccess"));
       }
 
+      setGeneratedFields({});
       setCreatedResult(finalResult);
     } catch (error) {
       setPageError(error.message || t("messages.createError"));
@@ -302,6 +349,15 @@ export function useNewCampaign(t) {
     successMessage,
     errors,
     createdResult,
+    generatedFields,
+
+    generatorModalOpen,
+    generatorLoading,
+    generatorError,
+
+    campaignEvents,
+    eventsLoading,
+    eventsError,
 
     updateField,
     toggleChannel,
@@ -310,5 +366,10 @@ export function useNewCampaign(t) {
     updateSelectedProduct,
     resetForm,
     handleSubmit,
+
+    openGeneratorModal,
+    closeGeneratorModal,
+    handleGenerateSuggestion,
+    loadCampaignEvents,
   };
 }
