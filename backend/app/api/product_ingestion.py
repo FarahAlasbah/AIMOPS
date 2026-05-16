@@ -24,6 +24,8 @@ from app.models.ingestion_batch import IngestionBatch
 from app.models.column_mapping import ColumnMapping
 from app.models.campaign import Product
 from app.models.sales_record import SalesRecord
+from app.services.consultation_service import invalidate_consultation_cache
+
 
 router = APIRouter(prefix="/api/data", tags=["Product Ingestion"])
 UPLOAD_DIR = "uploads/temp"
@@ -305,6 +307,8 @@ async def confirm_products_and_import(
 
         db.commit()
 
+        invalidate_consultation_cache()
+        
         # ── Fire Campaign Detection in Background ──
         # This runs AFTER the response is sent — user isn't waiting for it.
         # detect_campaigns_for_batch will analyze the imported sales records
