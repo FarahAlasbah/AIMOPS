@@ -222,8 +222,9 @@ const AdminSidebar = ({ isOpen }) => {
               className="brand-link"
               aria-label={t("layout.goToDashboard")}
             >
-              <span className="brand-text">{t("appName")}</span>
-            </Link>
+<span className="brand-text" lang="en" dir="ltr">
+  AIMOPS
+</span>            </Link>
           </div>
         </div>
 

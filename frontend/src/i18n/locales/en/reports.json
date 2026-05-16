@@ -37,6 +37,10 @@
       "title": "Revenue and quantity trend",
       "dailyMode": "Daily",
       "weeklyMode": "Weekly",
+      "periodAxis": "Period",
+      "description": "Products ranked by total revenue for the selected period.",
+"productAxis": "Products",
+"revenueAxis": "Revenue",
       "monthlyMode": "Monthly",
       "dailyDescription": "Daily view shows revenue and quantity movement across the selected period.",
       "weeklyDescription": "Weekly view makes the trend easier to read for longer report periods.",
@@ -194,8 +198,8 @@
       "type": "Type",
       "status": "Status",
       "budget": "Budget",
-      "roi": "ROI",
       "revenue": "Revenue",
+    "expectedRevenue": "Expected revenue",
       "startDate": "Start date",
       "endDate": "End date"
     }

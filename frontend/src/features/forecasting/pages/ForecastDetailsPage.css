@@ -597,3 +597,30 @@
     min-height: 42px;
   }
 }
+/* Help button alignment */
+.forecast-help-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2px;
+}
+
+html[dir="rtl"] .forecast-help-row {
+  justify-content: flex-start;
+}
+
+/* Small loader inside Generate/Training button */
+.forecast-generating-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.forecast-button-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(3, 4, 94, 0.18);
+  border-top-color: #03045e;
+  border-radius: 999px;
+  animation: forecast-refresh-spin 0.75s linear infinite;
+}

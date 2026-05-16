@@ -1,8 +1,7 @@
 import {
-  Activity,
+  CircleDollarSign,
   Megaphone,
   Package,
-  TrendingUp,
   Upload,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -38,7 +37,7 @@ export function ReportsSummaryCards({
       helper: t("summary.averageDailyRevenue", {
         value: formatCurrency(summary.average_daily_revenue, locale),
       }),
-      icon: TrendingUp,
+      icon: CircleDollarSign,
       tone: "blue",
     },
     {
@@ -66,15 +65,6 @@ export function ReportsSummaryCards({
       icon: Megaphone,
       tone: "violet",
     },
-    // {
-    //   label: t("summary.forecastModels"),
-    //   value: formatNumber(summary.forecast_models_total, 0, locale),
-    //   helper: t("summary.readyModels", {
-    //     value: formatNumber(summary.forecast_models_ready, 0, locale),
-    //   }),
-    //   icon: Activity,
-    //   tone: "blue",
-    // },
     {
       label: t("summary.uploads"),
       value: formatNumber(summary.uploads_count, 0, locale),
@@ -89,7 +79,7 @@ export function ReportsSummaryCards({
   return (
     <div className="reports-stat-grid">
       {loading
-        ? Array.from({ length: 6 }).map((_, index) => (
+        ? Array.from({ length: 5 }).map((_, index) => (
             <ReportsSkeletonCard key={index} />
           ))
         : cards.map((item) => {
@@ -101,15 +91,14 @@ export function ReportsSummaryCards({
                 className={`reports-stat-card tone-${item.tone}`}
               >
                 <div className="reports-stat-top">
-                  <div>
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
+                  <span>{item.label}</span>
 
                   <div className="reports-stat-icon">
                     <Icon size={20} />
                   </div>
                 </div>
+
+                <strong className="reports-stat-value">{item.value}</strong>
 
                 <p>{item.helper}</p>
               </div>

@@ -229,6 +229,16 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
         },
       },
       xaxis: {
+        title: {
+          text: t("charts.revenueQuantity.periodAxis", {
+            defaultValue: "Period",
+          }),
+          style: {
+            color: "#374151",
+            fontSize: "12px",
+            fontWeight: 800,
+          },
+        },
         categories: trendData.points.map((item) => item.label),
         tickAmount: Math.min(8, trendData.points.length),
         labels: {
@@ -294,12 +304,7 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
 
   return (
     <Card title={t("charts.revenueQuantity.title")}>
-      <p className="reports-muted">
-        {t("charts.revenueQuantity.summary", {
-          mode: trendData.mode,
-          description: trendData.description,
-        })}
-      </p>
+      
 
       <div className="reports-chart-box reports-chart-box-xl">
         {loading ? (

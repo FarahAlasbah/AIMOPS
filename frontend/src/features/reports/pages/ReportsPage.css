@@ -173,23 +173,23 @@
   align-items: flex-start;
   gap: 14px;
 }
-
 .reports-stat-top span {
   display: block;
-  margin-bottom: 10px;
+  min-width: 0;
   font-size: 13px;
   font-weight: 750;
   color: #6b7280;
 }
 
-.reports-stat-top strong {
+.reports-stat-value {
   display: block;
+  margin-top: 10px;
   color: #111827;
-  font-size: 28px;
+  font-size: clamp(24px, 2vw, 28px);
   font-weight: 850;
-  line-height: 1.1;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
-
 .reports-stat-card p {
   margin: 14px 0 0;
   color: #6b7280;

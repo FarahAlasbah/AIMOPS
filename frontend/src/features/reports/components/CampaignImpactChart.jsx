@@ -8,12 +8,9 @@ import { CHART_COLORS } from "../constants";
 import {
   exportCampaignsExcel,
   formatCurrency,
-  formatPercent,
   getCampaignBudget,
   getCampaignName,
   getCampaignRevenue,
-  getCampaignRoi,
-  toNumber,
 } from "../utils/reportUtils";
 
 function escapeHtml(value) {
@@ -33,16 +30,14 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
     return [...campaignPerformance]
       .map((campaign) => {
         const budget = getCampaignBudget(campaign);
-        const revenue = getCampaignRevenue(campaign);
-        const roi = toNumber(getCampaignRoi(campaign), 0);
+        const expectedRevenue = getCampaignRevenue(campaign);
 
         return {
           campaign,
           name: getCampaignName(campaign, t("fallback.untitledCampaign")),
           budget,
-          revenue,
-          roi,
-          bubbleSize: Math.max(revenue || budget || 1, 1),
+          expectedRevenue,
+          bubbleSize: Math.max(expectedRevenue || budget || 1, 1),
         };
       })
       .sort((a, b) => b.bubbleSize - a.bubbleSize)
@@ -91,11 +86,13 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
         },
       },
       yaxis: {
+        min: 0,
+        forceNiceScale: true,
         title: {
-          text: t("charts.campaignImpact.roi"),
+          text: t("campaignPerformance.summary.expectedRevenue"),
         },
         labels: {
-          formatter: (value) => formatPercent(value, locale),
+          formatter: (value) => formatCurrency(value, locale),
         },
       },
       tooltip: {
@@ -106,8 +103,7 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
             <div class="reports-chart-tooltip">
               <strong>${escapeHtml(point?.name || t("charts.campaignImpact.campaignFallback"))}</strong>
               <span>${escapeHtml(t("charts.campaignImpact.budget"))}: ${escapeHtml(formatCurrency(point?.x || 0, locale))}</span>
-              <span>${escapeHtml(t("charts.campaignImpact.roi"))}: ${escapeHtml(formatPercent(point?.y || 0, locale))}</span>
-              <span>${escapeHtml(t("charts.campaignImpact.revenue"))}: ${escapeHtml(formatCurrency(point?.revenue || 0, locale))}</span>
+              <span>${escapeHtml(t("campaignPerformance.summary.expectedRevenue"))}: ${escapeHtml(formatCurrency(point?.y || 0, locale))}</span>
             </div>
           `;
         },
@@ -118,10 +114,6 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
   return (
     <Card title={t("charts.campaignImpact.title")}>
       <div className="reports-card-action-row">
-        <p className="reports-muted">
-          {t("charts.campaignImpact.description")}
-        </p>
-
         <button
           type="button"
           className="reports-small-btn"
@@ -148,10 +140,9 @@ export function CampaignImpactChart({ loading, campaignPerformance }) {
                 name: t("charts.campaignImpact.campaigns"),
                 data: chartCampaigns.map((item) => ({
                   x: item.budget,
-                  y: item.roi,
+                  y: item.expectedRevenue,
                   z: item.bubbleSize,
                   name: item.name,
-                  revenue: item.revenue,
                 })),
               },
             ]}

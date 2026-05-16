@@ -1,4 +1,3 @@
-// frontend/src/features/events/pages/CalendarPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -13,6 +12,7 @@ import { getCampaignCalendar } from "../../../api/campaigns";
 import CalendarMonth from "../components/CalendarMonth";
 import { startOfMonth, addMonths, monthLabel } from "../utils/eventUtils";
 import { CalendarSkeleton } from "../components/Skeletons";
+import { useLatestValueRef } from "../hooks/useLatestValueRef";
 import "./Calendar.css";
 
 const getYearOptions = (selectedYear) => {
@@ -66,6 +66,7 @@ const normalizeCampaignAsCalendarEvent = (campaign) => {
 
 export default function CalendarPage() {
   const { t, i18n } = useTranslation("events");
+  const tRef = useLatestValueRef(t);
   const navigate = useNavigate();
 
   const [anchor, setAnchor] = useState(() => startOfMonth(new Date()));
@@ -144,13 +145,13 @@ export default function CalendarPage() {
           eventsResult.status === "rejected" &&
           campaignsResult.status === "rejected"
         ) {
-          setError(t("calendarPage.errorLoadFailed"));
+          setError(tRef.current("calendarPage.errorLoadFailed"));
         }
       } catch (e) {
         if (!alive) return;
 
         setEvents([]);
-        setError(e?.message || t("calendarPage.errorLoadFailed"));
+        setError(e?.message || tRef.current("calendarPage.errorLoadFailed"));
       } finally {
         if (alive) setLoading(false);
       }
@@ -161,7 +162,7 @@ export default function CalendarPage() {
     return () => {
       alive = false;
     };
-  }, [anchor, t]);
+  }, [anchor, tRef]);
 
   useEffect(() => {
     setJumpMonth(anchor.getMonth());
