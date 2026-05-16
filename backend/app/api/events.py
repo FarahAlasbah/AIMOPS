@@ -14,6 +14,8 @@ from app.models.user import User
 from app.models.event import Event, EventImpactResult
 from app.models.sales_record import SalesRecord
 from app.models.campaign import Product
+from app.services.consultation_service import invalidate_consultation_cache
+
 
 router = APIRouter(prefix="/api/events", tags=["Events"])
 
@@ -150,6 +152,8 @@ async def create_event(
     db.add(new_event)
     db.commit()
     db.refresh(new_event)
+    
+    invalidate_consultation_cache()
 
     # ── Calculate duration in days ──
     duration_days = (end_date - start_date).days + 1
@@ -432,6 +436,7 @@ async def update_event(
     event.updated_at = datetime.utcnow()
 
     db.commit()
+    invalidate_consultation_cache()
 
     return {
         "success": True,
@@ -483,7 +488,8 @@ async def delete_event(
     event.deleted_at = datetime.utcnow()
     event.updated_by = current_user.user_id
     db.commit()
-
+    invalidate_consultation_cache()
+    
     return {
         "success": True,
         "message": f"Event '{event.event_name}' deleted successfully",
