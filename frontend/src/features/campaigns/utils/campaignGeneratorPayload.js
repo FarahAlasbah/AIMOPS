@@ -27,6 +27,7 @@ const normalizeProductIds = ({ productIds, selectedProducts }) => {
 
 export const buildGeneratePayload = ({
   mode,
+  eventId,
   eventName,
   productIds,
   startDate,
@@ -99,9 +100,10 @@ export const buildGeneratePayload = ({
   }
 
   if (mode === GENERATE_MODES.EVENT) {
+    const safeEventId = Number(eventId);
     const safeEventName = normalizeText(eventName);
 
-    if (!safeEventName) {
+    if (!Number.isFinite(safeEventId) || safeEventId <= 0) {
       throw new Error(
         t("generator.errors.eventRequired", {
           defaultValue: "Choose one event from your events list first.",
@@ -112,7 +114,10 @@ export const buildGeneratePayload = ({
     return {
       payload: {
         mode: "event_given",
-        event_name: safeEventName,
+        event_id: safeEventId,
+      },
+      meta: {
+        eventName: safeEventName,
       },
     };
   }

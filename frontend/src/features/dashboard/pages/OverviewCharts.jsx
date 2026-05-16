@@ -1,4 +1,3 @@
-// frontend/src/features/dashboard/pages/OverviewCharts.jsx
 import { useTranslation } from "react-i18next";
 import ReactApexChart from "react-apexcharts";
 import { Card } from "../../../shared/components";
@@ -15,10 +14,6 @@ export default function OverviewCharts({
   // product revenue
   productRevenueData,
   productRevenueRankOptions,
-  // forecast radial
-  forecastSummary,
-  forecastRadialSeries,
-  forecastRadialOptions,
   // campaign bubble
   campaignBubbleData,
   campaignBubbleOptions,
@@ -31,8 +26,8 @@ export default function OverviewCharts({
 
   return (
     <>
-      {/* Row 1: Uploads over time + Forecast status */}
-      <div className="overview-main-grid">
+      {/* Row 1: Uploads over time */}
+      <div className="overview-full-grid">
         <Card title={t("charts.uploadsOverTime")}>
           <div className="chart-shell large">
             {loading ? (
@@ -42,27 +37,15 @@ export default function OverviewCharts({
                 type="area"
                 height={330}
                 options={uploadsOverTimeOptions}
-                series={[{ name: t("charts.uploadsDatasetLabel"), data: uploadsOverTime.values }]}
+                series={[
+                  {
+                    name: t("charts.uploadsDatasetLabel"),
+                    data: uploadsOverTime.values,
+                  },
+                ]}
               />
             ) : (
               <div className="chart-empty">{t("charts.noUploads")}</div>
-            )}
-          </div>
-        </Card>
-
-        <Card title={t("charts.forecastStatus")}>
-          <div className="chart-shell large">
-            {loading ? (
-              <div className="chart-empty">{t("charts.loading")}</div>
-            ) : forecastSummary.total > 0 ? (
-              <ReactApexChart
-                type="radialBar"
-                height={330}
-                options={forecastRadialOptions}
-                series={forecastRadialSeries}
-              />
-            ) : (
-              <div className="chart-empty">{t("charts.noForecasts")}</div>
             )}
           </div>
         </Card>
@@ -79,7 +62,12 @@ export default function OverviewCharts({
                 type="bar"
                 height={315}
                 options={productRevenueRankOptions}
-                series={[{ name: t("charts.revenueDatasetLabel"), data: productRevenueData.map((item) => item.revenue) }]}
+                series={[
+                  {
+                    name: t("charts.revenueDatasetLabel"),
+                    data: productRevenueData.map((item) => item.revenue),
+                  },
+                ]}
               />
             ) : (
               <div className="chart-empty">{t("charts.noProducts")}</div>
@@ -96,16 +84,18 @@ export default function OverviewCharts({
                 type="bubble"
                 height={315}
                 options={campaignBubbleOptions}
-                series={[{
-                  name: t("charts.campaignsDatasetLabel"),
-                  data: campaignBubbleData.map((item) => ({
-                    x: item.budget,
-                    y: item.roi,
-                    z: item.bubbleSize,
-                    name: item.name,
-                    revenue: item.revenue,
-                  })),
-                }]}
+                series={[
+                  {
+                    name: t("charts.campaignsDatasetLabel"),
+                    data: campaignBubbleData.map((item) => ({
+                      x: item.budget,
+                      y: item.roi,
+                      z: item.bubbleSize,
+                      name: item.name,
+                      revenue: item.revenue,
+                    })),
+                  },
+                ]}
               />
             ) : (
               <div className="chart-empty">{t("charts.noCampaigns")}</div>

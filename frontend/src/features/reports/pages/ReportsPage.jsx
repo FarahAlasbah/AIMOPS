@@ -28,7 +28,6 @@ export default function ReportsPage() {
     salesTrend,
     topProducts,
     campaignPerformance,
-    forecastHealth,
     uploadActivity,
     campaignTotals,
     campaignCount,
@@ -81,7 +80,6 @@ export default function ReportsPage() {
 
       <StatusDonutCards
         loading={loading}
-        forecastHealth={forecastHealth}
         uploadActivity={uploadActivity}
       />
 
