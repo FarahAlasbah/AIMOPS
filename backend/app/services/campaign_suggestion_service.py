@@ -691,8 +691,9 @@ def _suggest_channels(campaign_type: str) -> list:
 def _estimate_budget(db: Session) -> Optional[float]:
     """
     Estimate budget from average of past campaigns.
-    Returns None if no past campaigns with budgets exist.
+    Falls back to 10% of last 30 days revenue if no past campaigns.
     """
+    # Try past campaign average first
     result = db.query(
         func.avg(Campaign.budget).label('avg_budget')
     ).filter(
@@ -702,5 +703,21 @@ def _estimate_budget(db: Session) -> Optional[float]:
 
     if result and result.avg_budget:
         return round(float(result.avg_budget), 2)
+
+    # Fallback: 10% of last 30 days total revenue
+    from datetime import date, timedelta
+    today = date.today()
+    thirty_days_ago = today - timedelta(days=30)
+
+    revenue_result = db.query(
+        func.sum(SalesRecord.total_amount).label('total_revenue')
+    ).filter(
+        SalesRecord.sale_date >= thirty_days_ago,
+        SalesRecord.sale_date <= today
+    ).first()
+
+    if revenue_result and revenue_result.total_revenue:
+        estimated = float(revenue_result.total_revenue) * 0.10
+        return round(estimated, 2)
 
     return None
