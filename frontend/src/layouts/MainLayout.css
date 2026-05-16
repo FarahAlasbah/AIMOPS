@@ -40,10 +40,13 @@
   padding-right: 660px;
 }
 
+
 .app-header {
+  height: 92px;
+  min-height: 92px;
   background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-  padding: 16px 24px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -53,7 +56,6 @@
   width: 100%;
   box-sizing: border-box;
 }
-
 .menu-button {
   background: none;
   border: none;
@@ -125,7 +127,14 @@ html[dir="rtl"] .header-actions {
   }
 
   .app-header {
-    padding: 14px 16px;
+    height: 76px;
+    min-height: 76px;
+    padding: 0 16px;
+  }
+
+  .sidebar-header {
+    height: 76px;
+    min-height: 76px;
   }
 
   .content-area {

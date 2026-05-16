@@ -50,12 +50,34 @@ export function TopProductsChart({ loading, topProducts }) {
         strokeDashArray: 4,
       },
       xaxis: {
+        title: {
+          text: t("charts.topProducts.revenueAxis", {
+            defaultValue: "Revenue",
+          }),
+          style: {
+            color: "#374151",
+            fontSize: "12px",
+            fontWeight: 800,
+          },
+        },
         categories: chartProducts.map(
           (product) =>
             product.product_name || t("charts.topProducts.unnamedProduct"),
         ),
         labels: {
           formatter: (value) => formatNumber(value, 0, locale),
+        },
+      },
+      yaxis: {
+        title: {
+          text: t("charts.topProducts.productAxis", {
+            defaultValue: "Products",
+          }),
+          style: {
+            color: "#374151",
+            fontSize: "12px",
+            fontWeight: 800,
+          },
         },
       },
       tooltip: {
@@ -69,9 +91,7 @@ export function TopProductsChart({ loading, topProducts }) {
   return (
     <Card title={t("charts.topProducts.title")}>
       <div className="reports-card-action-row">
-        <p className="reports-muted">
-          {t("charts.topProducts.description")}
-        </p>
+        
 
         <button
           type="button"

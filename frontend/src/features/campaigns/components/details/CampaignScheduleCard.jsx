@@ -25,7 +25,7 @@ export default function CampaignScheduleCard({ t, campaign }) {
 
           <div>
             <span>{t("details.productCount")}</span>
-            <strong>{campaign.product_count ?? campaign.products?.length ?? 0}</strong>
+            <strong>{campaign.product_count ?? "-"}</strong>
           </div>
         </div>
       </div>

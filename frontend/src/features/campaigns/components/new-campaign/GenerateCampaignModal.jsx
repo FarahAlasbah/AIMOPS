@@ -15,6 +15,20 @@ const GENERATE_MODES = {
   CLEARANCE: "clearance",
 };
 
+function GenerateMiniLoader({ t }) {
+  return (
+    <div className="generate-campaign-modal__mini-loader" aria-live="polite">
+      <span className="generate-campaign-modal__spinner" />
+
+      <span>
+        {t("generator.loadingShort", {
+          defaultValue: "Generating suggestion...",
+        })}
+      </span>
+    </div>
+  );
+}
+
 export default function GenerateCampaignModal({
   isOpen,
   loading,
@@ -281,6 +295,7 @@ export default function GenerateCampaignModal({
                     setMode(option.value);
                   }
                 }}
+                disabled={loading}
               >
                 <span className="generate-option-card__title">
                   {option.title}
@@ -561,29 +576,35 @@ export default function GenerateCampaignModal({
         </div>
 
         <div className="generate-campaign-modal__footer">
-          <button
-            type="button"
-            className="generate-campaign-modal__button generate-campaign-modal__button--secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
-            {t("actions.cancel")}
-          </button>
+          <div className="generate-campaign-modal__footer-status">
+            {loading ? <GenerateMiniLoader t={t} /> : null}
+          </div>
 
-          <button
-            type="button"
-            className="generate-campaign-modal__button generate-campaign-modal__button--primary"
-            onClick={handleSubmit}
-            disabled={!canGenerate}
-          >
-            {loading
-              ? t("actions.generating", {
-                  defaultValue: "Generating...",
-                })
-              : t("actions.generate", {
-                  defaultValue: "Generate",
-                })}
-          </button>
+          <div className="generate-campaign-modal__footer-actions">
+            <button
+              type="button"
+              className="generate-campaign-modal__button generate-campaign-modal__button--secondary"
+              onClick={onClose}
+              disabled={loading}
+            >
+              {t("actions.cancel")}
+            </button>
+
+            <button
+              type="button"
+              className="generate-campaign-modal__button generate-campaign-modal__button--primary"
+              onClick={handleSubmit}
+              disabled={!canGenerate}
+            >
+              {loading
+                ? t("actions.generating", {
+                    defaultValue: "Generating...",
+                  })
+                : t("actions.generate", {
+                    defaultValue: "Generate",
+                  })}
+            </button>
+          </div>
         </div>
       </div>
     </div>

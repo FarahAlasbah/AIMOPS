@@ -8,7 +8,6 @@ import {
   extractArray,
   getCampaignBudget,
   getCampaignRevenue,
-  getCampaignRoi,
   getCampaignStatus,
   getDateRangeFromPeriod,
   normalizeSelectValue,
@@ -67,18 +66,15 @@ export function useReportsData() {
     "campaign_performance",
   ]);
 
-  const campaignPerformance = reportCampaignPerformance.length
-    ? reportCampaignPerformance
-    : fallbackCampaigns;
+  const campaignPerformance = fallbackCampaigns.length
+    ? fallbackCampaigns
+    : reportCampaignPerformance;
 
-  const forecastHealth = report?.forecast_health || {};
   const uploadActivity = report?.upload_activity || {};
 
   const campaignTotals = useMemo(() => {
     let totalBudget = 0;
     let totalRevenue = 0;
-    let totalRoi = 0;
-    let roiCount = 0;
     let activeCount = 0;
 
     campaignPerformance.forEach((campaign) => {
@@ -87,12 +83,6 @@ export function useReportsData() {
 
       const status = getCampaignStatus(campaign);
       if (ACTIVE_CAMPAIGN_STATUSES.has(status)) activeCount += 1;
-
-      const roi = toNumber(getCampaignRoi(campaign), NaN);
-      if (Number.isFinite(roi)) {
-        totalRoi += roi;
-        roiCount += 1;
-      }
     });
 
     return {
@@ -100,7 +90,6 @@ export function useReportsData() {
       activeCount,
       totalBudget,
       totalRevenue,
-      averageRoi: roiCount > 0 ? totalRoi / roiCount : null,
     };
   }, [campaignPerformance]);
 
@@ -130,7 +119,6 @@ export function useReportsData() {
     salesTrend,
     topProducts,
     campaignPerformance,
-    forecastHealth,
     uploadActivity,
     campaignTotals,
     campaignCount,

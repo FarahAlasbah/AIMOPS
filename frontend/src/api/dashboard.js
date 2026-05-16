@@ -172,27 +172,70 @@ function normalizeForecastStatus(value) {
   return "idle";
 }
 
+function getProductId(item) {
+  const id = Number(item?.product_id ?? item?.id);
+  return Number.isFinite(id) ? id : null;
+}
+
 export async function getForecastSummaryForDashboard() {
   try {
-    const data = await getForecastStatuses();
-    const list = Array.isArray(data?.products)
-      ? data.products
-      : Array.isArray(data)
-      ? data
-      : [];
+    const [statusData, productsData] = await Promise.all([
+      getForecastStatuses(),
+      api.get("/api/products").then((res) => res.data).catch(() => null),
+    ]);
+
+    const availableProducts = Array.isArray(productsData?.products)
+      ? productsData.products
+      : Array.isArray(productsData)
+        ? productsData
+        : [];
+
+    const availableProductIds = new Set(
+      availableProducts
+        .map(getProductId)
+        .filter((id) => id != null),
+    );
+
+    const statuses = Array.isArray(statusData?.models)
+      ? statusData.models
+      : Array.isArray(statusData?.products)
+        ? statusData.products
+        : Array.isArray(statusData)
+          ? statusData
+          : [];
+
+    const visibleStatuses = statuses.filter((item) => {
+      const productId = getProductId(item);
+      return productId != null && availableProductIds.has(productId);
+    });
 
     const summary = {
-      total: list.length,
+      total: availableProducts.length,
       ready: 0,
       training: 0,
       failed: 0,
       idle: 0,
     };
 
-    list.forEach((item) => {
-      const key = normalizeForecastStatus(item?.forecast_status || item?.status);
+    const countedProductIds = new Set();
+
+    visibleStatuses.forEach((item) => {
+      const productId = getProductId(item);
+      if (productId == null) return;
+
+      countedProductIds.add(productId);
+
+      const key = normalizeForecastStatus(
+        item?.status ||
+          item?.forecast_status ||
+          item?.model_status ||
+          item?.state,
+      );
+
       summary[key] += 1;
     });
+
+    summary.idle = Math.max(availableProducts.length - countedProductIds.size, 0);
 
     return summary;
   } catch {

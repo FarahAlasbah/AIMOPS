@@ -22,7 +22,6 @@ export function ReportsToolbar({ period, dateRange, report, onPeriodChange }) {
       <div className="reports-toolbar">
         <div>
           <div className="reports-toolbar-title">{t("toolbar.title")}</div>
-          <p>{t("toolbar.description")}</p>
         </div>
 
         <div className="reports-filter-group">
