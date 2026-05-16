@@ -16,6 +16,11 @@ export async function createCampaign(payload) {
   return res.data;
 }
 
+export async function generateCampaignSuggestion(payload = {}) {
+  const res = await api.post("/api/campaigns/generate-suggestion", payload);
+  return res.data;
+}
+
 export async function publishCampaign(campaignId) {
   const id = encodeURIComponent(String(campaignId));
   const res = await api.patch(`/api/campaigns/${id}`, { status: "active" });
