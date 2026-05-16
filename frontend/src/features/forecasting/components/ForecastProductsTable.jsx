@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../shared/components";
 import {
@@ -22,16 +23,76 @@ export default function ForecastProductsTable({
   statusMap,
   rowBusy,
   locale,
+
+  selectedProductIds = [],
+  eligibleProductIds = [],
+  allVisibleSelected = false,
+  bulkGenerating = false,
+  onToggleSelect,
+  onToggleSelectAll,
+  onGenerateSelected,
+
   onView,
   onUploadData,
   onGenerate,
 }) {
   const { t } = useTranslation("forecasting");
 
+  const selectedSet = useMemo(
+    () => new Set(selectedProductIds.map(String)),
+    [selectedProductIds],
+  );
+
+  const eligibleSet = useMemo(
+    () => new Set(eligibleProductIds.map(String)),
+    [eligibleProductIds],
+  );
+
+  const selectedCount = selectedProductIds.length;
+  const hasEligibleProducts = eligibleProductIds.length > 0;
+
   return (
     <div className="forecast-table-wrap">
+      <div className="forecast-bulk-toolbar">
+        <div className="forecast-bulk-copy">
+          <strong>
+            {t("bulk.title", {
+              defaultValue: "Generate multiple forecasts",
+            })}
+          </strong>
+
+          <span>
+            {t("bulk.subtitle", {
+              defaultValue:
+                "Select products, or use Select all. Generating many products may be slow.",
+            })}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="forecast-bulk-generate-btn"
+          onClick={onGenerateSelected}
+          disabled={!selectedCount || bulkGenerating}
+        >
+          {bulkGenerating ? (
+            <GeneratingLabel>
+              {t("actions.generating", {
+                defaultValue: "Generating...",
+              })}
+            </GeneratingLabel>
+          ) : (
+            t("bulk.generateSelected", {
+              count: selectedCount,
+              defaultValue: `Generate selected (${selectedCount})`,
+            })
+          )}
+        </button>
+      </div>
+
       <table className="forecast-table">
         <colgroup>
+          <col className="forecast-col-select" />
           <col className="forecast-col-product" />
           <col className="forecast-col-category" />
           <col className="forecast-col-data" />
@@ -41,6 +102,22 @@ export default function ForecastProductsTable({
 
         <thead>
           <tr>
+            <th>
+              <label className="forecast-select-all">
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  disabled={!hasEligibleProducts || bulkGenerating}
+                  onChange={onToggleSelectAll}
+                />
+                <span>
+                  {t("bulk.selectAll", {
+                    defaultValue: "Select all",
+                  })}
+                </span>
+              </label>
+            </th>
+
             <th>{t("table.colProduct")}</th>
             <th>{t("table.colCategory")}</th>
             <th>{t("table.colDataAvailable")}</th>
@@ -52,7 +129,7 @@ export default function ForecastProductsTable({
         <tbody>
           {products.length === 0 ? (
             <tr>
-              <td colSpan={5} className="empty">
+              <td colSpan={6} className="empty">
                 {t("table.empty")}
               </td>
             </tr>
@@ -68,8 +145,24 @@ export default function ForecastProductsTable({
               const needsUpload =
                 totalSales <= 0 || isLikelyNoDataMessage(row?.error);
 
+              const canSelect = eligibleSet.has(String(productId));
+              const isSelected = selectedSet.has(String(productId));
+
               return (
                 <tr key={productId}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="forecast-row-checkbox"
+                      checked={isSelected}
+                      disabled={!canSelect || bulkGenerating}
+                      onChange={() => onToggleSelect(productId)}
+                      aria-label={t("bulk.selectProduct", {
+                        defaultValue: "Select product",
+                      })}
+                    />
+                  </td>
+
                   <td className="forecast-name-cell">
                     <div className="name">
                       <bdi>

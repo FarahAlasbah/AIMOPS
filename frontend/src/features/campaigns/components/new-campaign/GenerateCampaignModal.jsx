@@ -275,7 +275,7 @@ export default function GenerateCampaignModal({
             <p>
               {t("generator.subtitle", {
                 defaultValue:
-                  "Choose how AIMOPS should build the campaign idea. The suggestion will fill this form, and the user can still edit everything.",
+  "Choose how AIMOPS should build the campaign idea. AIMOPS will fill the form, complete what is missing, and you can still edit everything before saving.",
               })}
             </p>
           </div>

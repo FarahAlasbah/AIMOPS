@@ -485,3 +485,125 @@ html[dir="rtl"] .forecast-summary-card::before {
 html[dir="rtl"] .forecast-help-row {
   justify-content: flex-start;
 }
+.forecast-bulk-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef2f7;
+  background: #eff6ff;
+}
+
+.forecast-bulk-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.forecast-bulk-copy strong {
+  color: #03045e;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.forecast-bulk-copy span {
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.forecast-bulk-generate-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #03045e;
+  border-radius: 12px;
+  background: #03045e;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.forecast-bulk-generate-btn:hover:not(:disabled) {
+  background: #02033f;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(3, 4, 94, 0.16);
+}
+
+.forecast-bulk-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.forecast-col-select {
+  width: 8%;
+}
+
+.forecast-col-product {
+  width: 23%;
+}
+
+.forecast-col-category {
+  width: 13%;
+}
+
+.forecast-col-data {
+  width: 21%;
+}
+
+.forecast-col-revenue {
+  width: 12%;
+}
+
+.forecast-col-action {
+  width: 23%;
+}
+
+.forecast-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #03045e;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.forecast-select-all input,
+.forecast-row-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #03045e;
+  cursor: pointer;
+}
+
+.forecast-select-all input:disabled,
+.forecast-row-checkbox:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .forecast-bulk-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .forecast-bulk-generate-btn {
+    width: 100%;
+  }
+
+  .forecast-table {
+    min-width: 960px;
+  }
+}
