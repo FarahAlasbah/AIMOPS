@@ -10,7 +10,6 @@ export const CAMPAIGN_TYPES = [
 export const CHANNEL_OPTIONS = [
   "facebook",
   "instagram",
-  "google_ads",
   "email",
   "sms",
   "in_store",

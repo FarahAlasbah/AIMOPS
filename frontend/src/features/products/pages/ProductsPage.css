@@ -162,46 +162,63 @@ html[dir="rtl"] .products-toolbar .fc-input {
   font-size: 13px;
 }
 
-/* same size buttons */
+/* Toolbar action buttons */
 .products-action-btn {
   width: 140px;
   height: 42px;
-  border-radius: 11px;
-  border: 1px solid transparent;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
   transition:
-    transform 0.15s ease,
-    filter 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease,
     opacity 0.15s ease;
 }
 
 .products-action-btn.merge {
-  background: #6f69a8;
-  border-color: #6f69a8;
-  color: #ffffff;
+  background: #f1f2ff;
+  border-color: #03045e;
+  color: #03045e;
+  box-shadow: 0 6px 14px rgba(3, 4, 94, 0.08);
 }
 
 .products-action-btn.delete {
+  background: #fff1f2;
+  border-color: #dc2626;
+  color: #b91c1c;
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.08);
+}
+
+.products-action-btn.merge:hover:not(:disabled) {
+  background: #03045e;
+  border-color: #03045e;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(3, 4, 94, 0.16);
+}
+
+.products-action-btn.delete:hover:not(:disabled) {
   background: #dc2626;
   border-color: #dc2626;
   color: #ffffff;
-}
-
-.products-action-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  filter: brightness(1.03);
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
 }
 
 .products-action-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 900px) {
@@ -278,6 +295,36 @@ html[dir="rtl"] .products-toolbar .fc-input {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.products-table .actions > button:not(.danger-btn) {
+  border: 1.5px solid #03045e;
+  background: #f1f2ff;
+  color: #03045e;
+  border-radius: 12px;
+  font-weight: 900;
+  box-shadow: 0 5px 12px rgba(3, 4, 94, 0.07);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.products-table .actions > button:not(.danger-btn):hover:not(:disabled) {
+  background: #03045e;
+  border-color: #03045e;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(3, 4, 94, 0.16);
+}
+
+.products-table .actions > button:not(.danger-btn):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .chip {
@@ -473,33 +520,43 @@ html[dir="rtl"] .products-toolbar .fc-input {
   color: #111827;
 }
 
+/* Delete buttons */
 .danger-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 36px;
   padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #dc2626;
-  background: #dc2626;
-  color: #ffffff;
+  border-radius: 12px;
+  border: 1.5px solid #dc2626;
+  background: #fff1f2;
+  color: #b91c1c;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
+  box-shadow: 0 5px 12px rgba(220, 38, 38, 0.07);
   transition:
     background-color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
   white-space: nowrap;
 }
 
 .danger-btn:hover:not(:disabled) {
-  background: #b91c1c;
-  border-color: #b91c1c;
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
 }
 
 .danger-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .danger-btn.sm {
@@ -544,3 +601,28 @@ html[dir="rtl"] .products-toolbar .fc-input {
   width: 100%;
 }
 
+/* ============================================================
+   Equal size table action buttons
+   ============================================================ */
+/* ============================================================
+   Equal size table action buttons - smaller
+   ============================================================ */
+
+.products-table .actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.products-table .actions > button,
+.products-table .actions .danger-btn,
+.products-table .actions .danger-btn.sm {
+  width: 88px;
+  min-width: 88px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 900;
+  justify-content: center;
+}
