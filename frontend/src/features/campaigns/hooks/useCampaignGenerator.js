@@ -41,7 +41,9 @@ const buildGeneratedFieldMarkers = ({
     markers.channels = true;
   }
 
-  if (getProductSignature(selectedProducts) !== getProductSignature(nextProducts)) {
+  if (
+    getProductSignature(selectedProducts) !== getProductSignature(nextProducts)
+  ) {
     markers.products = true;
   }
 
@@ -75,18 +77,14 @@ export function useCampaignGenerator({
 
     try {
       const response = await getEvents({ upcoming: false });
-      const normalized = normalizeEventsResponse(response);
-
-      console.log("Campaign generator events response:", response);
-      console.log("Normalized campaign events:", normalized);
-
-      setCampaignEvents(normalized);
+      const normalizedPastConfirmedEvents = normalizeEventsResponse(response);
+      setCampaignEvents(normalizedPastConfirmedEvents);
     } catch (error) {
       setCampaignEvents([]);
       setEventsError(
         error.message ||
           t("generator.event.loadError", {
-            defaultValue: "Could not load events.",
+            defaultValue: "Could not load past confirmed events.",
           }),
       );
     } finally {
@@ -131,7 +129,6 @@ export function useCampaignGenerator({
     try {
       const response = await generateCampaignSuggestion(result.payload);
 
-      console.log("Campaign suggestion response:", response);
 
       const { suggestion, nextFormData, nextProducts, changed } =
         buildAppliedSuggestionData({
@@ -141,13 +138,12 @@ export function useCampaignGenerator({
           availableProducts,
         });
 
-      console.log("Extracted campaign suggestion:", suggestion);
 
       if (!changed) {
         throw new Error(
           t("messages.generatorNoUsableData", {
             defaultValue:
-              "AIMOPS received suggestions, but the response fields do not match the campaign form yet. Open the console and check the extracted suggestion.",
+              "AIMOPS received suggestions, but the response fields do not match the campaign form yet. Please try again later.",
           }),
         );
       }

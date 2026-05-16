@@ -77,6 +77,10 @@
     "noCampaigns": "No campaign data available.",
     "noRecentUploads": "No recent uploads yet.",
     "axis": {
+      "date": "Date",
+      "uploads": "Uploads",
+      "revenue": "Revenue",
+      "products": "Products",
       "budget": "Budget",
       "roi": "ROI"
     },

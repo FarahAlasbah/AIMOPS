@@ -103,7 +103,7 @@
       "budget": "Budget",
       "dates": "Dates",
       "products": "Products",
-      "uplift": "Forecast Uplift",
+      "uplift": "Expected sales increase",
       "actions": "Actions"
     }
   },
@@ -126,7 +126,7 @@
     "subtitle": "Review campaign status, products, channels, and summary information",
     "duration": "Duration (days)",
     "predictedRoi": "Expected Sales",
-    "additionalRevenue": "Forecast Additional Revenue",
+    "additionalRevenue": "Forecast Extra revenue expected",
     "schedule": "Schedule",
     "createdAt": "Created At",
     "productCount": "Product Count",
@@ -150,13 +150,13 @@
     "forecastImpact": "Forecast Impact",
     "businessAdvice": "Business Advice",
     "forecastQuantity": "Forecast Quantity",
-    "uplift": "Uplift",
+    "uplift": "Expected sales increase",
     "confidence": "Confidence",
     "source": "Source",
     "risk": "Risk",
     "additionalUnits": "Additional Units",
     "baseRevenue": "Base Revenue",
-    "additionalRevenue": "Additional Revenue",
+    "additionalRevenue": "Extra revenue expected",
     "estimatedRoi": "Estimated ROI",
     "baseQuantity": "Base Quantity",
     "adjustedQuantity": "Adjusted Quantity",
@@ -304,7 +304,7 @@
           "description": "Save as Planned if you are still preparing. Create and Publish when the campaign is ready to become active."
         }
       },
-      "note": "Tip: Generate forecasts before creating campaigns to get better date suggestions, uplift estimates, ROI, and business advice."
+      "note": "Tip: Generate forecasts before creating campaigns to get better date suggestions, Expected sales increase estimates, ROI, and business advice."
     }
   },
   "utils": {
@@ -315,6 +315,7 @@
   "generator": {
     "title": "Generate campaign suggestion",
     "subtitle": "Choose how AIMOPS should build the campaign idea. The suggestion will fill this form, and the user can still edit everything.",
+    "loadingSuggestion": "AIMOPS is building the suggestion. This may take a few seconds...",
     "autoFilled": "AI filled",
     "full": {
       "title": "Full suggestion",
@@ -351,8 +352,7 @@
       "selectSubtitle": "This list comes from the confirmed events in your project.",
       "loading": "Loading events...",
       "loadError": "Could not load events.",
-      "noEvents": "No confirmed events were found. Add or confirm an event first, then come back to generate a campaign from it."
-    },
+"noEvents": "No past confirmed events were found. Confirm an event after it has ended, then come back to generate a campaign from it."    },
     "clearance": {
       "title": "Clearance / slow stock",
       "description": "Find products that need a push and generate a campaign for them.",

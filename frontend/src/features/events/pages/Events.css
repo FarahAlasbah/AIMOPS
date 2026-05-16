@@ -1,4 +1,3 @@
-/* frontend/src/features/events/pages/Events.css */
 .events-page {
   max-width: 1100px;
   margin: 0 auto;
@@ -10,7 +9,19 @@
   align-items: center;
   flex-wrap: wrap;
 }
+.event-details-actions {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+  .event-details-actions {
+    justify-content: stretch;
+  }
 
+  .event-details-actions > button {
+    flex: 1;
+  }
+}
 .events-toggle {
   display: inline-flex;
   border: 1px solid #e5e7eb;
@@ -60,7 +71,8 @@
   margin-bottom: 24px;
 }
 
-.events-checkbox {
+/* Event form recurring area */
+.events-form .events-checkbox {
   display: flex;
   gap: 16px;
   align-items: flex-start;
@@ -98,13 +110,6 @@
   gap: 16px;
 }
 
-@media (max-width: 768px) {
-  .event-details-grid,
-  .impact-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .detail-item {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -135,339 +140,8 @@
   line-height: 1.6;
   white-space: pre-wrap;
 }
-/* ── Append to frontend/src/features/events/pages/Events.css ── */
 
-/* Draft events button in header */
-.events-drafts-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1e40af;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.events-drafts-btn:hover:not(:disabled) {
-  background: #dbeafe;
-  border-color: #93c5fd;
-}
-
-.events-drafts-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.events-drafts-btn.has-drafts {
-  border-color: #2563eb;
-  background: #dbeafe;
-  animation: draft-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes draft-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.25); }
-  50%       { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
-}
-
-.events-drafts-icon {
-  font-size: 14px;
-}
-
-.events-drafts-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  background: #1e40af;
-  color: #ffffff;
-  line-height: 1;
-}
-
-/* Draft events inline banner */
-.events-drafts-banner {
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.events-drafts-banner-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.events-drafts-banner-icon {
-  font-size: 20px;
-  line-height: 1;
-  margin-top: 1px;
-}
-
-.events-drafts-banner-title {
-  font-size: 14px;
-  font-weight: 800;
-  color: #1e3a8a;
-}
-
-.events-drafts-banner-sub {
-  font-size: 12px;
-  color: #1e40af;
-  margin-top: 3px;
-}
-
-.events-drafts-banner-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
-}
-
-/* Individual draft chip */
-.events-draft-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  border: 1px solid #bfdbfe;
-  background: #ffffff;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  color: #1e40af;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
-}
-
-.events-draft-chip:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  transform: translateY(-1px);
-}
-
-.events-draft-chip-date {
-  color: #374151;
-  font-variant-numeric: tabular-nums;
-}
-
-.events-draft-chip-impact {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 999px;
-  text-transform: capitalize;
-}
-
-.impact-veryhigh {
-  background: #dbeafe;
-  color: #1e3a8a;
-  border: 1px solid #93c5fd;
-}
-
-.impact-high {
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-
-.impact-medium {
-  background: #f0f7ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-}
-
-.impact-low {
-  background: #f9fafb;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
-}
-
-/* ── Append to frontend/src/features/events/pages/Events.css ── */
-
-/* Draft count badge in card header */
-.drafts-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-
-/* ── Drafts table ── */
-.drafts-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.drafts-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 620px;
-}
-
-.drafts-table th {
-  text-align: left;
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 600;
-  padding: 10px 14px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.drafts-table td {
-  padding: 13px 14px;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: middle;
-  font-size: 13px;
-  color: #111827;
-}
-
-.drafts-row:last-child td {
-  border-bottom: none;
-}
-
-.drafts-dates {
-  font-size: 13px;
-  font-weight: 700;
-  color: #111827;
-  font-variant-numeric: tabular-nums;
-}
-
-.drafts-duration {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 3px;
-}
-
-.drafts-products {
-  font-size: 13px;
-  color: #374151;
-  max-width: 220px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.drafts-type {
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: capitalize;
-}
-
-/* Impact pills */
-.drafts-impact-pill {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.dimp-veryhigh { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.dimp-high     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
-.dimp-medium   { background: #f0f7ff; color: #2563eb; border-color: #bfdbfe; }
-.dimp-low      { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
-
-/* Review button */
-.drafts-review-btn {
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1e40af;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.drafts-review-btn:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-}
-
-/* ── Drafts skeleton ── */
-.drafts-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.drafts-sk-row {
-  display: grid;
-  grid-template-columns: 2fr 1.6fr 1fr 1fr 0.9fr;
-  gap: 12px;
-  padding: 14px 14px;
-  border-bottom: 1px solid #f3f4f6;
-  align-items: center;
-}
-
-.drafts-sk-row:last-child {
-  border-bottom: none;
-}
-
-.drafts-sk-cell {
-  height: 14px;
-  border-radius: 6px;
-  background: #eef2f7;
-  position: relative;
-  overflow: hidden;
-}
-
-.drafts-sk-cell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
-  animation: drafts-sk-shine 1.3s infinite;
-}
-
-/* Stagger shimmer per row for a cascade effect */
-.drafts-sk-row:nth-child(2) .drafts-sk-cell::after { animation-delay: 0.15s; }
-.drafts-sk-row:nth-child(3) .drafts-sk-cell::after { animation-delay: 0.30s; }
-
-@keyframes drafts-sk-shine {
-  100% { transform: translateX(100%); }
-}
-
-.drafts-sk-wide  { width: 75%; }
-.drafts-sk-mid   { width: 65%; }
-.drafts-sk-short { width: 50%; height: 20px; border-radius: 999px; }
-.drafts-sk-btn   { width: 80%; height: 28px; border-radius: 8px; }
-
-/* ── Append to frontend/src/features/events/pages/Events.css ── */
-
-/* ── Tab switcher ────────────────────────────────────────────────────────── */
+/* Tabs */
 .ev-tabs {
   display: flex;
   align-items: center;
@@ -481,7 +155,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px 11px 16px;
+  padding: 10px 16px 11px;
   border: none;
   background: none;
   font-size: 14px;
@@ -492,6 +166,7 @@
   margin-bottom: -1px;
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  user-select: none;
 }
 
 .ev-tab:hover {
@@ -525,7 +200,6 @@
   border-color: #03045e;
 }
 
-/* Tiny spinner inside tab for loading state */
 .ev-tab-spinner {
   display: inline-block;
   width: 13px;
@@ -537,17 +211,85 @@
   flex-shrink: 0;
 }
 
-@keyframes ev-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Push the upcoming toggle to the right */
 .ev-tabs-right {
   margin-left: auto;
   padding-bottom: 8px;
 }
 
-/* ── Drafts table ────────────────────────────────────────────────────────── */
+@keyframes ev-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Detected events selection */
+.drafts-selection-bar {
+  margin-bottom: 14px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 14px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.drafts-selection-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.drafts-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.drafts-secondary-btn,
+.confirmed-secondary-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drafts-secondary-btn:hover:not(:disabled),
+.confirmed-secondary-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.drafts-dismiss-selected-btn {
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.drafts-dismiss-selected-btn:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.drafts-secondary-btn:disabled,
+.drafts-dismiss-selected-btn:disabled,
+.confirmed-secondary-btn:disabled,
+.confirmed-delete-selected-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Drafts table */
 .drafts-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -556,7 +298,7 @@
 .drafts-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 580px;
+  min-width: 720px;
 }
 
 .drafts-table th {
@@ -566,6 +308,7 @@
   font-weight: 600;
   padding: 10px 14px;
   border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
 }
 
 .drafts-table td {
@@ -576,8 +319,33 @@
   color: #111827;
 }
 
+.drafts-row {
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
 .drafts-row:last-child td {
   border-bottom: none;
+}
+
+.drafts-row-selected td {
+  background: #eff6ff;
+}
+
+.drafts-row-busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.drafts-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #03045e;
+}
+
+.drafts-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .drafts-dates {
@@ -619,10 +387,29 @@
   border: 1px solid transparent;
 }
 
-.dimp-veryhigh { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.dimp-high     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
-.dimp-medium   { background: #f0f7ff; color: #2563eb; border-color: #bfdbfe; }
-.dimp-low      { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+.dimp-veryhigh {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border-color: #93c5fd;
+}
+
+.dimp-high {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.dimp-medium {
+  background: #f0f7ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.dimp-low {
+  background: #f9fafb;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
 
 .drafts-review-btn {
   border: 1px solid #bfdbfe;
@@ -637,12 +424,17 @@
   white-space: nowrap;
 }
 
-.drafts-review-btn:hover {
+.drafts-review-btn:hover:not(:disabled) {
   background: #dbeafe;
   border-color: #93c5fd;
 }
 
-/* ── Drafts skeleton ─────────────────────────────────────────────────────── */
+.drafts-review-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Drafts skeleton */
 .drafts-skeleton {
   display: flex;
   flex-direction: column;
@@ -650,14 +442,16 @@
 
 .drafts-sk-row {
   display: grid;
-  grid-template-columns: 2fr 1.6fr 1fr 1fr 0.9fr;
+  grid-template-columns: 34px 2fr 1.6fr 1fr 1fr 0.9fr;
   gap: 12px;
   padding: 14px;
   border-bottom: 1px solid #f3f4f6;
   align-items: center;
 }
 
-.drafts-sk-row:last-child { border-bottom: none; }
+.drafts-sk-row:last-child {
+  border-bottom: none;
+}
 
 .drafts-sk-cell {
   height: 14px;
@@ -672,132 +466,41 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
   animation: drafts-sk-shine 1.3s infinite;
 }
 
-.drafts-sk-row:nth-child(2) .drafts-sk-cell::after { animation-delay: 0.15s; }
-.drafts-sk-row:nth-child(3) .drafts-sk-cell::after { animation-delay: 0.30s; }
-
-@keyframes drafts-sk-shine {
-  100% { transform: translateX(100%); }
+.drafts-sk-row:nth-child(2) .drafts-sk-cell::after {
+  animation-delay: 0.15s;
 }
 
-.drafts-sk-wide  { width: 75%; }
-.drafts-sk-mid   { width: 60%; }
-.drafts-sk-short { width: 50%; height: 20px; border-radius: 999px; }
-.drafts-sk-btn   { width: 70%; height: 28px; border-radius: 8px; }
-
-/* ============================================================
-   Detected Events select + dismiss feature
-   Put this at the END of Events.css
-   ============================================================ */
-
-.drafts-selection-bar {
-  margin-bottom: 14px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  border-radius: 14px;
-  padding: 11px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+.drafts-sk-row:nth-child(3) .drafts-sk-cell::after {
+  animation-delay: 0.3s;
 }
 
-.drafts-selection-text {
-  font-size: 13px;
-  font-weight: 800;
-  color: #1e40af;
+.drafts-sk-wide {
+  width: 75%;
 }
 
-.drafts-selection-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.drafts-sk-mid {
+  width: 60%;
 }
 
-.drafts-secondary-btn {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
+.drafts-sk-short {
+  width: 50%;
+  height: 20px;
+  border-radius: 999px;
 }
 
-.drafts-secondary-btn:hover:not(:disabled) {
-  background: #f9fafb;
-}
-
-.drafts-dismiss-selected-btn {
-  border: 1px solid #bfdbfe;
-  background: #dbeafe;
-  color: #1e40af;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.drafts-dismiss-selected-btn:hover:not(:disabled) {
-  background: #bfdbfe;
-}
-
-.drafts-secondary-btn:disabled,
-.drafts-dismiss-selected-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Make detected table support checkbox column */
-.drafts-table {
-  min-width: 720px;
-}
-
-.drafts-table th,
-.drafts-table td {
-  vertical-align: middle;
-}
-
-.drafts-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #03045e;
-}
-
-.drafts-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.drafts-row {
-  transition: background 0.15s ease, opacity 0.15s ease;
-}
-
-.drafts-row-selected td {
-  background: #eff6ff;
-}
-
-.drafts-row-busy {
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.drafts-review-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Updated skeleton with checkbox column */
-.drafts-sk-row {
-  grid-template-columns: 34px 2fr 1.6fr 1fr 1fr 0.9fr;
+.drafts-sk-btn {
+  width: 70%;
+  height: 28px;
+  border-radius: 8px;
 }
 
 .drafts-sk-check {
@@ -806,45 +509,13 @@
   border-radius: 4px;
 }
 
-/* Better tab labels when using confirmed/detected tabs */
-.ev-tab {
-  user-select: none;
-}
-
-.ev-tabs-right {
-  margin-left: auto;
-  padding-bottom: 8px;
-}
-
-@media (max-width: 760px) {
-  .drafts-selection-bar {
-    align-items: stretch;
-  }
-
-  .drafts-selection-actions {
-    width: 100%;
-  }
-
-  .drafts-secondary-btn,
-  .drafts-dismiss-selected-btn {
-    flex: 1;
-  }
-
-  .ev-tabs {
-    flex-wrap: wrap;
-  }
-
-  .ev-tabs-right {
-    width: 100%;
-    margin-left: 0;
+@keyframes drafts-sk-shine {
+  100% {
+    transform: translateX(100%);
   }
 }
 
-/* ============================================================
-   Confirmed Events select + delete feature
-   Put this at the END of Events.css
-   ============================================================ */
-
+/* Confirmed events selection */
 .confirmed-selection-bar {
   margin-bottom: 14px;
   border: 1px solid #fecaca;
@@ -871,21 +542,6 @@
   flex-wrap: wrap;
 }
 
-.confirmed-secondary-btn {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.confirmed-secondary-btn:hover:not(:disabled) {
-  background: #f9fafb;
-}
-
 .confirmed-delete-selected-btn {
   border: 1px solid #fecaca;
   background: #ffffff;
@@ -901,21 +557,15 @@
   background: #fef2f2;
 }
 
-.confirmed-secondary-btn:disabled,
-.confirmed-delete-selected-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Confirmed table checkbox/delete styles */
-.events-checkbox {
+/* Confirmed table checkboxes/delete */
+input.events-checkbox {
   width: 16px;
   height: 16px;
   cursor: pointer;
   accent-color: #03045e;
 }
 
-.events-checkbox:disabled {
+input.events-checkbox:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -950,26 +600,7 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 760px) {
-  .confirmed-selection-bar {
-    align-items: stretch;
-  }
-
-  .confirmed-selection-actions {
-    width: 100%;
-  }
-
-  .confirmed-secondary-btn,
-  .confirmed-delete-selected-btn {
-    flex: 1;
-  }
-}
-
-/* ============================================================
-   Custom confirmation modal
-   Replaces browser window.confirm popup
-   ============================================================ */
-
+/* Confirmation modal */
 .ev-confirm-overlay {
   position: fixed;
   inset: 0;
@@ -1000,7 +631,7 @@
 .ev-confirm-icon {
   width: 46px;
   height: 46px;
-  margin: 0 auto 14px auto;
+  margin: 0 auto 14px;
   border-radius: 999px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
@@ -1078,6 +709,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1088,9 +720,46 @@
     opacity: 0;
     transform: translateY(8px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .event-details-grid,
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .drafts-selection-bar,
+  .confirmed-selection-bar {
+    align-items: stretch;
+  }
+
+  .drafts-selection-actions,
+  .confirmed-selection-actions {
+    width: 100%;
+  }
+
+  .drafts-secondary-btn,
+  .drafts-dismiss-selected-btn,
+  .confirmed-secondary-btn,
+  .confirmed-delete-selected-btn {
+    flex: 1;
+  }
+
+  .ev-tabs {
+    flex-wrap: wrap;
+  }
+
+  .ev-tabs-right {
+    width: 100%;
+    margin-left: 0;
   }
 }
 

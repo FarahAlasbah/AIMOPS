@@ -18,14 +18,23 @@
 
 /* Header/Brand */
 .sidebar-header {
-  padding: 11.5px 20px;
+  height: 92px;
+  min-height: 92px;
+  padding: 0 20px;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .brand {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 0;
+  direction: ltr;
 }
 
 @font-face {
@@ -36,15 +45,53 @@
   font-display: swap;
 }
 
+.brand-link {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 12px;
+  direction: ltr;
+}
+
 .brand-text {
+  display: block;
+  width: 100%;
   font-size: 40px;
+  line-height: 1;
   font-family: "Believe Stronger", serif;
   font-weight: 700;
   color: #03045e;
   letter-spacing: 3px;
-  padding-left: 30px;
+  text-align: center;
+  padding: 0;
+  margin: 0;
+  white-space: nowrap;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
+.brand-link:focus-visible {
+  outline: 3px solid rgba(3, 4, 94, 0.18);
+  outline-offset: 4px;
+}
+
+.brand-link:hover .brand-text {
+  color: #023e8a;
+}
+
+html[dir="rtl"] .admin-sidebar {
+  left: 0;
+  right: auto;
+}
+
+html[dir="rtl"] .brand,
+html[dir="rtl"] .brand-link,
+html[dir="rtl"] .brand-text {
+  direction: ltr;
+  text-align: center;
+}
 /* Navigation */
 .sidebar-nav {
   flex: 1;

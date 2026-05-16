@@ -207,6 +207,8 @@ export function getCampaignRoi(campaign) {
 export function getCampaignRevenue(campaign) {
   return toNumber(
     campaign?.forecast_additional_revenue ??
+      campaign?.forecastAdditionalRevenue ??
+      campaign?.forecast_addtional_revenue ??
       campaign?.additional_revenue ??
       campaign?.expected_revenue ??
       campaign?.predicted_revenue ??
@@ -291,8 +293,7 @@ export async function exportCampaignsExcel(campaignPerformance, t) {
       tr(t, "excel.campaigns.type", "Type"),
       tr(t, "excel.campaigns.status", "Status"),
       tr(t, "excel.campaigns.budget", "Budget"),
-      tr(t, "excel.campaigns.roi", "ROI"),
-      tr(t, "excel.campaigns.revenue", "Revenue"),
+      tr(t, "excel.campaigns.expectedRevenue", "Expected revenue"),
       tr(t, "excel.campaigns.startDate", "Start date"),
       tr(t, "excel.campaigns.endDate", "End date"),
     ],
@@ -301,7 +302,6 @@ export async function exportCampaignsExcel(campaignPerformance, t) {
       getCampaignType(campaign),
       getCampaignStatus(campaign),
       getCampaignBudget(campaign),
-      getCampaignRoi(campaign) ?? "",
       getCampaignRevenue(campaign),
       getCampaignStartDate(campaign) || "",
       getCampaignEndDate(campaign) || "",
