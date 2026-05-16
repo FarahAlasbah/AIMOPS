@@ -1,6 +1,12 @@
+import { Sparkles } from "lucide-react";
 import PageHelp from "../../../../shared/components/PageHelp";
 
-export default function NewCampaignHeaderActions({ t, onBack }) {
+export default function NewCampaignHeaderActions({
+  t,
+  generating,
+  onGenerate,
+  onBack,
+}) {
   return (
     <div className="new-campaign-top-actions" style={{ marginBottom: 0 }}>
       <PageHelp
@@ -30,6 +36,22 @@ export default function NewCampaignHeaderActions({ t, onBack }) {
         ]}
         note={t("help.new.note")}
       />
+
+      <button
+        type="button"
+        className="btn-generate"
+        onClick={onGenerate}
+        disabled={generating}
+      >
+        <Sparkles size={16} />
+        {generating
+          ? t("actions.generating", {
+              defaultValue: "Generating...",
+            })
+          : t("actions.generate", {
+              defaultValue: "Generate",
+            })}
+      </button>
 
       <button type="button" className="btn-outline" onClick={onBack}>
         {t("actions.backToCampaigns")}
