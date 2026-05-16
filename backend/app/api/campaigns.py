@@ -205,9 +205,13 @@ async def generate_campaign_suggestion(
     # ── Parse request ──
     mode = request.get("mode", "full")
     product_ids = request.get("product_ids", None)
+    target_quantities = request.get("target_quantities", None)
     event_id = request.get("event_id", None)
     start_date_str = request.get("start_date", None)
     end_date_str = request.get("end_date", None)
+    
+    if target_quantities:
+        target_quantities = {int(k): v for k, v in target_quantities.items()}
 
     start_date = None
     end_date = None
@@ -230,6 +234,7 @@ async def generate_campaign_suggestion(
         db=db,
         mode=mode,
         product_ids=product_ids,
+        target_quantities=target_quantities,
         event_id=event_id,
         start_date=start_date,
         end_date=end_date

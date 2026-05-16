@@ -13,6 +13,7 @@ from app.models.campaign import Campaign, Product, CampaignProduct, CampaignChan
 from app.models.event import Event, EventImpactResult
 from app.models.forecast import ForecastResult, ForecastModel
 from app.services.campaign_suggestion_service import generate_campaign_suggestion
+from app.services.consultation_service import invalidate_consultation_cache
 
 
 # ============================================
@@ -307,6 +308,7 @@ def create_campaign(
 
     db.commit()
 
+    invalidate_consultation_cache()
     # ── Build Response ──
     return {
         "campaign_id": campaign.campaign_id,
@@ -362,6 +364,7 @@ def update_campaign(
     campaign.updated_at = datetime.utcnow()
 
     db.commit()
+    invalidate_consultation_cache()
     return get_campaign_by_id(db, campaign_id)
 
 
@@ -375,6 +378,7 @@ def delete_campaign(db: Session, campaign_id: int, current_user_id: int) -> dict
     campaign.deleted_at = datetime.utcnow()
     campaign.updated_by = current_user_id
     db.commit()
+    invalidate_consultation_cache()
     return {"success": True, "message": f"Campaign '{campaign.campaign_name}' deleted"}
 
 
@@ -1066,7 +1070,8 @@ def recalculate_campaign_forecast(
     campaign.updated_at = datetime.utcnow()
 
     db.commit()
-
+    invalidate_consultation_cache()
+    
     return {
         "success": True,
         "message": f"Forecast recalculated for {products_with_forecast} product(s).",

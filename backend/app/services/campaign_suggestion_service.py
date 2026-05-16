@@ -40,6 +40,7 @@ def generate_campaign_suggestion(
     db: Session,
     mode: str = "full",
     product_ids: list = None,
+    target_quantities: dict = None,
     event_id: int = None,
     start_date: date = None,
     end_date: date = None
@@ -122,11 +123,23 @@ def generate_campaign_suggestion(
         suggestion = _build_clearance_suggestion(db, today)
         suggestion = enrich_suggestion_with_claude(suggestion, bp_dict)
         suggestions.append(suggestion)
+        
+    elif mode == "targets_given":
+        if not product_ids or not target_quantities:
+            raise HTTPException(
+                status_code=400,
+                detail="product_ids and target_quantities are required for targets_given mode"
+            )
+        suggestion = _build_suggestion_from_targets(
+            db, product_ids, target_quantities, today, start_date, end_date
+        )
+        suggestion = enrich_suggestion_with_claude(suggestion, bp_dict)
+        suggestions.append(suggestion)
 
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid mode '{mode}'. Must be: full, products_given, event_given, clearance"
+            detail=f"Invalid mode '{mode}'. Must be: full, products_given, targets_given, event_given, clearance"
         )
 
     return {
@@ -479,6 +492,180 @@ def _build_suggestion_from_products(
     }
 
 
+
+def _build_suggestion_from_targets(
+    db: Session,
+    product_ids: list,
+    target_quantities: dict,  # {product_id: target_qty}
+    today: date,
+    start_date: date = None,
+    end_date: date = None
+) -> dict:
+    """
+    User provided products + target quantities per product.
+    Back-calculate discount, duration, budget, and campaign type
+    from what's needed to hit those targets.
+
+    LOGIC:
+    1. Get base forecast for each product (what it sells without a campaign)
+    2. Calculate required uplift to hit the target
+    3. Back-calculate discount % from uplift (price elasticity: 1% discount ≈ 2% uplift)
+    4. Derive campaign type from discount size
+    5. Estimate duration needed to sell the target quantity
+    6. Calculate budget from expected revenue at discounted price
+    """
+    from app.models.forecast import ForecastResult
+
+    products_db = db.query(Product).filter(
+        Product.product_id.in_(product_ids),
+        Product.is_active == True,
+        Product.deleted_at.is_(None)
+    ).all()
+
+    if not products_db:
+        raise HTTPException(
+            status_code=400,
+            detail="None of the provided product_ids are valid active products"
+        )
+
+    product_map = {p.product_id: p for p in products_db}
+
+    # ── Use provided dates or default to next 7 days ──
+    suggested_start = start_date or (today + timedelta(days=7))
+    suggested_end = end_date or (suggested_start + timedelta(days=6))
+    duration_days = (suggested_end - suggested_start).days + 1
+
+    products_out = []
+    total_budget = 0
+    all_discounts = []
+    has_forecast_data = False
+
+    for pid in product_ids:
+        product = product_map.get(pid)
+        if not product:
+            continue
+
+        target_qty = target_quantities.get(pid)
+        if not target_qty or target_qty <= 0:
+            # No target for this product — use default 10% discount
+            products_out.append({
+                "product_id": pid,
+                "product_name": product.product_name,
+                "discount_pct": 10,
+                "target_quantity": None
+            })
+            continue
+
+        # ── Get base forecast for this product during campaign period ──
+        base_forecasts = db.query(ForecastResult).filter(
+            ForecastResult.product_id == pid,
+            ForecastResult.forecast_date >= suggested_start,
+            ForecastResult.forecast_date <= suggested_end
+        ).all()
+
+        if base_forecasts:
+            has_forecast_data = True
+            base_qty = sum(float(f.predicted_quantity) for f in base_forecasts)
+            base_revenue = sum(
+                float(f.predicted_revenue)
+                for f in base_forecasts
+                if f.predicted_revenue
+            )
+            avg_unit_price = (base_revenue / base_qty) if base_qty > 0 and base_revenue > 0 else None
+
+            # ── Calculate required uplift ──
+            if base_qty > 0:
+                required_uplift_pct = ((target_qty - base_qty) / base_qty) * 100
+            else:
+                required_uplift_pct = 50  # No baseline — assume 50% uplift needed
+
+            # ── Back-calculate discount from uplift ──
+            # Rule of thumb: 1% discount drives ~2% uplift (price elasticity)
+            # Cap between 5% and 40% to stay realistic
+            if required_uplift_pct <= 0:
+                # Target is below forecast — no discount needed, use loyalty approach
+                discount_pct = 5
+            else:
+                discount_pct = min(40, max(5, round(required_uplift_pct / 2)))
+
+            # ── Estimate budget from discounted revenue ──
+            if avg_unit_price:
+                discounted_price = avg_unit_price * (1 - discount_pct / 100)
+                expected_revenue = target_qty * discounted_price
+                # Budget = 10% of expected discounted revenue (marketing spend rule)
+                product_budget = expected_revenue * 0.10
+                total_budget += product_budget
+            
+            all_discounts.append(discount_pct)
+
+        else:
+            # No forecast data — use conservative defaults
+            discount_pct = 15
+            all_discounts.append(discount_pct)
+
+        products_out.append({
+            "product_id": pid,
+            "product_name": product.product_name,
+            "discount_pct": discount_pct,
+            "target_quantity": int(target_qty)
+        })
+
+    # ── Derive campaign type from average discount ──
+    avg_discount = sum(all_discounts) / len(all_discounts) if all_discounts else 15
+
+    if avg_discount >= 25:
+        campaign_type = "flash_sale"
+    elif avg_discount >= 15:
+        campaign_type = "discount"
+    elif avg_discount >= 10:
+        campaign_type = "seasonal"
+    else:
+        campaign_type = "loyalty"
+
+    # ── Use calculated budget or fall back to DB estimate ──
+    final_budget = round(total_budget, 2) if total_budget > 0 else _estimate_budget(db)
+
+    # ── Build reason message ──
+    if has_forecast_data:
+        reason_message = (
+            f"Discount percentages back-calculated from your target quantities "
+            f"using forecast data. Average discount needed: {avg_discount:.0f}%."
+        )
+        reason_type = "targets_given_with_forecast"
+    else:
+        reason_message = (
+            "No forecast data available for these products. "
+            "Default discounts applied. Generate forecasts first for precise suggestions."
+        )
+        reason_type = "targets_given_no_forecast"
+
+    return {
+        "label": "Campaign built around your targets",
+        "strategy": "targets_given",
+        "campaign_name": "Target-Driven Campaign",
+        "campaign_name_ar": None,
+        "campaign_type": campaign_type,
+        "start_date": suggested_start.isoformat(),
+        "end_date": suggested_end.isoformat(),
+        "products": products_out,
+        "channels": _suggest_channels(campaign_type),
+        "budget": final_budget,
+        "notes": (
+            f"Campaign designed to hit your sales targets. "
+            f"Discounts are calculated based on forecast data to drive the required uplift. "
+            f"Monitor daily sales and adjust if targets are not being met."
+        ),
+        "target_audience": "Existing customers",
+        "description": "",
+        "suggestion_reason": {
+            "type": reason_type,
+            "avg_discount_pct": round(avg_discount, 1),
+            "has_forecast_data": has_forecast_data,
+            "message": reason_message
+        }
+    }
+    
+    
 def _suggest_from_event(db: Session, event: Event, today: date) -> dict:
     """
     Build a campaign suggestion around a specific event.
