@@ -35,9 +35,9 @@ from app.models.event import Event
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_KEY = settings.ANTHROPIC_API_KEY
 CLAUDE_MODEL = "claude-sonnet-4-6"
-MAX_HISTORY = 10        # Messages sent to Claude per call
-MAX_TOKENS_CHAT = 1200  # Claude response limit for chat
-MAX_TOKENS_SUMMARY = 550  # Claude response limit for summaries (shorter)
+MAX_HISTORY = 10
+MAX_TOKENS_CHAT = 1200
+MAX_TOKENS_SUMMARY = 550
 
 
 # ============================================
