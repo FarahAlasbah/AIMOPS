@@ -1,7 +1,8 @@
+// frontend/src/features/data-upload/pages/MappingPage.jsx
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { Button, Card, FormActions, PageHeader } from "../../../shared/components";
+import { Card, PageHeader } from "../../../shared/components";
 import InfoMessage from "../../../shared/components/InfoMessage";
 
 import MappingStep from "../components/MappingStep";
@@ -24,7 +25,6 @@ export default function MappingPage() {
     requiredMissingMap,
     confirming,
     alreadyConfirmed,
-    completedNotice,
     allColumnsOptions,
     canConfirm,
 
@@ -46,7 +46,7 @@ export default function MappingPage() {
           </div>
         ) : null}
 
-        {alreadyConfirmed && !completedNotice ? (
+        {alreadyConfirmed ? (
           <div style={{ marginBottom: 16 }}>
             <InfoMessage type="success">
               {t("mappingPage.alreadyConfirmedInfo")}
@@ -54,28 +54,7 @@ export default function MappingPage() {
           </div>
         ) : null}
 
-        {completedNotice ? (
-          <>
-            <InfoMessage type="success">
-              <strong>{t("mappingPage.completedNoticeTitle")}</strong>
-              <br />
-              {t("mappingPage.completedNoticeMessage")}
-            </InfoMessage>
-
-            <FormActions>
-              <Button
-                variant="secondary"
-                onClick={() => navigate("/app/data-upload/uploads")}
-              >
-                {t("mappingPage.backToUploads")}
-              </Button>
-
-              <Button variant="primary" onClick={() => navigate("/app/products")}>
-                {t("mappingPage.viewProducts")}
-              </Button>
-            </FormActions>
-          </>
-        ) : analysisLoading ? (
+        {analysisLoading ? (
           <AnalyzeProgress percent={analyzePct} />
         ) : (
           <MappingStep
