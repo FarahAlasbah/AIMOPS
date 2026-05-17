@@ -10,12 +10,14 @@ import { watchForecastProducts } from "../../../shared/utils/forecastNotificatio
 import { useForecastBulkGeneration } from "./useForecastBulkGeneration";
 import { useLatestValueRef } from "./useLatestValueRef";
 import {
+  isForecastOutdated,
   normalizeStatus,
   POLL_MS,
   toDateKey,
 } from "../utils/forecastingUtils";
 
 const FAILED_PENDING_GRACE_MS = 10000;
+const LOCAL_PENDING_MAX_MS = 15000;
 
 export function useForecastingPage() {
   const { t, i18n } = useTranslation("forecasting");
@@ -129,11 +131,14 @@ export function useForecastingPage() {
       const next = {};
 
       for (const [productId, startedAt] of Object.entries(previous)) {
-        const serverStatus = normalizeStatus(statusMap?.[productId]?.status);
+        const serverRow = statusMap?.[productId] || {};
+        const serverStatus = normalizeStatus(serverRow?.status);
         const age = now - Number(startedAt || now);
 
         if (serverStatus === "ready") continue;
+        if (serverStatus === "idle" && age > LOCAL_PENDING_MAX_MS) continue;
         if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) continue;
+        if (age > LOCAL_PENDING_MAX_MS) continue;
 
         next[productId] = startedAt;
       }
@@ -147,14 +152,16 @@ export function useForecastingPage() {
     const now = Date.now();
 
     for (const [productId, startedAt] of Object.entries(pendingForecasts)) {
-      const serverStatus = normalizeStatus(next?.[productId]?.status);
+      const serverRow = next?.[productId] || {};
+      const serverStatus = normalizeStatus(serverRow?.status);
       const age = now - Number(startedAt || now);
 
       if (serverStatus === "ready") continue;
       if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) continue;
+      if (age > LOCAL_PENDING_MAX_MS) continue;
 
       next[productId] = {
-        ...(next[productId] || {}),
+        ...serverRow,
         status: "training",
         locally_pending: true,
       };
@@ -166,6 +173,7 @@ export function useForecastingPage() {
   const pageSkeleton = loading || refreshing;
 
   const handleRefresh = useCallback(() => {
+    setPendingForecasts({});
     loadData({ showSkeleton: true });
   }, [loadData]);
 
@@ -236,7 +244,8 @@ export function useForecastingPage() {
       const name = String(product?.product_name || "");
       const normalized = String(product?.normalized_name || "");
       const cat = String(product?.category || "");
-      const status = normalizeStatus(effectiveStatusMap?.[productId]?.status);
+      const row = effectiveStatusMap?.[productId] || {};
+      const status = normalizeStatus(row?.status);
       const lastSaleKey = toDateKey(product?.stats?.last_sale);
 
       if (qq) {
@@ -298,7 +307,9 @@ export function useForecastingPage() {
   const trainingProducts = useMemo(() => {
     return products.filter((product) => {
       const productId = Number(product?.product_id ?? product?.id);
-      return normalizeStatus(effectiveStatusMap?.[productId]?.status) === "training";
+      return (
+        normalizeStatus(effectiveStatusMap?.[productId]?.status) === "training"
+      );
     });
   }, [products, effectiveStatusMap]);
 
@@ -318,6 +329,9 @@ export function useForecastingPage() {
     const productId = Number(product?.product_id ?? product?.id);
     if (Number.isNaN(productId)) return;
 
+    const row = effectiveStatusMap?.[productId] || {};
+    const shouldRetrain = retrain || isForecastOutdated(product, row);
+
     setPendingForecasts((previous) => ({
       ...previous,
       [productId]: Date.now(),
@@ -332,7 +346,11 @@ export function useForecastingPage() {
     setInfo(null);
 
     try {
-      await generateForecast({ productId, retrain });
+      await generateForecast({
+        productId,
+        retrain: shouldRetrain,
+      });
+
       await loadData();
     } catch (e) {
       setPendingForecasts((previous) => {
