@@ -11,6 +11,27 @@ import {
 import { hasValue } from "../utils/campaignSuggestionUtils";
 import { useCampaignGenerator } from "./useCampaignGenerator";
 
+function getCampaignCreateError(error, fallback) {
+  const detail = error?.response?.data?.detail;
+
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    const message = detail
+      .map((item) => item?.msg)
+      .filter(Boolean)
+      .join(" ");
+
+    return message || fallback;
+  }
+
+  if (detail && typeof detail === "object") {
+    return detail.message || detail.error || fallback;
+  }
+
+  return error?.response?.data?.message || error?.message || fallback;
+}
+
 export function useNewCampaign(t) {
   const [formData, setFormData] = useState({ ...DEFAULT_FORM_DATA });
   const [availableProducts, setAvailableProducts] = useState([]);
@@ -248,6 +269,10 @@ export function useNewCampaign(t) {
       nextErrors.channels = t("validation.channelsRequired");
     }
 
+    if (!selectedProducts.length) {
+      nextErrors.selectedProducts = t("validation.productsRequired");
+    }
+
     selectedProducts.forEach((product) => {
       const productErrors = {};
       const hasTargetQuantity = hasValue(product.target_quantity);
@@ -289,14 +314,16 @@ export function useNewCampaign(t) {
   };
 
   const handleSubmit = async (mode = "publish") => {
-    if (createdResult?.status === "active") return;
+    if (createdResult?.status === "active") return null;
 
     const nextErrors = validateForm();
     setErrors(nextErrors);
     setPageError("");
     setSuccessMessage("");
 
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      return null;
+    }
 
     setSubmitMode(mode);
 
@@ -332,9 +359,10 @@ export function useNewCampaign(t) {
 
       setGeneratedFields({});
       setCreatedResult(finalResult);
+
       return finalResult;
     } catch (error) {
-      setPageError(error.message || t("messages.createError"));
+      setPageError(getCampaignCreateError(error, t("messages.createError")));
       return null;
     } finally {
       setSubmitMode("");

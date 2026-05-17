@@ -181,15 +181,16 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
   const options = useMemo(() => {
     return {
       chart: {
-        type: "line",
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        fontFamily: "inherit",
-        animations: {
-          enabled: true,
-          speed: 650,
-        },
-      },
+  type: "line",
+  toolbar: { show: false },
+  zoom: { enabled: false },
+  selection: { enabled: false },
+  fontFamily: "inherit",
+  animations: {
+    enabled: true,
+    speed: 650,
+  },
+},
       colors: [CHART_COLORS.blue, CHART_COLORS.emerald],
       stroke: {
         curve: "smooth",
@@ -204,12 +205,25 @@ export function RevenueQuantityChart({ loading, salesTrend }) {
         },
       },
       markers: {
-        size: [0, 4],
-        strokeWidth: 2,
-        hover: {
-          size: 6,
-        },
-      },
+  size: 0,
+  strokeWidth: 0,
+  hover: {
+    size: 0,
+    sizeOffset: 0,
+  },
+},
+states: {
+  hover: {
+    filter: {
+      type: "none",
+    },
+  },
+  active: {
+    filter: {
+      type: "none",
+    },
+  },
+},
       dataLabels: {
         enabled: false,
       },

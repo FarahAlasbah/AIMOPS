@@ -408,3 +408,10 @@
     justify-content: flex-start;
   }
 }
+
+.campaign-page-alert.warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #facc15;
+}
+
