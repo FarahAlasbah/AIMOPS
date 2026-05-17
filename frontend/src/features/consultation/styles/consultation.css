@@ -1477,3 +1477,56 @@ html[dir="rtl"] .consultation-message-text {
   }
 }
 
+.consultation-bubble-streaming {
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 26px rgba(3, 4, 94, 0.08);
+}
+
+.consultation-streaming-content {
+  position: relative;
+}
+
+.consultation-streaming-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1.15em;
+  margin-inline-start: 5px;
+  border-radius: 999px;
+  background: #03045e;
+  vertical-align: -0.18em;
+  animation: consultationCursorBlink 0.8s step-end infinite;
+}
+
+.consultation-stream-error {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.consultation-bubble-error {
+  border-color: #fecaca;
+}
+
+@keyframes consultationCursorBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consultation-streaming-cursor {
+    animation: none;
+  }
+}

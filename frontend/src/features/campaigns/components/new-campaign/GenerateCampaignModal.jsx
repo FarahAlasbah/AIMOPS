@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Sparkles, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -10,7 +10,7 @@ import "./GenerateCampaignModal.css";
 const GENERATE_MODES = {
   FULL: "full",
   PRODUCTS: "products",
-  PRODUCTS_WITH_DATES: "products_with_dates",
+  TARGETS: "targets",
   EVENT: "event",
   CLEARANCE: "clearance",
 };
@@ -27,6 +27,27 @@ function GenerateMiniLoader({ t }) {
       </span>
     </div>
   );
+}
+
+function getInitialTargetQuantities(selectedProducts = []) {
+  return selectedProducts.reduce((acc, product) => {
+    const productId = String(product.product_id || "");
+
+    if (!productId) return acc;
+
+    acc[productId] =
+      product.target_quantity === null ||
+      product.target_quantity === undefined
+        ? ""
+        : String(product.target_quantity);
+
+    return acc;
+  }, {});
+}
+
+function hasPositiveQuantity(value) {
+  const quantity = Number(value);
+  return Number.isFinite(quantity) && quantity > 0;
 }
 
 export default function GenerateCampaignModal({
@@ -46,9 +67,15 @@ export default function GenerateCampaignModal({
 }) {
   const { t } = useTranslation("campaigns");
 
+  const productsSectionRef = useRef(null);
+  const datesSectionRef = useRef(null);
+  const eventSectionRef = useRef(null);
+  const previousModeRef = useRef("");
+
   const [mode, setMode] = useState(GENERATE_MODES.FULL);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [draftProductIds, setDraftProductIds] = useState([]);
+  const [draftTargetQuantities, setDraftTargetQuantities] = useState({});
   const [draftStartDate, setDraftStartDate] = useState("");
   const [draftEndDate, setDraftEndDate] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -66,6 +93,7 @@ export default function GenerateCampaignModal({
         .filter(Boolean),
     );
 
+    setDraftTargetQuantities(getInitialTargetQuantities(selectedProducts));
     setDraftStartDate(startDate || "");
     setDraftEndDate(endDate || "");
   }, [isOpen, selectedProducts, startDate, endDate]);
@@ -121,6 +149,51 @@ export default function GenerateCampaignModal({
   const hasSelectedProducts = draftProductIds.length > 0;
   const hasDateRange = Boolean(draftStartDate && draftEndDate);
 
+  const needsProducts =
+    mode === GENERATE_MODES.PRODUCTS || mode === GENERATE_MODES.TARGETS;
+
+  const needsTargets = mode === GENERATE_MODES.TARGETS;
+  const needsEvent = mode === GENERATE_MODES.EVENT;
+  const needsDates = mode !== GENERATE_MODES.EVENT;
+
+  const targetQuantitiesReady =
+    !needsTargets ||
+    (hasSelectedProducts &&
+      draftProductIds.every((productId) =>
+        hasPositiveQuantity(draftTargetQuantities[String(productId)]),
+      ));
+
+  useEffect(() => {
+    if (!isOpen) {
+      previousModeRef.current = "";
+      return undefined;
+    }
+
+    const previousMode = previousModeRef.current;
+    previousModeRef.current = mode;
+
+    if (!mode || previousMode === mode) return undefined;
+
+    const sectionToShow = needsEvent
+      ? eventSectionRef.current
+      : needsProducts
+        ? productsSectionRef.current
+        : needsDates
+          ? datesSectionRef.current
+          : null;
+
+    if (!sectionToShow) return undefined;
+
+    const timer = window.setTimeout(() => {
+      sectionToShow.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [isOpen, mode, needsDates, needsEvent, needsProducts]);
+
   const options = useMemo(
     () => [
       {
@@ -129,11 +202,7 @@ export default function GenerateCampaignModal({
           defaultValue: "Full suggestion",
         }),
         description: t("generator.full.description", {
-          defaultValue:
-            "Let AIMOPS choose the products, dates, campaign type, and details.",
-        }),
-        helper: t("generator.full.helper", {
-          defaultValue: "Best when the system should decide everything.",
+          defaultValue: "AIMOPS chooses the products and campaign idea.",
         }),
       },
       {
@@ -143,34 +212,18 @@ export default function GenerateCampaignModal({
         }),
         description: t("generator.products.description", {
           defaultValue:
-            "Choose products here, then AIMOPS will generate a campaign idea for them.",
+            "Choose products and dates, then AIMOPS builds the idea around them.",
         }),
-        helper: hasSelectedProducts
-          ? t("generator.products.ready", {
-              count: draftProductIds.length,
-              defaultValue: `${draftProductIds.length} product(s) selected.`,
-            })
-          : t("generator.products.pickInsideModal", {
-              defaultValue: "Choose products below before generating.",
-            }),
       },
       {
-        value: GENERATE_MODES.PRODUCTS_WITH_DATES,
-        title: t("generator.productsWithDates.title", {
-          defaultValue: "Use selected products and dates",
+        value: GENERATE_MODES.TARGETS,
+        title: t("generator.targets.title", {
+          defaultValue: "Use products with target quantities",
         }),
-        description: t("generator.productsWithDates.description", {
+        description: t("generator.targets.description", {
           defaultValue:
-            "Choose products and dates here, then AIMOPS will generate the suggestion.",
+            "Choose products, enter the quantity target for each one, and pick dates.",
         }),
-        helper:
-          hasSelectedProducts && hasDateRange
-            ? t("generator.productsWithDates.ready", {
-                defaultValue: "Products and dates are ready.",
-              })
-            : t("generator.productsWithDates.pickInsideModal", {
-                defaultValue: "Choose products and dates below.",
-              }),
       },
       {
         value: GENERATE_MODES.EVENT,
@@ -179,11 +232,7 @@ export default function GenerateCampaignModal({
         }),
         description: t("generator.event.description", {
           defaultValue:
-            "Generate a campaign suggestion around one of the confirmed events.",
-        }),
-        helper: t("generator.event.helper", {
-          defaultValue:
-            "Choose an existing event below. AIMOPS will use that event name.",
+            "Choose a confirmed event. AIMOPS will use the event timing.",
         }),
       },
       {
@@ -193,29 +242,21 @@ export default function GenerateCampaignModal({
         }),
         description: t("generator.clearance.description", {
           defaultValue:
-            "Find products that need a push and generate a campaign for them.",
-        }),
-        helper: t("generator.clearance.helper", {
-          defaultValue: "Best for moving slow-selling products.",
+            "AIMOPS looks for slow-moving products and builds a campaign around them.",
         }),
       },
     ],
-    [draftProductIds.length, hasDateRange, hasSelectedProducts, t],
+    [t],
   );
 
   if (!isOpen) return null;
 
-  const needsProducts =
-    mode === GENERATE_MODES.PRODUCTS ||
-    mode === GENERATE_MODES.PRODUCTS_WITH_DATES;
-
-  const needsDates = mode === GENERATE_MODES.PRODUCTS_WITH_DATES;
-  const needsEvent = mode === GENERATE_MODES.EVENT;
-
   const canGenerate =
     !loading &&
+    Boolean(mode) &&
     (!needsProducts || draftProductIds.length > 0) &&
-    (!needsDates || (draftStartDate && draftEndDate)) &&
+    targetQuantitiesReady &&
+    (!needsDates || hasDateRange) &&
     (!needsEvent || Boolean(selectedEvent));
 
   const addProduct = (productId) => {
@@ -225,11 +266,32 @@ export default function GenerateCampaignModal({
       if (prev.includes(safeId)) return prev;
       return [...prev, safeId];
     });
+
+    setDraftTargetQuantities((prev) => ({
+      ...prev,
+      [safeId]: prev[safeId] || "",
+    }));
   };
 
   const removeProduct = (productId) => {
     const safeId = String(productId);
+
     setDraftProductIds((prev) => prev.filter((id) => id !== safeId));
+
+    setDraftTargetQuantities((prev) => {
+      const next = { ...prev };
+      delete next[safeId];
+      return next;
+    });
+  };
+
+  const updateTargetQuantity = (productId, value) => {
+    const safeId = String(productId);
+
+    setDraftTargetQuantities((prev) => ({
+      ...prev,
+      [safeId]: value,
+    }));
   };
 
   const handleSubmit = () => {
@@ -240,6 +302,7 @@ export default function GenerateCampaignModal({
       eventName: selectedEvent?.name || "",
       eventId: selectedEvent?.id || "",
       productIds: draftProductIds,
+      targetQuantities: draftTargetQuantities,
       startDate: draftStartDate,
       endDate: draftEndDate,
     });
@@ -275,7 +338,7 @@ export default function GenerateCampaignModal({
             <p>
               {t("generator.subtitle", {
                 defaultValue:
-  "Choose how AIMOPS should build the campaign idea. AIMOPS will fill the form, complete what is missing, and you can still edit everything before saving.",
+                  "Choose how AIMOPS should build the campaign idea. AIMOPS will fill the form, complete what is missing, and you can still edit everything before saving.",
               })}
             </p>
           </div>
@@ -304,16 +367,15 @@ export default function GenerateCampaignModal({
                 <span className="generate-option-card__description">
                   {option.description}
                 </span>
-
-                <span className="generate-option-card__helper">
-                  {option.helper}
-                </span>
               </button>
             ))}
           </div>
 
           {needsProducts ? (
-            <div className="generate-campaign-modal__section">
+            <div
+              ref={productsSectionRef}
+              className="generate-campaign-modal__section"
+            >
               <div className="generate-campaign-modal__section-header">
                 <div>
                   <h4>
@@ -323,10 +385,15 @@ export default function GenerateCampaignModal({
                   </h4>
 
                   <p>
-                    {t("generator.products.selectSubtitle", {
-                      defaultValue:
-                        "Pick the products you want AIMOPS to focus on.",
-                    })}
+                    {needsTargets
+                      ? t("generator.targets.selectSubtitle", {
+                          defaultValue:
+                            "Pick the products, then enter the target quantity for each one.",
+                        })
+                      : t("generator.products.selectSubtitle", {
+                          defaultValue:
+                            "Pick the products you want AIMOPS to focus on.",
+                        })}
                   </p>
                 </div>
 
@@ -365,6 +432,84 @@ export default function GenerateCampaignModal({
                   })}
                 </div>
               )}
+
+              {needsTargets ? (
+                <div
+                  className="selected-products-panel"
+                  style={{ marginBottom: 14 }}
+                >
+                  {selectedDraftProducts.length ? (
+                    <>
+                      <div className="selected-products-panel-header">
+                        <span>
+                          {t("generator.targets.quantityTitle", {
+                            defaultValue: "Target quantities",
+                          })}
+                        </span>
+
+                        <span>{selectedDraftProducts.length}</span>
+                      </div>
+
+                      <div className="selected-products-list compact">
+                        {selectedDraftProducts.map((product) => {
+                          const productId = String(product.id);
+
+                          return (
+                            <div
+                              key={`target-${product.id}`}
+                              className="selected-product-row"
+                            >
+                              <div className="selected-product-meta">
+                                <h4>{product.name}</h4>
+                                <p>{product.category || "-"}</p>
+                              </div>
+
+                              <div className="selected-product-inputs">
+                                <div className="selected-product-field compact">
+                                  <label>
+                                    {t("fields.targetQuantity", {
+                                      defaultValue: "Target quantity",
+                                    })}
+                                  </label>
+
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={
+                                      draftTargetQuantities[productId] || ""
+                                    }
+                                    onChange={(event) =>
+                                      updateTargetQuantity(
+                                        productId,
+                                        event.target.value,
+                                      )
+                                    }
+                                    placeholder={t(
+                                      "fields.targetQuantityPlaceholder",
+                                      {
+                                        defaultValue: "Example: 500",
+                                      },
+                                    )}
+                                    disabled={loading}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="selected-products-empty">
+                      {t("generator.targets.pickProductsFirst", {
+                        defaultValue:
+                          "Choose products first, then enter the target quantities.",
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               <div className="generate-campaign-modal__search">
                 <Search size={16} />
@@ -438,7 +583,10 @@ export default function GenerateCampaignModal({
           ) : null}
 
           {needsDates ? (
-            <div className="generate-campaign-modal__section">
+            <div
+              ref={datesSectionRef}
+              className="generate-campaign-modal__section"
+            >
               <div className="generate-campaign-modal__section-header">
                 <div>
                   <h4>
@@ -474,11 +622,22 @@ export default function GenerateCampaignModal({
                   required
                 />
               </div>
+              {needsTargets ? (
+  <div className="generate-campaign-modal__forecast-note">
+    {t("generator.targets.forecastCoverageNote", {
+      defaultValue:
+        "For best results, choose dates within the forecast period. If the selected dates are too far ahead and AIMOPS has no forecast for them, it may use a default discount instead.",
+    })}
+  </div>
+) : null}
             </div>
           ) : null}
 
           {needsEvent ? (
-            <div className="generate-campaign-modal__section">
+            <div
+              ref={eventSectionRef}
+              className="generate-campaign-modal__section"
+            >
               <div className="generate-campaign-modal__section-header">
                 <div>
                   <h4>

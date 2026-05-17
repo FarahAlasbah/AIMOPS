@@ -2,7 +2,7 @@ import { createContext, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   getConsultationHistory,
-  sendConsultationMessage,
+  sendConsultationMessageStream,
   createConsultationSummary,
   getConsultationSummaries,
   deleteConsultationSummary,
@@ -10,7 +10,6 @@ import {
 } from "../../../api/consultation";
 import {
   createLocalAssistantLoadingMessage,
-  createLocalAssistantMessage,
   createLocalUserMessage,
   mapHistoryResponseToMessages,
   mapSummariesResponse,
@@ -20,17 +19,6 @@ import "../styles/consultation.css";
 
 export const ConsultationContext = createContext(null);
 
-export function ConsultationProvider({ children }) {
-const { t } = useTranslation("consultation");
-  const [messages, setMessages] = useState([]);
-  const [summaries, setSummaries] = useState([]);
-  const [draft, setDraft] = useState("");
-
-  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState("");
-
-  const [isSummariesLoading, setIsSummariesLoading] = useState(false);
-  const [summariesError, setSummariesError] = useState("");
 function getConsultationErrorMessage(error, t) {
   const status = error?.response?.status;
 
@@ -41,9 +29,24 @@ function getConsultationErrorMessage(error, t) {
   return (
     error?.response?.data?.message ||
     error?.response?.data?.detail ||
+    error?.message ||
     t("unknownError")
   );
 }
+
+export function ConsultationProvider({ children }) {
+  const { t } = useTranslation("consultation");
+
+  const [messages, setMessages] = useState([]);
+  const [summaries, setSummaries] = useState([]);
+  const [draft, setDraft] = useState("");
+
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+
+  const [isSummariesLoading, setIsSummariesLoading] = useState(false);
+  const [summariesError, setSummariesError] = useState("");
+
   const [isSending, setIsSending] = useState(false);
   const [isCreatingSummary, setIsCreatingSummary] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -76,14 +79,16 @@ function getConsultationErrorMessage(error, t) {
         const message =
           error?.response?.data?.message ||
           error?.response?.data?.detail ||
-          t("historyLoadError", { defaultValue: "Failed to load conversation." });
+          t("historyLoadError", {
+            defaultValue: "Failed to load conversation.",
+          });
 
         setHistoryError(String(message));
       } finally {
         setIsHistoryLoading(false);
       }
     },
-    [hasLoadedHistory, isHistoryLoading, t]
+    [hasLoadedHistory, isHistoryLoading, t],
   );
 
   const ensureSummariesLoaded = useCallback(
@@ -102,14 +107,16 @@ function getConsultationErrorMessage(error, t) {
         const message =
           error?.response?.data?.message ||
           error?.response?.data?.detail ||
-          t("summariesLoadError", { defaultValue: "Failed to load summaries." });
+          t("summariesLoadError", {
+            defaultValue: "Failed to load summaries.",
+          });
 
         setSummariesError(String(message));
       } finally {
         setIsSummariesLoading(false);
       }
     },
-    [hasLoadedSummaries, isSummariesLoading, t]
+    [hasLoadedSummaries, isSummariesLoading, t],
   );
 
   const openDrawer = useCallback(() => {
@@ -129,147 +136,187 @@ function getConsultationErrorMessage(error, t) {
   }, []);
 
   const sendMessage = useCallback(
-  async (rawMessage) => {
-    const message = String(rawMessage || "").trim();
+    async (rawMessage) => {
+      const message = String(rawMessage || "").trim();
 
-    if (!message || sendingRef.current) return false;
+      if (!message || sendingRef.current) return false;
 
-    sendingRef.current = true;
-    setIsSending(true);
-    setHistoryError("");
-    setNotice(null);
+      sendingRef.current = true;
+      setIsSending(true);
+      setHistoryError("");
+      setNotice(null);
+      setDraft("");
 
-    // Clear the input immediately after sending
-    setDraft("");
-
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: message,
-      createdAt: new Date().toISOString(),
-      status: "sent",
-    };
-
-    const loadingMessage = {
-      id: `assistant-loading-${Date.now()}`,
-      role: "assistant",
-      content: "",
-      createdAt: new Date().toISOString(),
-      status: "loading",
-    };
-
-    setMessages((prev) => [...prev, userMessage, loadingMessage]);
-
-    try {
-      const data = await sendConsultationMessage(message);
+      const userMessage = createLocalUserMessage(message);
 
       const assistantMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: String(data?.response || ""),
-        createdAt: new Date().toISOString(),
-        status: "sent",
+        ...createLocalAssistantLoadingMessage(),
+        status: "streaming",
+        content: "",
       };
 
-      setMessages((prev) =>
-        prev.map((item) =>
-          item.id === loadingMessage.id ? assistantMessage : item
-        )
-      );
+      let streamedAnswer = "";
 
-      return true;
-    } catch (error) {
-      const errorText = getConsultationErrorMessage(error, t);
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
-      setMessages((prev) =>
-        prev.filter((item) => item.id !== loadingMessage.id)
-      );
+      try {
+        await sendConsultationMessageStream(message, {
+          onChunk: (chunk) => {
+            streamedAnswer += chunk;
 
-      setNotice({
-        type: "error",
-        text: errorText,
-      });
-
-      return false;
-    } finally {
-      sendingRef.current = false;
-      setIsSending(false);
-    }
-  },
-  [t]
-);
-const deleteSummary = useCallback(
-  async (summaryId) => {
-    if (!summaryId) return false;
-
-    try {
-      await deleteConsultationSummary(summaryId);
-
-      setSummaries((prev) =>
-        prev.filter((item) => item.summary_id !== summaryId)
-      );
-
-      setNotice({
-        type: "success",
-        text: t("summaryDeleted", { defaultValue: "Summary deleted." }),
-      });
-
-      return true;
-    } catch (error) {
-      const errorText =
-        error?.response?.data?.message ||
-        error?.response?.data?.detail ||
-        t("deleteSummaryError", {
-          defaultValue: "Failed to delete summary.",
+            setMessages((prev) =>
+              prev.map((item) =>
+                item.id === assistantMessage.id
+                  ? {
+                      ...item,
+                      content: streamedAnswer,
+                      status: "streaming",
+                    }
+                  : item,
+              ),
+            );
+          },
         });
 
-      setNotice({
-        type: "error",
-        text: errorText,
-      });
+        const finalAnswer = streamedAnswer.trim();
 
-      return false;
-    }
-  },
-  [t]
-);
-const saveSummary = useCallback(
-  async (title) => {
-    const trimmedTitle = String(title || "").trim();
-    if (!trimmedTitle || isCreatingSummary) return false;
+        setMessages((prev) =>
+          prev.map((item) =>
+            item.id === assistantMessage.id
+              ? {
+                  ...item,
+                  content:
+                    finalAnswer ||
+                    t("emptyAssistantResponse", {
+                      defaultValue:
+                        "AIMOPS did not return an answer. Please try again.",
+                    }),
+                  status: "sent",
+                }
+              : item,
+          ),
+        );
 
-    setIsCreatingSummary(true);
+        /*
+          The backend saves the chat after the stream finishes.
+          Mark history as stale so the next reload gets the saved backend version.
+        */
+        setHasLoadedHistory(false);
 
-    try {
-      await createConsultationSummary(trimmedTitle);
+        return true;
+      } catch (error) {
+        const errorText = getConsultationErrorMessage(error, t);
 
-      setNotice({
-        type: "success",
-        text: t("summaryCreated"),
-      });
+        setMessages((prev) =>
+          prev.map((item) => {
+            if (item.id !== assistantMessage.id) return item;
 
-      setHasLoadedSummaries(false);
-      await ensureSummariesLoaded({ force: true });
+            return {
+              ...item,
+              content: streamedAnswer,
+              status: "error",
+              errorText: t("streamInterrupted", {
+                defaultValue:
+                  "The answer stopped before it finished. Please try again.",
+              }),
+            };
+          }),
+        );
 
-      return true;
-    } catch (error) {
-      const errorText =
-        error?.response?.data?.message ||
-        error?.response?.data?.detail ||
-        t("summaryError");
+        if (!streamedAnswer.trim()) {
+          setMessages((prev) =>
+            prev.filter((item) => item.id !== assistantMessage.id),
+          );
+        }
 
-      setNotice({
-        type: "error",
-        text: errorText,
-      });
+        setNotice({
+          type: "error",
+          text: errorText,
+        });
 
-      return false;
-    } finally {
-      setIsCreatingSummary(false);
-    }
-  },
-  [ensureSummariesLoaded, isCreatingSummary, t]
-);
+        return false;
+      } finally {
+        sendingRef.current = false;
+        setIsSending(false);
+      }
+    },
+    [t],
+  );
+
+  const deleteSummary = useCallback(
+    async (summaryId) => {
+      if (!summaryId) return false;
+
+      try {
+        await deleteConsultationSummary(summaryId);
+
+        setSummaries((prev) =>
+          prev.filter((item) => item.summary_id !== summaryId),
+        );
+
+        setNotice({
+          type: "success",
+          text: t("summaryDeleted", { defaultValue: "Summary deleted." }),
+        });
+
+        return true;
+      } catch (error) {
+        const errorText =
+          error?.response?.data?.message ||
+          error?.response?.data?.detail ||
+          t("deleteSummaryError", {
+            defaultValue: "Failed to delete summary.",
+          });
+
+        setNotice({
+          type: "error",
+          text: errorText,
+        });
+
+        return false;
+      }
+    },
+    [t],
+  );
+
+  const saveSummary = useCallback(
+    async (title) => {
+      const trimmedTitle = String(title || "").trim();
+      if (!trimmedTitle || isCreatingSummary) return false;
+
+      setIsCreatingSummary(true);
+
+      try {
+        await createConsultationSummary(trimmedTitle);
+
+        setNotice({
+          type: "success",
+          text: t("summaryCreated"),
+        });
+
+        setHasLoadedSummaries(false);
+        await ensureSummariesLoaded({ force: true });
+
+        return true;
+      } catch (error) {
+        const errorText =
+          error?.response?.data?.message ||
+          error?.response?.data?.detail ||
+          t("summaryError");
+
+        setNotice({
+          type: "error",
+          text: errorText,
+        });
+
+        return false;
+      } finally {
+        setIsCreatingSummary(false);
+      }
+    },
+    [ensureSummariesLoaded, isCreatingSummary, t],
+  );
+
   const clearConversation = useCallback(
     async ({ shouldCreateSummary = false, summaryTitle = "" } = {}) => {
       if (clearFlowRef.current) return false;
@@ -316,10 +363,12 @@ const saveSummary = useCallback(
           await clearConsultationHistory();
           setMessages([]);
           setHasLoadedHistory(true);
+
           setNotice({
             type: "success",
             text: t("historyCleared"),
           });
+
           return true;
         } catch (error) {
           const message =
@@ -341,7 +390,7 @@ const saveSummary = useCallback(
         clearFlowRef.current = false;
       }
     },
-    [t]
+    [t],
   );
 
   const removeSummary = useCallback(
@@ -354,8 +403,9 @@ const saveSummary = useCallback(
 
       try {
         await deleteConsultationSummary(summaryId);
+
         setSummaries((current) =>
-          current.filter((summary) => String(summary?.summary_id) !== key)
+          current.filter((summary) => String(summary?.summary_id) !== key),
         );
 
         setNotice({
@@ -382,7 +432,7 @@ const saveSummary = useCallback(
         summariesDeleteRef.current.delete(key);
       }
     },
-    [t]
+    [t],
   );
 
   const value = useMemo(
@@ -437,6 +487,8 @@ const saveSummary = useCallback(
       hasLoadedSummaries,
       notice,
       clearNotice,
+      saveSummary,
+      deleteSummary,
       ensureHistoryLoaded,
       ensureSummariesLoaded,
       sendMessage,
@@ -445,8 +497,7 @@ const saveSummary = useCallback(
       openDrawer,
       closeDrawer,
       toggleDrawerExpanded,
-      
-    ]
+    ],
   );
 
   return (

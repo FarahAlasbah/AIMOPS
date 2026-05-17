@@ -7,6 +7,9 @@ export default function ConsultationMessageBubble({ message }) {
 
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
+  const isStreaming = message.status === "streaming";
+  const isError = message.status === "error";
+  const hasContent = Boolean(String(message.content || "").trim());
 
   return (
     <div
@@ -25,6 +28,8 @@ export default function ConsultationMessageBubble({ message }) {
       <div
         className={`consultation-bubble ${
           isUser ? "consultation-bubble-user" : "consultation-bubble-assistant"
+        } ${isStreaming ? "consultation-bubble-streaming" : ""} ${
+          isError ? "consultation-bubble-error" : ""
         }`}
         dir="auto"
       >
@@ -38,14 +43,35 @@ export default function ConsultationMessageBubble({ message }) {
           <div className="consultation-message-text" dir="auto">
             {message.content}
           </div>
-        ) : isLoading ? (
+        ) : isLoading || (isStreaming && !hasContent) ? (
           <div className="consultation-typing">
             <span />
             <span />
             <span />
           </div>
         ) : (
-          <ConsultationMarkdown content={message.content} />
+          <>
+            <div className="consultation-streaming-content">
+              <ConsultationMarkdown content={message.content} />
+
+              {isStreaming ? (
+                <span
+                  className="consultation-streaming-cursor"
+                  aria-hidden="true"
+                />
+              ) : null}
+            </div>
+
+            {isError ? (
+              <div className="consultation-stream-error">
+                {message.errorText ||
+                  t("streamInterrupted", {
+                    defaultValue:
+                      "The answer stopped before it finished. Please try again.",
+                  })}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
 
