@@ -324,6 +324,16 @@
       "description": "Let AIMOPS choose the products, dates, campaign type, and details.",
       "helper": "Best when the system should decide everything."
     },
+    
+  "targets": {
+    "title": "Use products with target quantities",
+    "description": "Choose products, enter the quantity target for each one, and pick dates.",
+    "selectSubtitle": "Pick the products, then enter the target quantity for each one.",
+    "quantityTitle": "Target quantities",
+    "pickProductsFirst": "Choose products first, then enter the target quantities.",
+    "forecastCoverageNote": "For best results, choose dates within the forecast period. If the selected dates are too far ahead and AIMOPS has no forecast for them, it may use a default discount instead."
+  }
+},
     "products": {
       "title": "Use selected products",
       "description": "Choose products here, then AIMOPS will generate a campaign idea for them.",
@@ -362,8 +372,8 @@
     },
     "errors": {
       "productsRequired": "Choose at least one product first.",
+  "targetQuantitiesRequired": "Enter a target quantity for every selected product.",
       "datesRequired": "Choose both start and end dates first.",
       "eventRequired": "Choose one event from your events list first."
     }
   }
-}

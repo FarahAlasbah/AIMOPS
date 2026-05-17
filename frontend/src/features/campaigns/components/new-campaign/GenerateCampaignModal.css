@@ -860,3 +860,16 @@
   line-height: 1.55;
 }
 
+html[dir="rtl"] .generate-option-card,
+html[dir="rtl"] .generate-campaign-modal__product-card,
+html[dir="rtl"] .generate-campaign-modal__event-card {
+  text-align: right;
+}
+
+html[dir="rtl"] .generate-campaign-modal__header {
+  direction: rtl;
+}
+
+html[dir="rtl"] .generate-campaign-modal__selected-chip {
+  padding: 6px 12px 6px 8px;
+}
