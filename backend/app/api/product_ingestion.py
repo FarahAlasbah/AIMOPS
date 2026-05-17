@@ -309,6 +309,20 @@ async def confirm_products_and_import(
 
         invalidate_consultation_cache()
         
+        from app.models.forecast import ForecastModel
+
+        imported_product_ids = list(set(name_to_product_id.values()))
+
+        if imported_product_ids:
+            db.query(ForecastModel).filter(
+                ForecastModel.product_id.in_(imported_product_ids),
+                ForecastModel.status == 'ready'
+            ).update(
+                {"status": "training"},
+                synchronize_session=False
+            )
+            db.commit()
+            
         # ── Fire Campaign Detection in Background ──
         # This runs AFTER the response is sent — user isn't waiting for it.
         # detect_campaigns_for_batch will analyze the imported sales records
@@ -350,7 +364,7 @@ async def confirm_products_and_import(
         },
         "rejected_details": rejected_details,
         "campaign_detection": "Running in background. You'll be notified when complete.",
-        "forecast_training": "Running in background. You'll be notified when forecasts are ready.",
+        "forecast_training": f"{len(imported_product_ids)} product forecast(s) marked for regeneration. Go to the Forecasting page to retrain them.",        
         "next_step": "Your data is ready for forecasting and campaign analysis"
     }
 
