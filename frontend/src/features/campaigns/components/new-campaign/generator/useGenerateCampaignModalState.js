@@ -1,4 +1,3 @@
-// frontend/src/features/campaigns/components/new-campaign/generator/useGenerateCampaignModalState.js
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   GENERATE_MODES,
@@ -96,7 +95,6 @@ export function useGenerateCampaignModalState({
   }, [availableProducts, productSearch]);
 
   const hasSelectedProducts = draftProductIds.length > 0;
-  const hasDateRange = Boolean(draftStartDate && draftEndDate);
 
   const needsProducts =
     mode === GENERATE_MODES.PRODUCTS || mode === GENERATE_MODES.TARGETS;
@@ -117,7 +115,6 @@ export function useGenerateCampaignModalState({
     Boolean(mode) &&
     (!needsProducts || draftProductIds.length > 0) &&
     targetQuantitiesReady &&
-    (!needsDates || hasDateRange) &&
     (!needsEvent || Boolean(selectedEvent));
 
   useEffect(() => {

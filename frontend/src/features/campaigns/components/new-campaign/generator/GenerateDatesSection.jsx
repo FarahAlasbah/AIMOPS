@@ -1,4 +1,3 @@
-// frontend/src/features/campaigns/components/new-campaign/generator/GenerateDatesSection.jsx
 import { FormCalendar } from "../../../../../shared/components";
 
 export default function GenerateDatesSection({
@@ -11,31 +10,39 @@ export default function GenerateDatesSection({
   onStartDateChange,
   onEndDateChange,
 }) {
+  const optionalLabel = t("common.optional", {
+    defaultValue: "optional",
+  });
+
   return (
     <div ref={sectionRef} className="generate-campaign-modal__section">
       <div className="generate-campaign-modal__section-header">
         <div>
           <h4>{t("generator.dates.selectTitle")}</h4>
-          <p>{t("generator.dates.selectSubtitle")}</p>
+
+          <p>
+            {t("generator.dates.selectSubtitle", {
+              defaultValue:
+                "Choose dates only if you already know them. Otherwise, leave them empty and AIMOPS will suggest them.",
+            })}
+          </p>
         </div>
       </div>
 
       <div className="generate-campaign-modal__date-grid">
         <FormCalendar
-          label={t("fields.startDate")}
+          label={`${t("fields.startDate")} (${optionalLabel})`}
           value={draftStartDate}
           onChange={(event) => onStartDateChange(event.target.value)}
           disabled={loading}
-          required
         />
 
         <FormCalendar
-          label={t("fields.endDate")}
+          label={`${t("fields.endDate")} (${optionalLabel})`}
           value={draftEndDate}
           min={draftStartDate || undefined}
           onChange={(event) => onEndDateChange(event.target.value)}
           disabled={loading}
-          required
         />
       </div>
 
