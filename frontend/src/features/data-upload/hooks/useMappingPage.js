@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/hooks/useMappingPage.js
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -35,7 +36,6 @@ export function useMappingPage({ batchId, navigate, t }) {
 
   const [confirming, setConfirming] = useState(false);
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
-  const [completedNotice, setCompletedNotice] = useState(false);
 
   const { pct: analyzePct, finish: finishAnalyzePct } =
     useFakeProgress(analysisLoading);
@@ -51,7 +51,6 @@ export function useMappingPage({ batchId, navigate, t }) {
       if (!batchId) return;
 
       setError("");
-      setCompletedNotice(false);
       setAnalysisLoading(true);
 
       try {
@@ -68,11 +67,18 @@ export function useMappingPage({ batchId, navigate, t }) {
             : null;
 
         if (isCompletedUploadDetails(details, analysisResult)) {
-          setAnalysis(null);
-          setColumnMap({});
-          setRequiredMissingMap({});
-          setAlreadyConfirmed(true);
-          setCompletedNotice(true);
+          const currentT = tRef.current;
+
+          navigate("/app/data-upload/uploads", {
+            replace: true,
+            state: {
+              uploadWarning: currentT("uploadsPage.completedUploadWarning", {
+                defaultValue:
+                  "This upload is already finished. The products from this file were already added to AIMOPS.",
+              }),
+            },
+          });
+
           return;
         }
 
@@ -117,7 +123,6 @@ export function useMappingPage({ batchId, navigate, t }) {
 
           setError(getFriendlyMappingError(err, fallback, currentT));
           setAnalysis(null);
-          setCompletedNotice(false);
         }
       } finally {
         if (!cancelled) {
@@ -132,7 +137,7 @@ export function useMappingPage({ batchId, navigate, t }) {
     return () => {
       cancelled = true;
     };
-  }, [batchId, finishAnalyzePct]);
+  }, [batchId, finishAnalyzePct, navigate]);
 
   const allColumnsOptions = useMemo(() => {
     const columns = analysis?.columns || [];
@@ -296,7 +301,6 @@ export function useMappingPage({ batchId, navigate, t }) {
     requiredMissingMap,
     confirming,
     alreadyConfirmed,
-    completedNotice,
     allColumnsOptions,
     canConfirm,
 
