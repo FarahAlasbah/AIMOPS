@@ -12,10 +12,15 @@ import {
   InfoMessage,
 } from "../../../shared/components";
 import { createEvent } from "../../../api/events";
-import { toIsoDate, validateEventPayload } from "../utils/eventUtils";
+import { validateEventPayload } from "../utils/eventUtils";
 import "./EventForm.css";
 
-export default function EventForm({ saving, onSavingChange, onSuccess, onError }) {
+export default function EventForm({
+  saving,
+  onSavingChange,
+  onSuccess,
+  onError,
+}) {
   const { t } = useTranslation("events");
 
   const TYPE_OPTIONS = [
@@ -37,19 +42,23 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
   const [form, setForm] = useState(() => ({
     event_name: "",
     event_name_ar: "",
-    event_type: "religious",
-    start_date: toIsoDate(new Date()),
-    end_date: toIsoDate(new Date()),
+    event_type: "",
+    start_date: "",
+    end_date: "",
     description: "",
-    is_recurring: true,
-    recurrence_type: "yearly",
+    is_recurring: false,
+    recurrence_type: "",
   }));
 
   const [localError, setLocalError] = useState("");
 
   const payload = useMemo(() => {
     const p = { ...form };
-    if (!p.is_recurring) p.recurrence_type = null;
+
+    if (!p.is_recurring) {
+      p.recurrence_type = null;
+    }
+
     return p;
   }, [form]);
 
@@ -57,10 +66,18 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
     const value =
       e?.target?.type === "checkbox" ? e.target.checked : e?.target?.value;
 
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
+    setForm((current) => {
+      const next = {
+        ...current,
+        [key]: value,
+      };
+
+      if (key === "is_recurring" && !value) {
+        next.recurrence_type = "";
+      }
+
+      return next;
+    });
   };
 
   async function submit(e) {
@@ -98,7 +115,7 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
       <FormRow columns={2}>
         <FormInput
           label={t("form.eventNameEn")}
-          placeholder={t("form.eventNameEnPlaceholder")}
+          placeholder="Ex: Ramadan 2026"
           value={form.event_name}
           onChange={set("event_name")}
           required
@@ -106,7 +123,7 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
 
         <FormInput
           label={t("form.eventNameAr")}
-          placeholder={t("form.eventNameArPlaceholder")}
+          placeholder="مثال: رمضان 2026"
           value={form.event_name_ar}
           onChange={set("event_name_ar")}
         />
@@ -131,13 +148,16 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
             <span>{t("form.recurring")}</span>
           </label>
 
-          <div className={`recurrence-wrap ${form.is_recurring ? "" : "disabled"}`}>
+          <div
+            className={`recurrence-wrap ${
+              form.is_recurring ? "" : "disabled"
+            }`}
+          >
             <FormSelect
               label={t("form.recurrenceType")}
               value={form.recurrence_type || ""}
               onChange={set("recurrence_type")}
               options={RECURRENCE_OPTIONS}
-              placeholder={t("form.recurrencePlaceholder")}
               disabled={!form.is_recurring}
             />
           </div>
@@ -157,13 +177,12 @@ export default function EventForm({ saving, onSavingChange, onSuccess, onError }
           value={form.end_date}
           onChange={set("end_date")}
           required
-          min={form.start_date}
+          min={form.start_date || undefined}
         />
       </FormRow>
 
       <FormTextarea
         label={t("form.description")}
-        placeholder={t("eventForm.descriptionPlaceholder")}
         value={form.description}
         onChange={set("description")}
         rows={4}
