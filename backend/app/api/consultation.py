@@ -23,6 +23,7 @@ from app.models.user import User
 from app.models.consultation_summary import ConsultationSummary
 from app.models.consultation_message import ConsultationMessage
 from app.services import consultation_service
+from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/api/consultation", tags=["Consultation"])
 
@@ -123,6 +124,62 @@ async def chat(
     }
 
 
+# ============================================
+# ENDPOINT 2B: Send a Message (Streaming)
+# ============================================
+
+@router.post("/chat/stream")
+async def chat_stream(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Streaming version of /chat.
+    Returns text chunks as Server-Sent Events (SSE) as Claude generates them.
+    Frontend reads the stream and appends words in real time.
+
+    Body:
+    - message: str (required)
+
+    Response format: text/event-stream
+    Each chunk: "data: <text>\n\n"
+    End signal: "data: [DONE]\n\n"
+    """
+    require_consultation_access(current_user)
+
+    message = request.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    if len(message) > 2000:
+        raise HTTPException(
+            status_code=400,
+            detail="Message too long. Keep it under 2000 characters."
+        )
+
+    async def generate():
+        try:
+            async for chunk in consultation_service.chat_stream(
+                db=db,
+                user_id=current_user.user_id,
+                user_message=message
+            ):
+                yield f"data: {chunk}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"data: [ERROR] {str(e)}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
+    
+    
 # ============================================
 # ENDPOINT 3: Load Saved Summaries
 # ============================================
