@@ -144,6 +144,86 @@
   flex-wrap: wrap;
 }
 
+/* Styled uploads warning banner */
+.uploads-warning-banner-wrap {
+  margin-bottom: 16px;
+}
+
+.uploads-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #f5c97a;
+  background: linear-gradient(180deg, #fffaf0 0%, #fff7e8 100%);
+  box-shadow: 0 8px 24px rgba(180, 83, 9, 0.08);
+}
+
+.uploads-warning-banner__icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploads-warning-banner__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.uploads-warning-banner__title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #9a3412;
+  margin-bottom: 4px;
+}
+
+.uploads-warning-banner__text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #7c2d12;
+}
+
+.uploads-warning-banner__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.uploads-warning-banner__dismiss {
+  border: 1px solid #fdba74;
+  background: #ffffff;
+  color: #9a3412;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.uploads-warning-banner__dismiss:hover {
+  background: #fff7ed;
+  border-color: #fb923c;
+  box-shadow: 0 6px 18px rgba(194, 65, 12, 0.08);
+  transform: translateY(-1px);
+}
+
+.uploads-warning-banner__dismiss:active {
+  transform: translateY(0);
+}
+
 /* Uploads list table alignment */
 .ul-table {
   width: 100%;
@@ -935,6 +1015,17 @@ html[dir="rtl"] .confidence-mini-row {
 @media (max-width: 900px) {
   .meta-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .uploads-warning-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .uploads-warning-banner__actions {
+    justify-content: flex-start;
   }
 }
 

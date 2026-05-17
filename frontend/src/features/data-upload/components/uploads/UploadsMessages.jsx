@@ -1,6 +1,13 @@
+// frontend/src/features/data-upload/components/uploads/UploadsMessages.jsx
+import { AlertTriangle } from "lucide-react";
 import InfoMessage from "../../../../shared/components/InfoMessage";
 
-export default function UploadsMessages({ t, error, warning, onDismissWarning }) {
+export default function UploadsMessages({
+  t,
+  error,
+  warning,
+  onDismissWarning,
+}) {
   return (
     <>
       {error ? (
@@ -10,20 +17,31 @@ export default function UploadsMessages({ t, error, warning, onDismissWarning })
       ) : null}
 
       {warning ? (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <div style={{ flex: "1 1 auto" }}>
-              <InfoMessage type="warn">{warning}</InfoMessage>
+        <div className="uploads-warning-banner-wrap">
+          <div className="uploads-warning-banner" role="alert">
+            <div className="uploads-warning-banner__icon">
+              <AlertTriangle size={18} />
             </div>
 
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={onDismissWarning}
-              style={{ whiteSpace: "nowrap" }}
-            >
-              {t("uploadsPage.dismiss")}
-            </button>
+            <div className="uploads-warning-banner__content">
+              <div className="uploads-warning-banner__title">
+                {t("uploadsPage.warningTitle", {
+                  defaultValue: "This file was already uploaded",
+                })}
+              </div>
+
+              <div className="uploads-warning-banner__text">{warning}</div>
+            </div>
+
+            <div className="uploads-warning-banner__actions">
+              <button
+                type="button"
+                className="uploads-warning-banner__dismiss"
+                onClick={onDismissWarning}
+              >
+                {t("uploadsPage.dismiss")}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

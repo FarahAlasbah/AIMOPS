@@ -1,3 +1,6 @@
+// frontend/src/features/data-upload/pages/UploadsPage.jsx
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { Card, PageHeader } from "../../../shared/components";
@@ -19,11 +22,13 @@ import "../components/UploadCard.css";
 
 export default function UploadsPage() {
   const { t } = useTranslation("upload");
+  const location = useLocation();
 
   const {
     error,
     warning,
     setWarning,
+    showCompletedUploadWarning,
 
     uploadedFile,
     uploading,
@@ -73,8 +78,15 @@ export default function UploadsPage() {
 
     canOpenReviewForUpload,
     isCompletedUploadStatus,
-    navigate,
   } = useUploadsPage(t);
+
+  useEffect(() => {
+    const uploadWarning = location.state?.uploadWarning;
+
+    if (uploadWarning) {
+      setWarning(uploadWarning);
+    }
+  }, [location.state, setWarning]);
 
   return (
     <div className="data-upload-page">
@@ -146,15 +158,18 @@ export default function UploadsPage() {
               isCompletedUploadStatus(upload?.status)
             }
             onCompletedOpen={(upload) =>
-              navigate("/app/products", {
-                state: {
-                  completedUploadRedirect: true,
-                  completedUploadFileName: upload?.fileName || "",
-                },
-              })
+              showCompletedUploadWarning(upload?.fileName || "")
             }
-            onOpenMapping={(id) => navigate(`/app/data-upload/map/${id}`)}
-            onReview={(id) => navigate(`/app/data-upload/review/${id}`)}
+            onOpenMapping={(id) => {
+              setWarning("");
+              window.history.replaceState({}, document.title);
+              window.location.href = `/app/data-upload/map/${id}`;
+            }}
+            onReview={(id) => {
+              setWarning("");
+              window.history.replaceState({}, document.title);
+              window.location.href = `/app/data-upload/review/${id}`;
+            }}
             onDelete={requestDelete}
             deletingIds={deletingIds}
             selectedIds={selectedBatchIdSet}
