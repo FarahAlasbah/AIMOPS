@@ -1,13 +1,14 @@
+// frontend/src/features/forecasting/components/ForecastProductsTable.jsx
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../shared/components";
+
 import {
   fmtDate,
   fmtMoney,
   isLikelyNoDataMessage,
   normalizeStatus,
 } from "../utils/forecastingUtils";
-import ForecastStatusChip from "./ForecastStatusChip";
+import ForecastProductActionCell from "./ForecastProductActionCell";
 
 function GeneratingLabel({ children }) {
   return (
@@ -64,7 +65,7 @@ export default function ForecastProductsTable({
           <span>
             {t("bulk.subtitle", {
               defaultValue:
-                "Select products, or use Select all. Generating many products may be slow.",
+                "Select products that need a first forecast or a refreshed forecast.",
             })}
           </span>
         </div>
@@ -135,7 +136,7 @@ export default function ForecastProductsTable({
             </tr>
           ) : (
             products.map((product) => {
-              const productId = Number(product?.product_id);
+              const productId = Number(product?.product_id ?? product?.id);
               const row = statusMap?.[productId] || {};
               const status = normalizeStatus(row?.status);
               const totalSales = Number(product?.stats?.total_sales || 0);
@@ -199,61 +200,17 @@ export default function ForecastProductsTable({
                   <td>{fmtMoney(totalRevenue, locale)}</td>
 
                   <td>
-                    <div className="forecast-actions">
-                      <div className="forecast-action-row">
-                        <ForecastStatusChip status={status} />
-
-                        {status === "ready" ? (
-                          <Button
-                            type="button"
-                            onClick={() => onView(productId)}
-                          >
-                            {t("actions.view")}
-                          </Button>
-                        ) : status === "training" || busy || locallyPending ? (
-                          <Button type="button" disabled>
-                            <GeneratingLabel>
-                              {busy || locallyPending
-                                ? t("actions.generating")
-                                : t("actions.training")}
-                            </GeneratingLabel>
-                          </Button>
-                        ) : needsUpload ? (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={onUploadData}
-                          >
-                            {t("actions.uploadData")}
-                          </Button>
-                        ) : status === "failed" ? (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => onGenerate(product, true)}
-                          >
-                            {t("actions.retry")}
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            onClick={() => onGenerate(product)}
-                          >
-                            {t("actions.generate")}
-                          </Button>
-                        )}
-                      </div>
-
-                      {status === "failed" && row?.error ? (
-                        <div className="forecast-error-text">{row.error}</div>
-                      ) : null}
-
-                      {needsUpload ? (
-                        <div className="forecast-warning-text">
-                          {t("table.uploadHint")}
-                        </div>
-                      ) : null}
-                    </div>
+                    <ForecastProductActionCell
+                      product={product}
+                      row={row}
+                      status={status}
+                      busy={busy}
+                      locallyPending={locallyPending}
+                      needsUpload={needsUpload}
+                      onView={onView}
+                      onUploadData={onUploadData}
+                      onGenerate={onGenerate}
+                    />
                   </td>
                 </tr>
               );
