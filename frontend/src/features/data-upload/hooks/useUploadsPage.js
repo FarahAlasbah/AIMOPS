@@ -1,3 +1,4 @@
+// frontend/src/features/data-upload/hooks/useUploadsPage.js
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -131,6 +132,19 @@ export function useUploadsPage(t) {
   const selectedCount = selectedUploads.length;
   const isDeleting = deletingIds.size > 0;
 
+  const showCompletedUploadWarning = useCallback(
+    (fileName = "") => {
+      setWarning(
+        t("uploadsPage.completedUploadWarning", {
+          fileName,
+          defaultValue:
+            "This upload is already finished. The products from this file were already added to AIMOPS.",
+        }),
+      );
+    },
+    [t],
+  );
+
   const toggleSelectUpload = (batchId, checked) => {
     const id = String(batchId ?? "").trim();
 
@@ -178,6 +192,7 @@ export function useUploadsPage(t) {
 
   const handleFileSelect = (file) => {
     setError("");
+    setWarning("");
 
     if (!file) {
       setUploadedFile(null);
@@ -243,21 +258,27 @@ export function useUploadsPage(t) {
         const existingId = getExistingBatchIdFrom409(err);
         const message = extractApiError(
           err,
-          t("uploadsPage.errorUploadDuplicate"),
+          t("uploadsPage.errorUploadDuplicate", {
+            defaultValue:
+              "This file already exists in AIMOPS. You do not need to upload it again.",
+          }),
         );
 
         setUploadedFile(null);
         setProgress(0);
         setFileInputKey((key) => key + 1);
 
-        if (existingId) {
-          navigate(`/app/data-upload/map/${existingId}`);
-          return;
-        }
+        setWarning(
+          existingId
+            ? t("uploadsPage.duplicateUploadWarning", {
+                defaultValue:
+                  "This file already exists in AIMOPS. You do not need to upload it again.",
+              })
+            : message,
+        );
 
         setOffset(0);
         await fetchUploads(0);
-        setError(message);
         return;
       }
 
@@ -401,6 +422,7 @@ export function useUploadsPage(t) {
     error,
     warning,
     setWarning,
+    showCompletedUploadWarning,
 
     uploadedFile,
     uploading,
