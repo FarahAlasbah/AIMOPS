@@ -4,6 +4,7 @@ export const GENERATE_MODES = {
   FULL: "full",
   PRODUCTS: "products",
   PRODUCTS_WITH_DATES: "products_with_dates",
+  TARGETS: "targets",
   EVENT: "event",
   CLEARANCE: "clearance",
 };
@@ -25,53 +26,92 @@ const normalizeProductIds = ({ productIds, selectedProducts }) => {
     : getSelectedProductIds(selectedProducts);
 };
 
+const getDateRange = ({ startDate, endDate, formData }) => ({
+  safeStartDate: startDate || formData.startDate,
+  safeEndDate: endDate || formData.endDate,
+});
+
+const validateDateRange = ({ safeStartDate, safeEndDate, t }) => {
+  if (!safeStartDate || !safeEndDate) {
+    throw new Error(
+      t("generator.errors.datesRequired", {
+        defaultValue: "Choose both start and end dates first.",
+      }),
+    );
+  }
+};
+
+const getDatePayload = ({ safeStartDate, safeEndDate }) => ({
+  start_date: safeStartDate,
+  end_date: safeEndDate,
+});
+
+const normalizeTargetQuantities = ({
+  productIds = [],
+  targetQuantities = {},
+  selectedProducts = [],
+}) => {
+  const selectedProductLookup = new Map(
+    selectedProducts.map((product) => [
+      String(product.product_id),
+      product.target_quantity,
+    ]),
+  );
+
+  return productIds.reduce((acc, productId) => {
+    const key = String(productId);
+
+    const rawValue =
+      targetQuantities?.[key] ??
+      targetQuantities?.[productId] ??
+      selectedProductLookup.get(key);
+
+    const quantity = Number(rawValue);
+
+    if (Number.isFinite(quantity) && quantity > 0) {
+      acc[key] = quantity;
+    }
+
+    return acc;
+  }, {});
+};
+
 export const buildGeneratePayload = ({
   mode,
   eventId,
   eventName,
   productIds,
+  targetQuantities,
   startDate,
   endDate,
   formData,
   selectedProducts,
   t,
 }) => {
+  const { safeStartDate, safeEndDate } = getDateRange({
+    startDate,
+    endDate,
+    formData,
+  });
+
   if (mode === GENERATE_MODES.FULL) {
-    return {
-      payload: {},
-    };
-  }
-
-  if (mode === GENERATE_MODES.PRODUCTS) {
-    const safeProductIds = normalizeProductIds({
-      productIds,
-      selectedProducts,
-    });
-
-    if (!safeProductIds.length) {
-      throw new Error(
-        t("generator.errors.productsRequired", {
-          defaultValue: "Choose at least one product first.",
-        }),
-      );
-    }
+    validateDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
-        mode: "products_given",
-        product_ids: safeProductIds,
+        ...getDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
 
-  if (mode === GENERATE_MODES.PRODUCTS_WITH_DATES) {
+  if (
+    mode === GENERATE_MODES.PRODUCTS ||
+    mode === GENERATE_MODES.PRODUCTS_WITH_DATES
+  ) {
     const safeProductIds = normalizeProductIds({
       productIds,
       selectedProducts,
     });
-
-    const safeStartDate = startDate || formData.startDate;
-    const safeEndDate = endDate || formData.endDate;
 
     if (!safeProductIds.length) {
       throw new Error(
@@ -81,20 +121,53 @@ export const buildGeneratePayload = ({
       );
     }
 
-    if (!safeStartDate || !safeEndDate) {
-      throw new Error(
-        t("generator.errors.datesRequired", {
-          defaultValue: "Choose both start and end dates first.",
-        }),
-      );
-    }
+    validateDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
         mode: "products_given",
         product_ids: safeProductIds,
-        start_date: safeStartDate,
-        end_date: safeEndDate,
+        ...getDatePayload({ safeStartDate, safeEndDate }),
+      },
+    };
+  }
+
+  if (mode === GENERATE_MODES.TARGETS) {
+    const safeProductIds = normalizeProductIds({
+      productIds,
+      selectedProducts,
+    });
+
+    if (!safeProductIds.length) {
+      throw new Error(
+        t("generator.errors.productsRequired", {
+          defaultValue: "Choose at least one product first.",
+        }),
+      );
+    }
+
+    const safeTargetQuantities = normalizeTargetQuantities({
+      productIds: safeProductIds,
+      targetQuantities,
+      selectedProducts,
+    });
+
+    if (Object.keys(safeTargetQuantities).length !== safeProductIds.length) {
+      throw new Error(
+        t("generator.errors.targetQuantitiesRequired", {
+          defaultValue: "Enter a target quantity for every selected product.",
+        }),
+      );
+    }
+
+    validateDateRange({ safeStartDate, safeEndDate, t });
+
+    return {
+      payload: {
+        mode: "targets_given",
+        product_ids: safeProductIds,
+        target_quantities: safeTargetQuantities,
+        ...getDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
@@ -123,9 +196,12 @@ export const buildGeneratePayload = ({
   }
 
   if (mode === GENERATE_MODES.CLEARANCE) {
+    validateDateRange({ safeStartDate, safeEndDate, t });
+
     return {
       payload: {
         mode: "clearance",
+        ...getDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
