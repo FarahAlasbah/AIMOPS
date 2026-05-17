@@ -1,3 +1,4 @@
+// frontend/src/features/forecasting/hooks/useForecastingPage.js
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -6,18 +7,16 @@ import { getProducts } from "../../../api/products";
 import { generateForecast, getForecastStatuses } from "../../../api/forecasts";
 import { watchForecastProducts } from "../../../shared/utils/forecastNotifications";
 
+import { useForecastBulkGeneration } from "./useForecastBulkGeneration";
 import { useLatestValueRef } from "./useLatestValueRef";
 import {
-  isLikelyNoDataMessage,
   normalizeStatus,
   POLL_MS,
   toDateKey,
 } from "../utils/forecastingUtils";
+
 const FAILED_PENDING_GRACE_MS = 10000;
-const getProductId = (product) => {
-  const id = Number(product?.product_id ?? product?.id);
-  return Number.isFinite(id) ? id : null;
-};
+
 export function useForecastingPage() {
   const { t, i18n } = useTranslation("forecasting");
   const tRef = useLatestValueRef(t);
@@ -41,8 +40,7 @@ export function useForecastingPage() {
 
   const [rowBusy, setRowBusy] = useState({});
   const [pendingForecasts, setPendingForecasts] = useState({});
-const [selectedForecastIds, setSelectedForecastIds] = useState([]);
-const [bulkGenerating, setBulkGenerating] = useState(false);
+
   const loadData = useCallback(
     async ({ showSkeleton = false } = {}) => {
       if (showSkeleton) {
@@ -72,33 +70,34 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
             .filter((id) => Number.isFinite(id)),
         );
 
-        if (statusRes) {
-          const models = Array.isArray(statusRes?.models)
-            ? statusRes.models
-            : Array.isArray(statusRes?.products)
-              ? statusRes.products
-              : Array.isArray(statusRes)
-                ? statusRes
-                : [];
-
-          const nextMap = {};
-
-          for (const model of models) {
-            const productId = Number(model?.product_id);
-
-            if (!Number.isFinite(productId)) continue;
-            if (!existingProductIds.has(productId)) continue;
-
-            nextMap[productId] = {
-              ...model,
-              status: normalizeStatus(model?.status || model?.forecast_status),
-            };
-          }
-
-          setStatusMap(nextMap);
-        } else {
+        if (!statusRes) {
           setStatusMap({});
+          return;
         }
+
+        const models = Array.isArray(statusRes?.models)
+          ? statusRes.models
+          : Array.isArray(statusRes?.products)
+            ? statusRes.products
+            : Array.isArray(statusRes)
+              ? statusRes
+              : [];
+
+        const nextMap = {};
+
+        for (const model of models) {
+          const productId = Number(model?.product_id);
+
+          if (!Number.isFinite(productId)) continue;
+          if (!existingProductIds.has(productId)) continue;
+
+          nextMap[productId] = {
+            ...model,
+            status: normalizeStatus(model?.status || model?.forecast_status),
+          };
+        }
+
+        setStatusMap(nextMap);
       } catch (e) {
         setErr(e?.message || tRef.current("messages.loadFailed"));
       } finally {
@@ -134,10 +133,7 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
         const age = now - Number(startedAt || now);
 
         if (serverStatus === "ready") continue;
-
-        if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) {
-          continue;
-        }
+        if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) continue;
 
         next[productId] = startedAt;
       }
@@ -155,10 +151,7 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
       const age = now - Number(startedAt || now);
 
       if (serverStatus === "ready") continue;
-
-      if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) {
-        continue;
-      }
+      if (serverStatus === "failed" && age > FAILED_PENDING_GRACE_MS) continue;
 
       next[productId] = {
         ...(next[productId] || {}),
@@ -170,11 +163,11 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
     return next;
   }, [statusMap, pendingForecasts]);
 
+  const pageSkeleton = loading || refreshing;
+
   const handleRefresh = useCallback(() => {
     loadData({ showSkeleton: true });
   }, [loadData]);
-
-  const pageSkeleton = loading || refreshing;
 
   const summary = useMemo(() => {
     const nextSummary = {
@@ -198,8 +191,8 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
   const categories = useMemo(() => {
     const set = new Set();
 
-    for (const p of products) {
-      if (p?.category) set.add(String(p.category));
+    for (const product of products) {
+      if (product?.category) set.add(String(product.category));
     }
 
     return [
@@ -238,17 +231,17 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
 
-    const next = products.filter((p) => {
-      const productId = Number(p?.product_id);
-      const name = String(p?.product_name || "");
-      const normalized = String(p?.normalized_name || "");
-      const cat = String(p?.category || "");
+    const next = products.filter((product) => {
+      const productId = Number(product?.product_id ?? product?.id);
+      const name = String(product?.product_name || "");
+      const normalized = String(product?.normalized_name || "");
+      const cat = String(product?.category || "");
       const status = normalizeStatus(effectiveStatusMap?.[productId]?.status);
-      const lastSaleKey = toDateKey(p?.stats?.last_sale);
+      const lastSaleKey = toDateKey(product?.stats?.last_sale);
 
       if (qq) {
-        const hay = `${name} ${normalized} ${cat}`.toLowerCase();
-        if (!hay.includes(qq)) return false;
+        const haystack = `${name} ${normalized} ${cat}`.toLowerCase();
+        if (!haystack.includes(qq)) return false;
       }
 
       if (category !== "all" && cat !== category) return false;
@@ -303,158 +296,26 @@ const [bulkGenerating, setBulkGenerating] = useState(false);
   ]);
 
   const trainingProducts = useMemo(() => {
-    return products.filter(
-      (p) =>
-        normalizeStatus(effectiveStatusMap?.[p?.product_id]?.status) ===
-        "training",
-    );
+    return products.filter((product) => {
+      const productId = Number(product?.product_id ?? product?.id);
+      return normalizeStatus(effectiveStatusMap?.[productId]?.status) === "training";
+    });
   }, [products, effectiveStatusMap]);
-const visibleGeneratableProductIds = useMemo(() => {
-  return filtered
-    .filter((product) => {
-      const productId = getProductId(product);
-      if (productId == null) return false;
 
-      const row = effectiveStatusMap?.[productId] || {};
-      const status = normalizeStatus(row?.status);
-      const totalSales = Number(product?.stats?.total_sales || 0);
-      const busy = !!rowBusy[productId];
-      const locallyPending = !!row?.locally_pending;
-      const needsUpload = totalSales <= 0 || isLikelyNoDataMessage(row?.error);
-
-      return (
-        !needsUpload &&
-        !busy &&
-        !locallyPending &&
-        status !== "ready" &&
-        status !== "training"
-      );
-    })
-    .map(getProductId)
-    .filter((id) => id != null);
-}, [filtered, effectiveStatusMap, rowBusy]);
-
-useEffect(() => {
-  const allowed = new Set(visibleGeneratableProductIds.map(String));
-
-  setSelectedForecastIds((previous) =>
-    previous.filter((id) => allowed.has(String(id))),
-  );
-}, [visibleGeneratableProductIds]);
-
-const allVisibleForecastsSelected =
-  visibleGeneratableProductIds.length > 0 &&
-  selectedForecastIds.length === visibleGeneratableProductIds.length;
-
-const handleToggleForecastSelection = (productId) => {
-  const safeId = Number(productId);
-  if (!Number.isFinite(safeId)) return;
-
-  setSelectedForecastIds((previous) => {
-    const exists = previous.includes(safeId);
-
-    if (exists) {
-      return previous.filter((id) => id !== safeId);
-    }
-
-    return [...previous, safeId];
-  });
-};
-
-const handleToggleSelectAllForecasts = () => {
-  setSelectedForecastIds((previous) => {
-    if (previous.length === visibleGeneratableProductIds.length) {
-      return [];
-    }
-
-    return visibleGeneratableProductIds;
-  });
-};
-
-const handleGenerateSelectedForecasts = async () => {
-  const selectedSet = new Set(selectedForecastIds.map(String));
-
-  const productsToGenerate = filtered.filter((product) => {
-    const productId = getProductId(product);
-    return productId != null && selectedSet.has(String(productId));
+  const bulk = useForecastBulkGeneration({
+    filtered,
+    effectiveStatusMap,
+    rowBusy,
+    setRowBusy,
+    setPendingForecasts,
+    loadData,
+    setErr,
+    setInfo,
+    tRef,
   });
 
-  if (!productsToGenerate.length) return;
-
-  setBulkGenerating(true);
-  setErr("");
-  setInfo({
-    type: "info",
-    text: `Starting forecasts for ${productsToGenerate.length} product(s). This may take a little while.`,
-  });
-
-  const ids = productsToGenerate
-    .map(getProductId)
-    .filter((id) => id != null);
-
-  setPendingForecasts((previous) => {
-    const next = { ...previous };
-    ids.forEach((id) => {
-      next[id] = Date.now();
-    });
-    return next;
-  });
-
-  setRowBusy((previous) => {
-    const next = { ...previous };
-    ids.forEach((id) => {
-      next[id] = true;
-    });
-    return next;
-  });
-
-  const failed = [];
-
-  for (const product of productsToGenerate) {
-    const productId = getProductId(product);
-    if (productId == null) continue;
-
-    const currentStatus = normalizeStatus(effectiveStatusMap?.[productId]?.status);
-
-    try {
-      await generateForecast({
-        productId,
-        retrain: currentStatus === "failed",
-      });
-    } catch {
-      failed.push(product?.product_name || `Product #${productId}`);
-
-      setPendingForecasts((previous) => {
-        const next = { ...previous };
-        delete next[productId];
-        return next;
-      });
-    }
-  }
-
-  setRowBusy((previous) => {
-    const next = { ...previous };
-    ids.forEach((id) => {
-      next[id] = false;
-    });
-    return next;
-  });
-
-  setSelectedForecastIds([]);
-  setBulkGenerating(false);
-
-  await loadData();
-
-  if (failed.length) {
-    setErr(
-      `Could not start ${failed.length} forecast(s). You can try again for those products.`,
-    );
-    return;
-  }
-
-};
   const handleGenerate = async (product, retrain = false) => {
-    const productId = Number(product?.product_id);
+    const productId = Number(product?.product_id ?? product?.id);
     if (Number.isNaN(productId)) return;
 
     setPendingForecasts((previous) => ({
@@ -462,14 +323,16 @@ const handleGenerateSelectedForecasts = async () => {
       [productId]: Date.now(),
     }));
 
-    setRowBusy((previous) => ({ ...previous, [productId]: true }));
+    setRowBusy((previous) => ({
+      ...previous,
+      [productId]: true,
+    }));
+
     setErr("");
     setInfo(null);
 
     try {
-    await generateForecast({ productId, retrain });
-      
-
+      await generateForecast({ productId, retrain });
       await loadData();
     } catch (e) {
       setPendingForecasts((previous) => {
@@ -487,14 +350,17 @@ const handleGenerateSelectedForecasts = async () => {
           }),
       );
     } finally {
-      setRowBusy((previous) => ({ ...previous, [productId]: false }));
+      setRowBusy((previous) => ({
+        ...previous,
+        [productId]: false,
+      }));
     }
   };
 
   const handleGoDashboard = () => {
-    const items = trainingProducts.map((p) => ({
-      product_id: Number(p.product_id),
-      product_name: p.product_name,
+    const items = trainingProducts.map((product) => ({
+      product_id: Number(product.product_id),
+      product_name: product.product_name,
     }));
 
     if (items.length) {
@@ -547,13 +413,7 @@ const handleGenerateSelectedForecasts = async () => {
     handleGoDashboard,
     handleViewForecast,
     handleUploadData,
-    selectedForecastIds,
-visibleGeneratableProductIds,
-allVisibleForecastsSelected,
-bulkGenerating,
 
-handleToggleForecastSelection,
-handleToggleSelectAllForecasts,
-handleGenerateSelectedForecasts,
+    ...bulk,
   };
 }
