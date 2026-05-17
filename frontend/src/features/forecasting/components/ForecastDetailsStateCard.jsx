@@ -65,6 +65,8 @@ export default function ForecastDetailsStateCard({
     );
   }
 
+  const isMissingForecast = type === "missing-forecast";
+
   return (
     <Card>
       <InfoMessage type={detailsWarn || likelyNoData ? "warning" : "error"}>
@@ -78,6 +80,20 @@ export default function ForecastDetailsStateCard({
         <Button type="button" variant="secondary" onClick={onUploadData}>
           {t("actions.uploadData")}
         </Button>
+
+        {isMissingForecast && onGenerate ? (
+          <Button
+            type="button"
+            onClick={() => onGenerate(true)}
+            disabled={actionBusy}
+          >
+            {actionBusy
+              ? t("actions.generating")
+              : t("actions.generate", {
+                  defaultValue: "Generate Forecast",
+                })}
+          </Button>
+        ) : null}
       </div>
     </Card>
   );

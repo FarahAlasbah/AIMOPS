@@ -79,7 +79,12 @@ export function useForecastDetailsData(productId) {
       setForecast(null);
 
       if (getApiStatus(e) === 404) {
-        setDetailsWarn(tRef.current("messages.forecastNotFound"));
+        setDetailsWarn(
+          tRef.current("messages.forecastNotFound", {
+            defaultValue:
+              "No forecast is available for this product yet. Generate a forecast first.",
+          }),
+        );
         return null;
       }
 
@@ -175,13 +180,18 @@ export function useForecastDetailsData(productId) {
           }),
       });
 
+      setForecast(null);
       setExplanationData(null);
       setExplanationErr("");
       setExplanationLoading(false);
       setHasFetchedExplanation(false);
       clearExplanationCache(productId);
 
-      await loadStatus();
+      const nextStatus = await loadStatus();
+
+      if (normalizeStatus(nextStatus?.status) === "ready") {
+        await loadForecast();
+      }
     } catch (e) {
       setStatusErr(
         e?.message ||

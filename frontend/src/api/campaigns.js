@@ -42,3 +42,10 @@ export async function getCampaignCalendar({ startDate, endDate }) {
   const res = await api.get(`/api/campaigns/calendar?${params.toString()}`);
   return res.data;
 }
+
+export async function recalculateCampaignForecast(campaignId) {
+  const id = encodeURIComponent(String(campaignId));
+  const res = await api.post(`/api/campaigns/${id}/recalculate-forecast`);
+  return res.data;
+}
+

@@ -75,6 +75,8 @@ const submitAndGoToList = async (mode) => {
     navigate("/app/campaigns");
   }
 };
+
+const showGeneratedWarning = Object.keys(generatedFields || {}).length > 0;
   return (
     <div className="new-campaign-page">
       <PageHeader
@@ -93,9 +95,17 @@ const submitAndGoToList = async (mode) => {
       ) : null}
 
       {successMessage ? (
-        <div className="campaign-page-alert success">{successMessage}</div>
-      ) : null}
+  <div className="campaign-page-alert success">{successMessage}</div>
+) : null}
 
+{successMessage && showGeneratedWarning ? (
+  <div className="campaign-page-alert warning">
+    {t("messages.generatorChangeWarning", {
+      defaultValue:
+        "Heads up: changing the highlighted fields can change the final campaign result.",
+    })}
+  </div>
+) : null}
       <Card>
         <div className="campaign-form-shell">
           <NewCampaignDetailsSection

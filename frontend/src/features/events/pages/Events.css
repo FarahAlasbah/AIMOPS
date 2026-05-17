@@ -777,3 +777,15 @@ input.events-checkbox:disabled {
     width: 100%;
   }
 }
+
+.events-page-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 22px;
+}
+
+.events-page-messages + .events-create-card,
+.events-page-messages + .ev-tabs {
+  margin-top: 6px;
+}
