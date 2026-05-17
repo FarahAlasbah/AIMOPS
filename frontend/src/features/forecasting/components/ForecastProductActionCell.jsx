@@ -1,9 +1,10 @@
 // frontend/src/features/forecasting/components/ForecastProductActionCell.jsx
 import { useTranslation } from "react-i18next";
+
 import { Button } from "../../../shared/components";
 import {
-  isForecastOutdated,
   normalizeStatus,
+  shouldShowRegenerate,
 } from "../utils/forecastingUtils";
 import ForecastStatusChip from "./ForecastStatusChip";
 
@@ -31,8 +32,57 @@ export default function ForecastProductActionCell({
 
   const productId = Number(product?.product_id ?? product?.id);
   const safeStatus = normalizeStatus(status);
-  const isReady = safeStatus === "ready";
-  const isOutdated = isReady && isForecastOutdated(product, row);
+  const showRegenerate = shouldShowRegenerate(product, row);
+
+  if (busy && showRegenerate) {
+    return (
+      <div className="forecast-actions">
+        <div className="forecast-action-row">
+          <ForecastStatusChip status="ready" />
+
+          <Button type="button" disabled>
+            <GeneratingLabel>
+              {t("actions.regenerating", {
+                defaultValue: "Regenerating...",
+              })}
+            </GeneratingLabel>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showRegenerate) {
+    return (
+      <div className="forecast-actions">
+        <div className="forecast-action-row">
+          <ForecastStatusChip status="ready" />
+
+          <Button type="button" onClick={() => onView(productId)}>
+            {t("actions.view")}
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => onGenerate(product, true)}
+          >
+            {t("actions.regenerate", {
+              defaultValue: "Regenerate Forecast",
+            })}
+          </Button>
+        </div>
+
+        <div className="forecast-warning-text">
+          {t("table.regenerateHint", {
+            defaultValue:
+              "New data was uploaded. Regenerate this forecast to use the latest records.",
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const isWorking = busy || locallyPending || safeStatus === "training";
 
   if (isWorking) {
@@ -53,7 +103,7 @@ export default function ForecastProductActionCell({
     );
   }
 
-  if (isReady) {
+  if (safeStatus === "ready") {
     return (
       <div className="forecast-actions">
         <div className="forecast-action-row">
@@ -62,28 +112,7 @@ export default function ForecastProductActionCell({
           <Button type="button" onClick={() => onView(productId)}>
             {t("actions.view")}
           </Button>
-
-          {isOutdated ? (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => onGenerate(product, true)}
-            >
-              {t("actions.regenerate", {
-                defaultValue: "Regenerate",
-              })}
-            </Button>
-          ) : null}
         </div>
-
-        {isOutdated ? (
-          <div className="forecast-warning-text">
-            {t("table.regenerateHint", {
-              defaultValue:
-                "New data or system changes were detected after this forecast. Regenerate to refresh it.",
-            })}
-          </div>
-        ) : null}
       </div>
     );
   }
