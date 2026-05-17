@@ -80,11 +80,11 @@ def generate_campaign_suggestion(
     suggestions = []
 
     if mode == "full":
-        opportunity = _build_opportunity_suggestion(db, today)
+        opportunity = _build_opportunity_suggestion(db, today, start_date=start_date, end_date=end_date)
         opportunity = enrich_suggestion_with_claude(opportunity, bp_dict)
         suggestions.append(opportunity)
 
-        clearance = _build_clearance_suggestion(db, today)
+        clearance = _build_clearance_suggestion(db, today, start_date, end_date)
         clearance = enrich_suggestion_with_claude(clearance, bp_dict)
         suggestions.append(clearance)
 
@@ -120,7 +120,7 @@ def generate_campaign_suggestion(
         suggestions.append(suggestion)
 
     elif mode == "clearance":
-        suggestion = _build_clearance_suggestion(db, today)
+        suggestion = _build_clearance_suggestion(db, today, start_date, end_date)
         suggestion = enrich_suggestion_with_claude(suggestion, bp_dict)
         suggestions.append(suggestion)
         
@@ -153,7 +153,8 @@ def generate_campaign_suggestion(
 # SUGGESTION BUILDERS
 # ============================================
 
-def _build_opportunity_suggestion(db: Session, today: date) -> dict:
+def _build_opportunity_suggestion(db: Session, today: date, start_date: date = None,
+    end_date: date = None) -> dict:
     """
     Build the opportunity suggestion.
     Capitalizes on upcoming events or top-performing products.
@@ -194,18 +195,19 @@ def _build_opportunity_suggestion(db: Session, today: date) -> dict:
                 upcoming_events.append(event)
 
     if upcoming_events:
-        suggestion = _suggest_from_event(db, upcoming_events[0], today)
+        suggestion = _suggest_from_event(db, upcoming_events[0], today, start_date, end_date)
         suggestion["label"] = "Capitalize on upcoming opportunity"
         suggestion["strategy"] = "opportunity"
         return suggestion
 
-    suggestion = _suggest_from_top_products(db, today)
+    suggestion = _suggest_from_top_products(db, today, start_date=start_date, end_date=end_date)
     suggestion["label"] = "Drive sales with top products"
     suggestion["strategy"] = "opportunity"
     return suggestion
 
 
-def _build_clearance_suggestion(db: Session, today: date) -> dict:
+def _build_clearance_suggestion(db: Session, today: date, start_date: date = None,
+    end_date: date = None) -> dict:
     """
     Build a clearance suggestion for slow-moving products.
 
@@ -283,14 +285,16 @@ def _build_clearance_suggestion(db: Session, today: date) -> dict:
     top_slow = slow_products[:5]
 
     if not top_slow:
+        _start = start_date or (today + timedelta(days=3))
+        _end = end_date or (_start + timedelta(days=2))
         return {
             "label": "Move slow-moving stock",
             "strategy": "clearance",
             "campaign_name": "Inventory Clearance",
             "campaign_name_ar": None,
             "campaign_type": "flash_sale",
-            "start_date": (today + timedelta(days=3)).isoformat(),
-            "end_date": (today + timedelta(days=5)).isoformat(),
+            "start_date": _start.isoformat(),
+            "end_date": _end.isoformat(),
             "products": [],
             "channels": ["in_store", "sms"],
             "budget": _estimate_budget(db),
@@ -327,8 +331,8 @@ def _build_clearance_suggestion(db: Session, today: date) -> dict:
             "decline_pct": slow.get('decline_pct')
         })
 
-    start_date = today + timedelta(days=3)
-    end_date = start_date + timedelta(days=4)
+    suggested_start = start_date or (today + timedelta(days=3))
+    suggested_end = end_date or (suggested_start + timedelta(days=4))
 
     return {
         "label": "Move slow-moving stock",
@@ -336,8 +340,8 @@ def _build_clearance_suggestion(db: Session, today: date) -> dict:
         "campaign_name": "Flash Clearance Sale",
         "campaign_name_ar": None,
         "campaign_type": "flash_sale",
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
+        "start_date": suggested_start.isoformat(),
+        "end_date": suggested_end.isoformat(),
         "products": products,
         "channels": ["in_store", "sms", "instagram"],
         "budget": _estimate_budget(db),
@@ -666,18 +670,19 @@ def _build_suggestion_from_targets(
     }
     
     
-def _suggest_from_event(db: Session, event: Event, today: date) -> dict:
+def _suggest_from_event(db: Session, event: Event, today: date, start_date: date = None, end_date: date = None) -> dict:
     """
     Build a campaign suggestion around a specific event.
     Finds products most historically impacted by this event.
     Falls back to top products if no impact data exists.
     """
-    try:
-        start_date = event.start_date.replace(year=today.year)
-        end_date = event.end_date.replace(year=today.year)
-    except ValueError:
-        start_date = event.start_date.replace(year=today.year, day=28)
-        end_date = event.end_date.replace(year=today.year, day=28)
+    if not start_date:
+        try:
+            start_date = event.start_date.replace(year=today.year)
+            end_date = event.end_date.replace(year=today.year)
+        except ValueError:
+            start_date = event.start_date.replace(year=today.year, day=28)
+            end_date = event.end_date.replace(year=today.year, day=28)
 
     # Find products with high historical impact for this event
     impact_results = db.query(EventImpactResult).filter(
@@ -719,7 +724,7 @@ def _suggest_from_event(db: Session, event: Event, today: date) -> dict:
 
     # Fallback to top products if no impact data
     if not products:
-        return _suggest_from_top_products(db, today, event=event)
+        return _suggest_from_top_products(db, today, event=event, start_date=start_date, end_date=end_date)
 
     type_map = {
         'religious': 'seasonal', 'national': 'seasonal',
@@ -758,7 +763,9 @@ def _suggest_from_event(db: Session, event: Event, today: date) -> dict:
 def _suggest_from_top_products(
     db: Session,
     today: date,
-    event: Event = None
+    event: Event = None,
+    start_date: date = None,
+    end_date: date = None
 ) -> dict:
     """
     Fallback: suggest top 5 revenue products from the last 30 days.
@@ -779,12 +786,14 @@ def _suggest_from_top_products(
     ).limit(5).all()
 
     if not top_products:
+        _start = start_date or (today + timedelta(days=7))
+        _end = end_date or (_start + timedelta(days=14))
         return {
             "campaign_name": "New Campaign",
             "campaign_name_ar": None,
             "campaign_type": "discount",
-            "start_date": (today + timedelta(days=7)).isoformat(),
-            "end_date": (today + timedelta(days=14)).isoformat(),
+            "start_date": _start.isoformat(),
+            "end_date": _end.isoformat(),
             "products": [],
             "channels": ["in_store", "instagram"],
             "budget": None,
@@ -822,8 +831,8 @@ def _suggest_from_top_products(
             "target_quantity": None
         })
 
-    start_date = today + timedelta(days=7)
-    end_date = start_date + timedelta(days=6)
+    suggested_start = start_date or (today + timedelta(days=7))
+    suggested_end = end_date or (suggested_start + timedelta(days=6))
 
     reason = {
         "type": "top_products",
@@ -846,8 +855,8 @@ def _suggest_from_top_products(
         "campaign_name": f"Campaign {today.strftime('%B %Y')}",
         "campaign_name_ar": None,
         "campaign_type": "discount",
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
+        "start_date": suggested_start.isoformat(),
+        "end_date": suggested_end.isoformat(),
         "products": products,
         "channels": _suggest_channels("discount"),
         "budget": _estimate_budget(db),
@@ -859,7 +868,7 @@ def _suggest_from_top_products(
 
 
 # ============================================
-# PRIVATE HELPERS
+# HELPERS
 # ============================================
 
 def _suggest_channels(campaign_type: str) -> list:
