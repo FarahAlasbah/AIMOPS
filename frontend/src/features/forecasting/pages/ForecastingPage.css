@@ -607,3 +607,9 @@ html[dir="rtl"] .forecast-help-row {
     min-width: 960px;
   }
 }
+
+.forecast-chip.stale {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}

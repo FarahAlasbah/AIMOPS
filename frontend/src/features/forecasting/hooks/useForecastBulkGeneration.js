@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { generateForecast } from "../../../api/forecasts";
 import {
-  isForecastOutdated,
   isLikelyNoDataMessage,
   normalizeStatus,
   shouldRetrainForecast,
+  shouldShowRegenerate,
 } from "../utils/forecastingUtils";
 
 const getProductId = (product) => {
@@ -37,21 +37,13 @@ export function useForecastBulkGeneration({
         const row = effectiveStatusMap?.[productId] || {};
         const status = normalizeStatus(row?.status);
         const totalSales = Number(product?.stats?.total_sales || 0);
-        const busy = !!rowBusy[productId];
-        const locallyPending = !!row?.locally_pending;
         const needsUpload =
           totalSales <= 0 || isLikelyNoDataMessage(row?.error);
 
-        const readyButOutdated =
-          status === "ready" && isForecastOutdated(product, row);
+        if (needsUpload || rowBusy[productId]) return false;
+        if (shouldShowRegenerate(product, row)) return true;
 
-        return (
-          !needsUpload &&
-          !busy &&
-          !locallyPending &&
-          status !== "training" &&
-          (status !== "ready" || readyButOutdated)
-        );
+        return status !== "ready" && status !== "training";
       })
       .map(getProductId)
       .filter((id) => id != null);
@@ -116,17 +108,21 @@ export function useForecastBulkGeneration({
 
     setPendingForecasts((previous) => {
       const next = { ...previous };
+
       ids.forEach((id) => {
         next[id] = Date.now();
       });
+
       return next;
     });
 
     setRowBusy((previous) => {
       const next = { ...previous };
+
       ids.forEach((id) => {
         next[id] = true;
       });
+
       return next;
     });
 
@@ -156,9 +152,11 @@ export function useForecastBulkGeneration({
 
     setRowBusy((previous) => {
       const next = { ...previous };
+
       ids.forEach((id) => {
         next[id] = false;
       });
+
       return next;
     });
 

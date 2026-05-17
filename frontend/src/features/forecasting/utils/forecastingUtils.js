@@ -12,10 +12,8 @@ export const NO_DATA_HINTS = [
   "empty",
 ];
 
-const STALE_GRACE_MS = 60000;
-
 export const normalizeStatus = (value) => {
-  const v = String(value || "").toLowerCase();
+  const v = String(value || "").toLowerCase().trim();
 
   if (["ready", "done", "success", "completed"].includes(v)) return "ready";
 
@@ -33,8 +31,21 @@ export const isLikelyNoDataMessage = (value) => {
   return NO_DATA_HINTS.some((token) => text.includes(token));
 };
 
-const isTrueFlag = (value) => value === true || String(value).toLowerCase() === "true";
-const isFalseFlag = (value) => value === false || String(value).toLowerCase() === "false";
+const isTrueFlag = (value) =>
+  value === true || String(value).toLowerCase() === "true";
+
+const isFalseFlag = (value) =>
+  value === false || String(value).toLowerCase() === "false";
+
+const firstExistingValue = (...values) => {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== "") {
+      return value;
+    }
+  }
+
+  return null;
+};
 
 const firstValidTime = (...values) => {
   for (const value of values) {
@@ -48,6 +59,22 @@ const firstValidTime = (...values) => {
   }
 
   return null;
+};
+
+export const hasExistingForecast = (row) => {
+  return Boolean(
+    firstExistingValue(
+      row?.trained_at,
+      row?.model_trained_at,
+      row?.forecast_trained_at,
+      row?.forecast_generated_at,
+      row?.generated_at,
+      row?.last_generated_at,
+      row?.forecast_id,
+      row?.model_id,
+      row?.has_forecast,
+    ),
+  );
 };
 
 export const getProductChangedAtMs = (product) => {
@@ -115,7 +142,15 @@ export const isForecastOutdated = (product, row) => {
 
   if (!productChangedAt || !forecastTrainedAt) return false;
 
-  return productChangedAt > forecastTrainedAt + STALE_GRACE_MS;
+  return productChangedAt > forecastTrainedAt;
+};
+
+export const shouldShowRegenerate = (product, row) => {
+  const status = normalizeStatus(row?.status || row?.forecast_status);
+
+  if (isForecastOutdated(product, row)) return true;
+
+  return status === "training" && hasExistingForecast(row);
 };
 
 export const shouldRetrainForecast = (product, row) => {
@@ -124,7 +159,8 @@ export const shouldRetrainForecast = (product, row) => {
   return (
     status === "ready" ||
     status === "failed" ||
-    isForecastOutdated(product, row)
+    status === "training" ||
+    shouldShowRegenerate(product, row)
   );
 };
 
