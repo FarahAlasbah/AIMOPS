@@ -354,6 +354,7 @@
     },
     "dates": {
       "selectTitle": "Choose campaign dates",
+      "optionalWarning": "Fill in your campaign dates now, or AIMOPS will automatically schedule it for next week.",
       "selectSubtitle": "Pick the date range AIMOPS should use for this suggestion."
     },
     "event": {
