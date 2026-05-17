@@ -1163,3 +1163,317 @@ html[dir="rtl"] .consultation-modal-actions {
     flex-basis: 36px;
   }
 }
+
+/* Cleaner chat text + Arabic mirroring */
+
+.consultation-message-list {
+  gap: 16px;
+}
+
+.consultation-bubble,
+.consultation-message-bubble {
+  padding: 14px 16px;
+  border-radius: 20px;
+  line-height: 1.65;
+}
+
+.consultation-bubble-assistant,
+.consultation-message-bubble-assistant,
+.consultation-message-assistant {
+  background: #ffffff;
+  border-color: #dbe3ee;
+}
+
+.consultation-bubble-user,
+.consultation-message-bubble-user,
+.consultation-message-user {
+  background: #03045e;
+  border-color: #03045e;
+}
+
+.consultation-message-text {
+  font-size: 15px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  unicode-bidi: plaintext;
+}
+
+.consultation-bubble-label {
+  margin-bottom: 8px;
+  color: #03045e;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Cleaner markdown output */
+
+.consultation-markdown {
+  color: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: break-word;
+  unicode-bidi: plaintext;
+}
+
+.consultation-markdown p {
+  margin: 0 0 0.75rem;
+}
+
+.consultation-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.consultation-markdown h1,
+.consultation-markdown h2,
+.consultation-markdown h3,
+.consultation-markdown h4 {
+  margin: 0.95rem 0 0.55rem;
+  color: #03045e;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.consultation-markdown h1:first-child,
+.consultation-markdown h2:first-child,
+.consultation-markdown h3:first-child,
+.consultation-markdown h4:first-child {
+  margin-top: 0;
+}
+
+.consultation-markdown h1 {
+  font-size: 1.18rem;
+}
+
+.consultation-markdown h2 {
+  font-size: 1.08rem;
+}
+
+.consultation-markdown h3,
+.consultation-markdown h4 {
+  font-size: 1rem;
+}
+
+.consultation-markdown ul,
+.consultation-markdown ol {
+  margin: 0.55rem 0 0.85rem;
+  padding-inline-start: 1.35rem;
+}
+
+.consultation-markdown li {
+  margin-bottom: 0.42rem;
+  padding-inline-start: 0.1rem;
+}
+
+.consultation-markdown li::marker {
+  color: #2563eb;
+  font-weight: 900;
+}
+
+.consultation-markdown strong {
+  color: #03045e;
+  font-weight: 900;
+}
+
+.consultation-markdown hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 1rem 0;
+}
+
+.consultation-markdown blockquote {
+  margin: 0.8rem 0;
+  padding: 10px 12px;
+  border-inline-start: 4px solid #93c5fd;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.consultation-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 0.85rem 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.consultation-table-scroll table {
+  width: 100%;
+  min-width: max-content;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  display: table;
+}
+
+.consultation-table-scroll th,
+.consultation-table-scroll td {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  text-align: start;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.consultation-table-scroll th {
+  background: #f8fafc;
+  color: #03045e;
+  font-weight: 900;
+}
+
+.consultation-table-scroll td {
+  color: #111827;
+}
+
+.consultation-bubble-user .consultation-markdown h1,
+.consultation-bubble-user .consultation-markdown h2,
+.consultation-bubble-user .consultation-markdown h3,
+.consultation-bubble-user .consultation-markdown h4,
+.consultation-bubble-user .consultation-markdown strong {
+  color: #ffffff;
+}
+
+.consultation-bubble-user .consultation-markdown li::marker {
+  color: #ffffff;
+}
+
+.consultation-bubble-user .consultation-table-scroll {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.consultation-bubble-user .consultation-table-scroll th,
+.consultation-bubble-user .consultation-table-scroll td {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Arabic: mirror chat sides */
+/* Arabic: put the avatar/icon on the right side */
+html[dir="rtl"] .consultation-message-row-assistant {
+  justify-content: flex-start;
+  flex-direction: row;
+}
+
+html[dir="rtl"] .consultation-message-row-user {
+  justify-content: flex-end;
+  flex-direction: row;
+}
+
+html[dir="rtl"] .consultation-bubble-assistant {
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 8px;
+}
+
+html[dir="rtl"] .consultation-bubble-user {
+  border-bottom-right-radius: 20px;
+  border-bottom-left-radius: 8px;
+}
+
+html[dir="rtl"] .consultation-composer {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .consultation-markdown,
+html[dir="rtl"] .consultation-message-text {
+  text-align: start;
+}
+
+/* Saving summary skeleton */
+
+.consultation-summary-save-skeleton {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 80%);
+}
+
+.consultation-summary-save-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #bfdbfe;
+  border-top-color: #03045e;
+  border-radius: 999px;
+  animation: consultation-summary-spin 0.8s linear infinite;
+}
+
+.consultation-summary-save-copy {
+  min-width: 0;
+}
+
+.consultation-summary-save-copy strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #03045e;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.consultation-summary-save-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.consultation-summary-save-lines span {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dbeafe;
+}
+
+.consultation-summary-save-lines span:nth-child(1) {
+  width: 92%;
+}
+
+.consultation-summary-save-lines span:nth-child(2) {
+  width: 74%;
+}
+
+.consultation-summary-save-lines span:nth-child(3) {
+  width: 52%;
+}
+
+.consultation-summary-save-lines span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.75),
+    transparent
+  );
+  animation: consultation-summary-shimmer 1.15s infinite;
+}
+
+@keyframes consultation-summary-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes consultation-summary-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consultation-summary-save-spinner,
+  .consultation-summary-save-lines span::after {
+    animation: none;
+  }
+}
+

@@ -209,7 +209,9 @@
     "noProductsLeftToSelect": "All available products are already selected.",
     "generatorApplied": "The suggestion is ready. Fields filled by AIMOPS are highlighted so you can review them before saving.",
     "generatorError": "Could not generate a campaign suggestion.",
-    "generatorNoUsableData": "AIMOPS received suggestions, but the response fields do not match the campaign form yet. Open the console and check the extracted suggestion."
+    "generatorNoUsableData": "AIMOPS received suggestions, but the response fields do not match the campaign form yet. Open the console and check the extracted suggestion.",
+
+    "generatorChangeWarning": "Heads up: changing the highlighted fields can change the final campaign result."
   },
   "picker": {
     "selectedProductsLabel": "Selected products",

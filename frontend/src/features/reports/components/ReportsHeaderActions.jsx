@@ -1,4 +1,4 @@
-import { HelpCircle, Printer, RefreshCcw } from "lucide-react";
+import { HelpCircle, RefreshCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function ReportsHeaderActions({ onHelp, onRefresh }) {
@@ -23,15 +23,6 @@ export function ReportsHeaderActions({ onHelp, onRefresh }) {
       >
         <RefreshCcw size={16} />
         {t("actions.refresh")}
-      </button>
-
-      <button
-        type="button"
-        className="reports-btn reports-btn-secondary"
-        onClick={() => window.print()}
-      >
-        <Printer size={16} />
-        {t("actions.print")}
       </button>
     </div>
   );

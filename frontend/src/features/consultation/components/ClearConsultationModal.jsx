@@ -4,13 +4,31 @@ import { useTranslation } from "react-i18next";
 import { buildConsultationSummaryTitle } from "../utils/consultationHelpers";
 import { useConsultation } from "../hooks/useConsultation";
 
+function SavingSummarySkeleton({ label }) {
+  return (
+    <div className="consultation-summary-save-skeleton" aria-live="polite">
+      <div className="consultation-summary-save-spinner" />
+
+      <div className="consultation-summary-save-copy">
+        <strong>{label}</strong>
+
+        <div className="consultation-summary-save-lines">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ClearConsultationModal({ open, onClose }) {
   const { t } = useTranslation("consultation");
   const { clearConversation, isCreatingSummary, isClearing } = useConsultation();
 
   const defaultTitle = useMemo(
     () => buildConsultationSummaryTitle(t("summaryDefaultTitle")),
-    [t]
+    [t],
   );
 
   const [summaryTitle, setSummaryTitle] = useState(defaultTitle);
@@ -54,6 +72,7 @@ export default function ClearConsultationModal({ open, onClose }) {
       shouldCreateSummary: true,
       summaryTitle,
     });
+
     if (ok) onClose();
   };
 
@@ -67,25 +86,46 @@ export default function ClearConsultationModal({ open, onClose }) {
         }}
         aria-label={t("close")}
       />
+
       <div className="consultation-modal" role="dialog" aria-modal="true">
         <div className="consultation-modal-header">
           <h3>{t("clearTitle")}</h3>
         </div>
 
         <div className="consultation-modal-body">
-          <p>{t("clearDescription")}</p>
+          {isCreatingSummary ? (
+            <SavingSummarySkeleton
+              label={t("savingSummary", {
+                defaultValue: "Saving summary...",
+              })}
+            />
+          ) : isClearing ? (
+            <SavingSummarySkeleton
+              label={t("clearingConversation", {
+                defaultValue: "Clearing conversation...",
+              })}
+            />
+          ) : (
+            <>
+              <p>{t("clearDescription")}</p>
 
-          <label className="consultation-field-label" htmlFor="consultation-summary-title">
-            {t("summaryTitle")}
-          </label>
-          <input
-            id="consultation-summary-title"
-            type="text"
-            className="consultation-input"
-            value={summaryTitle}
-            onChange={(event) => setSummaryTitle(event.target.value)}
-            disabled={isBusy}
-          />
+              <label
+                className="consultation-field-label"
+                htmlFor="consultation-summary-title"
+              >
+                {t("summaryTitle")}
+              </label>
+
+              <input
+                id="consultation-summary-title"
+                type="text"
+                className="consultation-input"
+                value={summaryTitle}
+                onChange={(event) => setSummaryTitle(event.target.value)}
+                disabled={isBusy}
+              />
+            </>
+          )}
         </div>
 
         <div className="consultation-modal-actions">
@@ -113,11 +153,13 @@ export default function ClearConsultationModal({ open, onClose }) {
             onClick={handleSaveSummaryAndDelete}
             disabled={isBusy}
           >
-            {t("saveSummaryAndDelete")}
+            {isCreatingSummary
+              ? t("savingSummary", { defaultValue: "Saving..." })
+              : t("saveSummaryAndDelete")}
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -56,7 +56,9 @@ export default function ForecastDetailsPage() {
           type="missing-forecast"
           detailsWarn={page.detailsWarn}
           likelyNoData={page.likelyNoData}
+          actionBusy={page.actionBusy}
           onUploadData={() => navigate("/app/data-upload")}
+          onGenerate={page.handleGenerate}
         />
       ) : (
         <>
