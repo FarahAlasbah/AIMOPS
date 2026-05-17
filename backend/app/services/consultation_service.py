@@ -561,3 +561,71 @@ async def chat(db: Session, user_id: int, user_message: str) -> str:
     db.commit()
 
     return response_text
+
+
+async def chat_stream(db: Session, user_id: int, user_message: str):
+    """
+    Streaming version of chat — yields text chunks as they arrive from Claude.
+    Used by the streaming endpoint for real-time word-by-word responses.
+    """
+    import json
+
+    # Save user message immediately
+    db.add(ConsultationMessage(user_id=user_id, role="user", content=user_message))
+    db.commit()
+
+    # Load history
+    history = (
+        db.query(ConsultationMessage)
+        .filter(ConsultationMessage.user_id == user_id)
+        .order_by(ConsultationMessage.created_at.desc())
+        .limit(MAX_HISTORY)
+        .all()
+    )
+    history = list(reversed(history))
+
+    context = _gather_business_context(db)
+    system_prompt = _build_system_prompt(context)
+    messages = [{"role": msg.role, "content": msg.content} for msg in history]
+
+    full_response = ""
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        async with client.stream(
+            "POST",
+            ANTHROPIC_API_URL,
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": CLAUDE_MODEL,
+                "max_tokens": MAX_TOKENS_CHAT,
+                "system": system_prompt,
+                "messages": messages,
+                "stream": True
+            }
+        ) as response:
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    data = line[6:]
+                    if data == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(data)
+                        if event.get("type") == "content_block_delta":
+                            chunk = event["delta"].get("text", "")
+                            if chunk:
+                                full_response += chunk
+                                yield chunk
+                    except Exception:
+                        continue
+
+    # Save full response after streaming completes
+    db.add(ConsultationMessage(
+        user_id=user_id,
+        role="assistant",
+        content=full_response
+    ))
+    db.commit()
