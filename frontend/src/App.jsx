@@ -8,6 +8,9 @@ import { isAdminUser } from "./shared/permissions/rolePermissions";
 import RequirePermission from "./routes/RequirePermission";
 import Denied from "./shared/pages/Denied";
 import { BusinessProfileProvider } from "./features/business-profile/context/BusinessProfileContext";
+import { ConsultationProvider } from "./features/consultation/context/ConsultationProvider";
+import ConsultationDrawer from "./features/consultation/components/ConsultationDrawer";
+import ConsultationFloatingButton from "./features/consultation/components/ConsultationFloatingButton";
 import { applyTheme } from "./shared/theme/themeToCssVars";
 
 const MainLayout = lazy(() => import("./layouts/MainLayout"));
@@ -80,6 +83,19 @@ function RequireAdminOnly({ children }) {
   return children;
 }
 
+function AppShell() {
+  return (
+    <BusinessProfileProvider>
+      <ConsultationProvider>
+        <MainLayout />
+
+        <ConsultationDrawer />
+        <ConsultationFloatingButton />
+      </ConsultationProvider>
+    </BusinessProfileProvider>
+  );
+}
+
 function App() {
   useDirection();
   useTheme();
@@ -97,9 +113,7 @@ function App() {
               path="/app"
               element={
                 <RequirePermission anyOf={["dashboard.view"]} redirectTo="/login">
-                  <BusinessProfileProvider>
-                    <MainLayout />
-                  </BusinessProfileProvider>
+                  <AppShell />
                 </RequirePermission>
               }
             >
