@@ -31,20 +31,50 @@ const getDateRange = ({ startDate, endDate, formData }) => ({
   safeEndDate: endDate || formData.endDate,
 });
 
-const validateDateRange = ({ safeStartDate, safeEndDate, t }) => {
-  if (!safeStartDate || !safeEndDate) {
+const hasDateValue = (value) => Boolean(String(value || "").trim());
+
+const validateOptionalDateRange = ({ safeStartDate, safeEndDate, t }) => {
+  const hasStartDate = hasDateValue(safeStartDate);
+  const hasEndDate = hasDateValue(safeEndDate);
+
+  if (hasStartDate !== hasEndDate) {
     throw new Error(
-      t("generator.errors.datesRequired", {
-        defaultValue: "Choose both start and end dates first.",
+      t("generator.errors.completeOrLeaveDates", {
+        defaultValue:
+          "Choose both start and end dates, or leave both empty so AIMOPS can suggest them.",
       }),
     );
   }
+
+  if (hasStartDate && hasEndDate) {
+    const start = new Date(safeStartDate);
+    const end = new Date(safeEndDate);
+
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      if (end < start) {
+        throw new Error(
+          t("validation.endDateInvalid", {
+            defaultValue: "End date must be after the start date.",
+          }),
+        );
+      }
+    }
+  }
 };
 
-const getDatePayload = ({ safeStartDate, safeEndDate }) => ({
-  start_date: safeStartDate,
-  end_date: safeEndDate,
-});
+const getOptionalDatePayload = ({ safeStartDate, safeEndDate }) => {
+  const payload = {};
+
+  if (hasDateValue(safeStartDate)) {
+    payload.start_date = safeStartDate;
+  }
+
+  if (hasDateValue(safeEndDate)) {
+    payload.end_date = safeEndDate;
+  }
+
+  return payload;
+};
 
 const normalizeTargetQuantities = ({
   productIds = [],
@@ -95,11 +125,11 @@ export const buildGeneratePayload = ({
   });
 
   if (mode === GENERATE_MODES.FULL) {
-    validateDateRange({ safeStartDate, safeEndDate, t });
+    validateOptionalDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
-        ...getDatePayload({ safeStartDate, safeEndDate }),
+        ...getOptionalDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
@@ -121,13 +151,13 @@ export const buildGeneratePayload = ({
       );
     }
 
-    validateDateRange({ safeStartDate, safeEndDate, t });
+    validateOptionalDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
         mode: "products_given",
         product_ids: safeProductIds,
-        ...getDatePayload({ safeStartDate, safeEndDate }),
+        ...getOptionalDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
@@ -160,14 +190,14 @@ export const buildGeneratePayload = ({
       );
     }
 
-    validateDateRange({ safeStartDate, safeEndDate, t });
+    validateOptionalDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
         mode: "targets_given",
         product_ids: safeProductIds,
         target_quantities: safeTargetQuantities,
-        ...getDatePayload({ safeStartDate, safeEndDate }),
+        ...getOptionalDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
@@ -196,12 +226,12 @@ export const buildGeneratePayload = ({
   }
 
   if (mode === GENERATE_MODES.CLEARANCE) {
-    validateDateRange({ safeStartDate, safeEndDate, t });
+    validateOptionalDateRange({ safeStartDate, safeEndDate, t });
 
     return {
       payload: {
         mode: "clearance",
-        ...getDatePayload({ safeStartDate, safeEndDate }),
+        ...getOptionalDatePayload({ safeStartDate, safeEndDate }),
       },
     };
   }
