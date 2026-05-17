@@ -4,13 +4,31 @@ import { useTranslation } from "react-i18next";
 import { buildConsultationSummaryTitle } from "../utils/consultationHelpers";
 import { useConsultation } from "../hooks/useConsultation";
 
+function SavingSummarySkeleton({ label }) {
+  return (
+    <div className="consultation-summary-save-skeleton" aria-live="polite">
+      <div className="consultation-summary-save-spinner" />
+
+      <div className="consultation-summary-save-copy">
+        <strong>{label}</strong>
+
+        <div className="consultation-summary-save-lines">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SaveSummaryModal({ open, onClose }) {
   const { t } = useTranslation("consultation");
   const { saveSummary, isCreatingSummary } = useConsultation();
 
   const defaultTitle = useMemo(
     () => buildConsultationSummaryTitle(t("summaryDefaultTitle")),
-    [t]
+    [t],
   );
 
   const [summaryTitle, setSummaryTitle] = useState(defaultTitle);
@@ -57,24 +75,38 @@ export default function SaveSummaryModal({ open, onClose }) {
         }}
         aria-label={t("close")}
       />
+
       <div className="consultation-modal" role="dialog" aria-modal="true">
         <div className="consultation-modal-header">
           <h3>{t("saveSummary")}</h3>
         </div>
 
         <div className="consultation-modal-body">
-          <label className="consultation-field-label" htmlFor="consultation-save-summary-title">
-            {t("summaryTitle")}
-          </label>
+          {isCreatingSummary ? (
+            <SavingSummarySkeleton
+              label={t("savingSummary", {
+                defaultValue: "Saving summary...",
+              })}
+            />
+          ) : (
+            <>
+              <label
+                className="consultation-field-label"
+                htmlFor="consultation-save-summary-title"
+              >
+                {t("summaryTitle")}
+              </label>
 
-          <input
-            id="consultation-save-summary-title"
-            type="text"
-            className="consultation-input"
-            value={summaryTitle}
-            onChange={(event) => setSummaryTitle(event.target.value)}
-            disabled={isCreatingSummary}
-          />
+              <input
+                id="consultation-save-summary-title"
+                type="text"
+                className="consultation-input"
+                value={summaryTitle}
+                onChange={(event) => setSummaryTitle(event.target.value)}
+                disabled={isCreatingSummary}
+              />
+            </>
+          )}
         </div>
 
         <div className="consultation-modal-actions">
@@ -93,11 +125,13 @@ export default function SaveSummaryModal({ open, onClose }) {
             onClick={handleSave}
             disabled={isCreatingSummary}
           >
-            {isCreatingSummary ? t("savingSummary", { defaultValue: "Saving..." }) : t("saveSummary")}
+            {isCreatingSummary
+              ? t("savingSummary", { defaultValue: "Saving..." })
+              : t("saveSummary")}
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

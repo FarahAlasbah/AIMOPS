@@ -100,7 +100,7 @@ export const CITY_OPTIONS = [
     aliases: ["beit jala", "jala", "بيت جالا", "جالا"],
   },
   {
-    en: "Doha",
+    en: "Al-Doha",
     ar: "الدوحة",
     aliases: ["doha", "الدوحة", "دوحة"],
   },

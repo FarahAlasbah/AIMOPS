@@ -60,9 +60,15 @@ export default function EventsPage() {
         }
       />
 
-      {page.notice && <InfoMessage type="success">{page.notice}</InfoMessage>}
-      {page.error && <InfoMessage type="error">{page.error}</InfoMessage>}
+      {(page.notice || page.error) && (
+  <div className="events-page-messages">
+    {page.notice ? (
+      <InfoMessage type="success">{page.notice}</InfoMessage>
+    ) : null}
 
+    {page.error ? <InfoMessage type="error">{page.error}</InfoMessage> : null}
+  </div>
+)}
       {page.showCreate && (
         <Card
           title={t("eventsPage.createCardTitle")}

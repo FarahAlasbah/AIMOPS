@@ -16,25 +16,28 @@ export default function ConsultationMessageBubble({ message }) {
           : "consultation-message-row-assistant"
       }`}
     >
-      {!isUser && (
+      {!isUser ? (
         <div className="consultation-avatar consultation-avatar-assistant">
           <Bot size={16} />
         </div>
-      )}
+      ) : null}
 
       <div
         className={`consultation-bubble ${
           isUser ? "consultation-bubble-user" : "consultation-bubble-assistant"
         }`}
+        dir="auto"
       >
-        {!isUser && (
+        {!isUser ? (
           <div className="consultation-bubble-label">
             {t("assistantName")}
           </div>
-        )}
+        ) : null}
 
         {isUser ? (
-          <div className="consultation-message-text">{message.content}</div>
+          <div className="consultation-message-text" dir="auto">
+            {message.content}
+          </div>
         ) : isLoading ? (
           <div className="consultation-typing">
             <span />
@@ -46,11 +49,11 @@ export default function ConsultationMessageBubble({ message }) {
         )}
       </div>
 
-      {isUser && (
+      {isUser ? (
         <div className="consultation-avatar consultation-avatar-user">
           <User size={16} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
