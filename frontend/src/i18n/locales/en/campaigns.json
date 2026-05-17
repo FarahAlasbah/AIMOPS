@@ -332,7 +332,7 @@
     "quantityTitle": "Target quantities",
     "pickProductsFirst": "Choose products first, then enter the target quantities.",
     "forecastCoverageNote": "For best results, choose dates within the forecast period. If the selected dates are too far ahead and AIMOPS has no forecast for them, it may use a default discount instead."
-  }
+  
 },
     "products": {
       "title": "Use selected products",
@@ -377,3 +377,4 @@
       "eventRequired": "Choose one event from your events list first."
     }
   }
+}
