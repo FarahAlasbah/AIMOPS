@@ -1,4 +1,3 @@
-// frontend/src/features/campaigns/components/new-campaign/GenerateCampaignModal.jsx
 import { useTranslation } from "react-i18next";
 
 import GenerateModalHeader from "./generator/GenerateModalHeader";
@@ -79,6 +78,13 @@ export default function GenerateCampaignModal({
             loading={loading}
             onModeChange={modal.setMode}
           />
+
+          <div className="generate-campaign-modal__forecast-note">
+            {t("generator.dates.optionalWarning", {
+              defaultValue:
+                "Dates are optional for every suggestion. Leave them empty and AIMOPS will choose a suitable start and end date for you.",
+            })}
+          </div>
 
           {modal.needsProducts ? (
             <GenerateProductsSection

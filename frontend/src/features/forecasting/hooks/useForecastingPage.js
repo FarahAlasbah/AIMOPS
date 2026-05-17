@@ -452,10 +452,6 @@ const handleGenerateSelectedForecasts = async () => {
     return;
   }
 
-  setInfo({
-    type: "success",
-    text: `Forecast generation started for ${productsToGenerate.length} product(s). It may take a little while.`,
-  });
 };
   const handleGenerate = async (product, retrain = false) => {
     const productId = Number(product?.product_id);
@@ -471,18 +467,8 @@ const handleGenerateSelectedForecasts = async () => {
     setInfo(null);
 
     try {
-      const res = await generateForecast({ productId, retrain });
-
-      setInfo({
-        type: "success",
-        text:
-          res?.message ||
-          tRef.current("messages.generateAccepted", {
-            name:
-              product?.product_name ||
-              tRef.current("details.productFallback", { id: productId }),
-          }),
-      });
+    await generateForecast({ productId, retrain });
+      
 
       await loadData();
     } catch (e) {
