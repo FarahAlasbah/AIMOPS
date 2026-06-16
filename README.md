@@ -38,7 +38,7 @@ Tested on real POS data: 801 rows, 52 products, 23 training days → **79.4% ave
 | Layer | Technology |
 |---|---|
 | Framework | React |
-| Language | TypeScript |
+| Language | JavaScript |
 | Styling | CSS Modules |
 | i18n | Arabic + English (full bilingual support) |
 | HTTP | Axios |
@@ -50,7 +50,7 @@ Tested on real POS data: 801 rows, 52 products, 23 training days → **79.4% ave
 ```
 ┌─────────────────────────────────────────────────┐
 │                   React Frontend                │
-│         (TypeScript, bilingual AR/EN)           │
+│         (JavaScript, bilingual AR/EN)           │
 └────────────────────┬────────────────────────────┘
                      │ REST API
 ┌────────────────────▼────────────────────────────┐
