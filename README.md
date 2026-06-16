@@ -201,6 +201,6 @@ VITE_API_BASE_URL=http://localhost:8000
 | Name | Role |
 |---|---|
 | Farah Alasbah | Backend Developer — FastAPI, XGBoost, Claude API integration, database design, Alembic migrations |
-| Shahd Abu Nawa | Frontend Developer — React, TypeScript, bilingual UI |
+| Shahd Abu Nawa | Frontend Developer — React, JavaScript, bilingual UI |
 
 Supervised by **Rawan Gedeon** — Bethlehem University, Department of Software Engineering.
